@@ -1,0 +1,161 @@
+:root {
+  --navy: #162136;
+  --blue: #0B72F5;
+  --bg: #fff;
+  --soft: #F3F6FB;
+  --line: #E1E7F0;
+  --mute: #5B667A;
+  color-scheme: light;
+  box-sizing: border-box;
+}
+*, *::before, *::after { box-sizing: inherit; }
+html, body, #root { min-height: 100%; }
+body {
+  margin: 0;
+  color: var(--navy);
+  font-family: Manrope, system-ui, sans-serif;
+  line-height: 1.6;
+}
+a { color: inherit; text-decoration: none; }
+
+.dash { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; background: var(--soft); }
+.dash .i {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex: none;
+}
+
+/* Sidebar */
+.dash .side {
+  background: var(--bg);
+  border-right: 1px solid var(--line);
+  padding: 24px 18px;
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+.dash .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 22px; }
+.dash .side .brand { padding: 0 10px 20px; }
+.dash .brand img { width: 34px; height: 34px; }
+.dash .brand b { color: var(--blue); }
+
+.dash .menu {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  padding: 0 2px 12px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.dash .menu::-webkit-scrollbar { display: none; }
+.dash .group { display: grid; gap: 2px; }
+.dash .gt { margin: 0 0 4px; padding: 0 12px; font-size: 13px; font-weight: 700; color: var(--mute); }
+.dash .mi {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  font-weight: 700;
+  color: var(--mute);
+  transition: background .15s, color .15s;
+}
+.dash .mi:hover { background: var(--soft); color: var(--navy); }
+.dash .mi:focus-visible { outline: 3px solid var(--blue); }
+.dash .mi.on { background: #EEF5FF; color: var(--blue); }
+
+.dash .me { flex: none; border-top: 1px solid var(--line); padding-top: 16px; display: grid; gap: 8px; }
+.dash .user { display: flex; align-items: center; gap: 12px; padding: 0 6px; }
+.dash .av {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--navy);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+}
+.dash .user b { display: block; line-height: 1.2; }
+.dash .user span { font-size: 13px; color: var(--mute); }
+.dash .out {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 12px;
+  border-radius: 10px;
+  font: inherit;
+  font-weight: 700;
+  color: var(--mute);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+}
+.dash .out:hover { background: var(--soft); color: #D92D20; }
+.dash .out:focus-visible { outline: 3px solid var(--blue); }
+
+/* Mobile top bar (desktop-da gizlidir) */
+.dash .topbar { display: none; }
+
+/* Page area */
+.dash .main { padding: 36px 40px 56px; max-width: 1100px; width: 100%; min-width: 0; }
+.dash .main h1 { font-size: clamp(26px, 4vw, 36px); letter-spacing: -.02em; margin: 0 0 10px; line-height: 1.15; }
+
+/* Log out confirmation */
+.dash .out-bg {
+  position: fixed;
+  inset: 0;
+  background: rgba(22, 33, 54, .5);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  z-index: 50;
+}
+.dash .out-box { background: var(--bg); border-radius: 18px; padding: 28px; width: 100%; max-width: 400px; }
+.dash .out-box h2 { margin: 0 0 8px; font-size: 24px; letter-spacing: -.02em; }
+.dash .out-box p { margin: 0 0 24px; color: var(--mute); }
+.dash .out-actions { display: flex; gap: 12px; justify-content: flex-end; }
+.dash .out-actions button {
+  padding: 12px 22px;
+  border-radius: 10px;
+  font: inherit;
+  font-weight: 700;
+  border: 2px solid var(--line);
+  background: var(--bg);
+  color: var(--navy);
+  cursor: pointer;
+}
+.dash .out-actions button:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
+.dash .out-actions .out-yes { background: #D92D20; border-color: #D92D20; color: #fff; }
+
+/* Mobile */
+@media (max-width: 900px) {
+  .dash { grid-template-columns: 1fr; }
+  .dash .side { display: none; }
+  .dash .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--line);
+  }
+  .dash .main { padding: 24px 20px 48px; }
+  .dash .out-actions { flex-direction: column-reverse; }
+  .dash .out-actions button { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dash .mi { transition: none; }
+}
