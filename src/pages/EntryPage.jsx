@@ -2,6 +2,8 @@ import "./EntryPage.css"
 import {Link} from "react-router-dom"
 import { useEffect, useState } from "react";
 import { supabase } from "../supabaseclient";
+import logo from "/photos/logo.png"
+
 function EntryPage() {
 const [user, setUser] = useState(null);
 const [checking, setChecking] = useState(true);
@@ -35,7 +37,7 @@ const handleLogout = async () => {
     <div>
       <div className="wrap">
 <nav>
-<a className="brand" href="#"><img src="/photos/logo.png" alt="" />Dev<b>Up</b></a>
+<a className="brand" href="#"><img src={logo} alt="" />Dev<b>Up</b></a>
 <div className="links"><a href="#fields">Fields</a><a href="#how">How it works</a><a href="#about">About</a></div>
 <div className="nav-cta">
   {!checking &&
