@@ -1,0 +1,249 @@
+.projects-page {
+  padding: 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  font-family: "Manrope", system-ui, sans-serif;
+  color: #162136;
+  box-sizing: border-box;
+}
+
+.projects-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.projects-header h1 {
+  margin: 0 0 8px;
+  font-size: 42px;
+  font-weight: 800;
+  letter-spacing: -1px;
+}
+
+.projects-header p {
+  margin: 0;
+  font-size: 17px;
+  color: #5b6678;
+}
+
+.projects-add-btn {
+  padding: 0 24px;
+  min-height: 48px;
+  border: 0;
+  border-radius: 12px;
+  background: #0b72f5;
+  color: #fff;
+  font-family: inherit;
+  font-weight: 800;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.projects-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  border-bottom: 1px solid #e3e9f3;
+  padding-bottom: 16px;
+}
+
+.projects-tab {
+  padding: 0 20px;
+  min-height: 44px;
+  border-radius: 12px;
+  border: 0;
+  background: transparent;
+  color: #2a3650;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.projects-tab.is-active {
+  background: #e7f0fe;
+  color: #0b5fd0;
+  font-weight: 800;
+}
+
+.projects-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
+
+.projects-search {
+  flex: 1 1 320px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fff;
+  border: 1px solid #d5deec;
+  border-radius: 14px;
+  padding: 0 16px;
+  min-height: 48px;
+  color: #5b6678;
+}
+
+.projects-search:focus-within {
+  border-color: #0b72f5;
+}
+
+.projects-search input {
+  flex: 1;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-family: inherit;
+  font-size: 15px;
+  color: #162136;
+  min-height: 44px;
+}
+
+.projects-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.projects-field {
+  padding: 0 18px;
+  min-height: 44px;
+  border-radius: 99px;
+  border: 1px solid #d5deec;
+  background: #fff;
+  color: #2a3650;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.projects-field.is-active {
+  background: #162136;
+  border-color: #162136;
+  color: #fff;
+}
+
+.projects-empty {
+  background: #fff;
+  border: 2px dashed #b9c7e0;
+  border-radius: 20px;
+  padding: 56px 24px;
+  text-align: center;
+}
+
+.projects-empty h2 {
+  margin: 0 0 8px;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.projects-empty-text {
+  margin: 0;
+  font-size: 16px;
+  color: #5b6678;
+}
+
+.projects-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.projects-card {
+  flex: 1 1 300px;
+  max-width: 100%;
+  box-sizing: border-box;
+  background: #fff;
+  border: 1px solid #e3e9f3;
+  border-radius: 20px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: left;
+  font-family: inherit;
+  color: #162136;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.15s;
+}
+
+.projects-card:hover {
+  border-color: #0b72f5;
+  transform: translateY(-2px);
+}
+
+.projects-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.projects-badge {
+  padding: 4px 12px;
+  border-radius: 99px;
+  background: #e7f0fe;
+  color: #0b5fd0;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.projects-badge.is-level {
+  background: #eef1f6;
+  color: #4a5568;
+}
+
+.projects-card-field {
+  font-size: 13px;
+  font-weight: 600;
+  color: #5b6678;
+}
+
+.projects-card h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.projects-card p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #5b6678;
+}
+
+.projects-tech {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.projects-tech span {
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: #f3f6fc;
+  color: #2a3650;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.projects-visit {
+  margin-top: auto;
+  color: #0b5fd0;
+  font-weight: 800;
+  font-size: 15px;
+}
+
+@media (max-width: 700px) {
+  .projects-page {
+    padding: 24px 16px;
+  }
+}
