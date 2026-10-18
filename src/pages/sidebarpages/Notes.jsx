@@ -3,6 +3,9 @@ import Sidebar from "../Sidebar";
 import { supabase } from "/src/supabaseclient.js";
 import "./Notes.css";
 
+const FIELDS = ["All fields", "Frontend", "Backend", "Cybersecurity", "Mobile"];
+const NOTE_FIELDS = FIELDS.slice(1);
+
 function formatDate(date) {
   return new Date(date).toLocaleDateString(undefined, {
     day: "numeric",
@@ -17,9 +20,10 @@ export default function Notes() {
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
   const [query, setQuery] = useState("");
+  const [field, setField] = useState("All fields");
 
   const [formOpen, setFormOpen] = useState(false);
-  const [form, setForm] = useState({ topic: "", title: "", content: "" });
+  const [form, setForm] = useState({ field: "Frontend", title: "", content: "" });
   const [formError, setFormError] = useState("");
 
   useEffect(() => {
@@ -30,7 +34,7 @@ export default function Notes() {
     let cancelled = false;
     supabase
       .from("notes")
-      .select("id, title, content, topic, updated_at")
+      .select("id, title, content, field, updated_at")
       .order("updated_at", { ascending: false })
       .then(({ data, error }) => {
         if (cancelled) return;
@@ -54,7 +58,7 @@ export default function Notes() {
     }
     const { error } = await supabase.from("notes").insert({
       user_id: user.id,
-      topic: form.topic.trim() || "General",
+      field: form.field,
       title: form.title.trim(),
       content: form.content.trim(),
     });
@@ -62,22 +66,17 @@ export default function Notes() {
       setFormError("Couldn't save the note. Try again.");
       return;
     }
-    setForm({ topic: "", title: "", content: "" });
+    setForm({ field: "Frontend", title: "", content: "" });
     setFormError("");
     setFormOpen(false);
     setRefreshKey((k) => k + 1);
   }
 
-  const q = query.trim().toLowerCase();
-  const filtered = notes.filter(
-    (n) => n.title.toLowerCase().includes(q) || n.topic.toLowerCase().includes(q)
-  );
-  const groups = filtered.reduce((acc, n) => {
-    (acc[n.topic] = acc[n.topic] || []).push(n);
-    return acc;
-  }, {});
-  const topics = Object.keys(groups).sort((a, b) => a.localeCompare(b));
-  const allTopics = [...new Set(notes.map((n) => n.topic))];
+  const visible = notes.filter((n) => {
+    const okField = field === "All fields" || n.field === field;
+    const okQuery = n.title.toLowerCase().includes(query.trim().toLowerCase());
+    return okField && okQuery;
+  });
 
   return (
     <div className="notes-layout">
@@ -87,7 +86,7 @@ export default function Notes() {
           <header className="notes-header">
             <div>
               <h1>Notes</h1>
-              <p>Your private notes, grouped by topic.</p>
+              <p>Your private notes while you learn.</p>
             </div>
             <button className="notes-primary" onClick={() => setFormOpen(!formOpen)}>
               + Add note
@@ -96,20 +95,16 @@ export default function Notes() {
 
           {formOpen && (
             <form className="notes-form" onSubmit={submitNote}>
-              <label htmlFor="note-topic">Topic</label>
-              <input
-                id="note-topic"
-                type="text"
-                list="note-topics"
-                value={form.topic}
-                onChange={(e) => setForm({ ...form, topic: e.target.value })}
-                placeholder="JavaScript"
-              />
-              <datalist id="note-topics">
-                {allTopics.map((t) => (
-                  <option key={t} value={t} />
+              <label htmlFor="note-field">Field</label>
+              <select
+                id="note-field"
+                value={form.field}
+                onChange={(e) => setForm({ ...form, field: e.target.value })}
+              >
+                {NOTE_FIELDS.map((f) => (
+                  <option key={f}>{f}</option>
                 ))}
-              </datalist>
+              </select>
 
               <label htmlFor="note-title">Title</label>
               <input
@@ -159,10 +154,24 @@ export default function Notes() {
             <input
               type="search"
               aria-label="Search notes"
-              placeholder="Search by title or topic"
+              placeholder="Search notes"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
+          </div>
+
+          <div className="notes-tabs" role="tablist">
+            {FIELDS.map((f) => (
+              <button
+                key={f}
+                role="tab"
+                aria-selected={field === f}
+                className={"notes-tab" + (field === f ? " is-active" : "")}
+                onClick={() => setField(f)}
+              >
+                {f}
+              </button>
+            ))}
           </div>
 
           {loading ? (
@@ -174,30 +183,23 @@ export default function Notes() {
               <h2>No notes yet</h2>
               <p className="notes-empty-text">Write your first note.</p>
             </div>
-          ) : topics.length === 0 ? (
+          ) : visible.length === 0 ? (
             <div className="notes-empty">
-              <h2>No results</h2>
-              <p className="notes-empty-text">Try a different search.</p>
+              <h2>No notes here</h2>
+              <p className="notes-empty-text">Try a different search or field.</p>
             </div>
           ) : (
-            topics.map((topic) => (
-              <section className="notes-group" key={topic}>
-                <div className="notes-group-head">
-                  <h2>{topic}</h2>
-                  <span>{groups[topic].length}</span>
-                </div>
-                <div className="notes-grid">
-                  {groups[topic].map((n) => (
-                    // onClick (notu açmaq) sonrakı mərhələdə əlavə olunacaq
-                    <article className="notes-card" key={n.id}>
-                      <h3>{n.title}</h3>
-                      <p className="notes-preview">{n.content.replace(/```/g, "")}</p>
-                      <span className="notes-date">Edited {formatDate(n.updated_at)}</span>
-                    </article>
-                  ))}
-                </div>
-              </section>
-            ))
+            <div className="notes-grid">
+              {visible.map((n) => (
+                // onClick (notu açmaq) sonrakı mərhələdə əlavə olunacaq
+                <article className="notes-card" key={n.id}>
+                  <span className="notes-field">{n.field}</span>
+                  <h3>{n.title}</h3>
+                  <p className="notes-preview">{n.content.replace(/```/g, "")}</p>
+                  <span className="notes-date">Edited {formatDate(n.updated_at)}</span>
+                </article>
+              ))}
+            </div>
           )}
         </div>
       </main>
