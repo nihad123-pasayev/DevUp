@@ -243,7 +243,49 @@
   line-height: 1.5;
   color: #5b6678;
 }
+.certs-count {
+  margin-left: 4px;
+  padding: 1px 8px;
+  border-radius: 99px;
+  background: #e3e9f3;
+  color: #2a3650;
+  font-size: 12px;
+  font-weight: 800;
+}
 
+.certs-tab.is-active .certs-count {
+  background: #0b72f5;
+  color: #fff;
+}
+
+.certs-status {
+  padding: 4px 12px;
+  border-radius: 99px;
+  background: #eef1f6;
+  color: #4a5568;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.certs-status.is-progress {
+  background: #fdf0d9;
+  color: #8a5a00;
+}
+
+.certs-start {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  min-height: 44px;
+  color: #0b5fd0;
+  font-weight: 800;
+  font-size: 15px;
+  text-decoration: none;
+}
+
+.certs-start:hover {
+  text-decoration: underline;
+}
 @media (max-width: 700px) {
   .certs-page {
     padding: 24px 16px;

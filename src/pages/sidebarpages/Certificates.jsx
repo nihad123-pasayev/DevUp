@@ -3,12 +3,24 @@ import Sidebar from "../Sidebar";
 import { supabase } from "/src/supabaseclient.js";
 import "./Certificates.css";
 
-const TABS = [
-  { id: "earned", label: "Earned" },
-  { id: "progress", label: "In progress" },
-];
-
 const FIELDS = ["All fields", "Frontend", "Backend", "Cybersecurity", "Mobile"];
+const RANK = { earned: 0, progress: 1, new: 2 };
+
+const EMPTY = {
+  earned: [
+    "No certificates yet",
+    "Finish a roadmap to earn your first certificate.",
+  ],
+  progress: [
+    "Nothing in progress",
+    "Start a lesson and your roadmap will show up here.",
+  ],
+  new: ["Everything started", "You've started every roadmap."],
+  all: [
+    "No certificates yet",
+    "Roadmaps and certificates will appear here soon.",
+  ],
+};
 
 function formatDate(date) {
   return new Date(date).toLocaleDateString(undefined, {
@@ -24,7 +36,7 @@ export default function Certificates() {
   const [courses, setCourses] = useState([]);
   const [progress, setProgress] = useState({});
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState("earned");
+  const [tab, setTab] = useState("all");
   const [field, setField] = useState("All fields");
 
   const userName =
@@ -38,10 +50,7 @@ export default function Certificates() {
   useEffect(() => {
     let cancelled = false;
     Promise.all([
-      supabase
-        .from("certificates")
-        .select("id, course_id, code, issued_at, courses(title, field)")
-        .order("issued_at", { ascending: false }),
+      supabase.from("certificates").select("id, course_id, code, issued_at"),
       supabase.from("courses").select("id, title, field, lesson_count"),
       supabase
         .from("user_progress")
@@ -64,25 +73,39 @@ export default function Certificates() {
     };
   }, []);
 
-  const earnedIds = new Set(certs.map((c) => c.course_id));
+  const certByCourse = {};
+  certs.forEach((c) => {
+    certByCourse[c.course_id] = c;
+  });
 
-  const visibleEarned = certs.filter(
-    (c) => field === "All fields" || c.courses?.field === field,
+  const items = courses
+    .map((course) => {
+      const cert = certByCourse[course.id];
+      const done = progress[course.id] || 0;
+      const state = cert ? "earned" : done > 0 ? "progress" : "new";
+      return { course, cert, done, state };
+    })
+    .sort((a, b) => RANK[a.state] - RANK[b.state]);
+
+  const counts = {
+    all: items.length,
+    earned: items.filter((i) => i.state === "earned").length,
+    progress: items.filter((i) => i.state === "progress").length,
+    new: items.filter((i) => i.state === "new").length,
+  };
+
+  const TABS = [
+    { id: "all", label: "All" },
+    { id: "earned", label: "Earned" },
+    { id: "progress", label: "In progress" },
+    { id: "new", label: "Not started" },
+  ];
+
+  const visible = items.filter(
+    (i) =>
+      (tab === "all" || i.state === tab) &&
+      (field === "All fields" || i.course.field === field),
   );
-
-  const visibleProgress = courses.filter(
-    (c) =>
-      !earnedIds.has(c.id) &&
-      (progress[c.id] || 0) > 0 &&
-      (field === "All fields" || c.field === field),
-  );
-
-  const isEarned = tab === "earned";
-  const list = isEarned ? visibleEarned : visibleProgress;
-  const totalCount = isEarned
-    ? certs.length
-    : courses.filter((c) => !earnedIds.has(c.id) && (progress[c.id] || 0) > 0)
-        .length;
 
   return (
     <div className="certs-layout">
@@ -103,7 +126,7 @@ export default function Certificates() {
                 className={"certs-tab" + (tab === t.id ? " is-active" : "")}
                 onClick={() => setTab(t.id)}
               >
-                {t.label}
+                {t.label} <span className="certs-count">{counts[t.id]}</span>
               </button>
             ))}
           </div>
@@ -124,78 +147,70 @@ export default function Certificates() {
             <div className="certs-empty">
               <p className="certs-empty-text">Loading...</p>
             </div>
-          ) : totalCount === 0 ? (
+          ) : counts[tab] === 0 ? (
             <div className="certs-empty">
-              <h2>
-                {isEarned ? "No certificates yet" : "Nothing in progress"}
-              </h2>
-              <p className="certs-empty-text">
-                {isEarned
-                  ? "Finish a roadmap to earn your first certificate."
-                  : "Start a lesson and your roadmap will show up here."}
-              </p>
+              <h2>{EMPTY[tab][0]}</h2>
+              <p className="certs-empty-text">{EMPTY[tab][1]}</p>
             </div>
-          ) : list.length === 0 ? (
+          ) : visible.length === 0 ? (
             <div className="certs-empty">
               <h2>No results</h2>
               <p className="certs-empty-text">Try a different field.</p>
             </div>
-          ) : isEarned ? (
-            <div className="certs-grid">
-              {visibleEarned.map((c) => (
-                <article className="certs-card" key={c.id}>
-                  <div className="certs-preview">
-                    <span className="certs-brand">DEVUP</span>
-                    <span className="certs-kind">
-                      Certificate of completion
-                    </span>
-                    <span className="certs-name">{userName}</span>
-                    <span className="certs-kind">has completed</span>
-                    <span className="certs-course">{c.courses?.title}</span>
-                  </div>
-                  <div className="certs-row">
-                    <span className="certs-badge">{c.courses?.field}</span>
-                    <span className="certs-date">
-                      Issued {formatDate(c.issued_at)}
-                    </span>
-                  </div>
-                  <span className="certs-code">ID: {c.code}</span>
-                  <div className="certs-actions">
-                    {/* onClick (View və Download PDF) sonrakı mərhələdə əlavə olunacaq */}
-                    <button className="certs-btn-primary">View</button>
-                    <button className="certs-btn-outline">Download PDF</button>
-                  </div>
-                </article>
-              ))}
-            </div>
           ) : (
             <div className="certs-grid">
-              {visibleProgress.map((c) => {
-                const done = progress[c.id] || 0;
-                const total = c.lesson_count || 0;
+              {visible.map(({ course, cert, done, state }) => {
+                if (state === "earned") {
+                  return (
+                    <article className="certs-card" key={course.id}>
+                      <div className="certs-preview">
+                        <span className="certs-brand">DEVUP</span>
+                        <span className="certs-kind">
+                          Certificate of completion
+                        </span>
+                        <span className="certs-name">{userName}</span>
+                        <span className="certs-kind">has completed</span>
+                        <span className="certs-course">{course.title}</span>
+                      </div>
+                      <div className="certs-row">
+                        <span className="certs-badge">{course.field}</span>
+                        <span className="certs-date">
+                          Issued {formatDate(cert.issued_at)}
+                        </span>
+                      </div>
+                      <span className="certs-code">ID: {cert.code}</span>
+                      <div className="certs-actions">
+                        {/* onClick (View və Download PDF) sonrakı mərhələdə əlavə olunacaq */}
+                        <button className="certs-btn-primary">View</button>
+                        <button className="certs-btn-outline">
+                          Download PDF
+                        </button>
+                      </div>
+                    </article>
+                  );
+                }
+
+                const total = course.lesson_count || 0;
                 const percent = total
                   ? Math.min(100, Math.round((done / total) * 100))
                   : 0;
                 return (
-                  <article className="certs-card certs-card-locked" key={c.id}>
+                  <article
+                    className="certs-card certs-card-locked"
+                    key={course.id}
+                  >
                     <div className="certs-row">
-                      <span className="certs-badge">{c.field}</span>
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        aria-hidden="true"
+                      <span className="certs-badge">{course.field}</span>
+                      <span
+                        className={
+                          "certs-status" +
+                          (state === "progress" ? " is-progress" : "")
+                        }
                       >
-                        <rect x="5" y="11" width="14" height="9" rx="2" />
-                        <path d="M8 11V8a4 4 0 0 1 8 0v3" />
-                      </svg>
+                        {state === "progress" ? "In progress" : "Not started"}
+                      </span>
                     </div>
-                    <h3>{c.title}</h3>
+                    <h3>{course.title}</h3>
                     <div className="certs-bar">
                       <div
                         className="certs-bar-fill"
@@ -206,6 +221,9 @@ export default function Certificates() {
                       {done} / {total} lessons. Finish all lessons to earn this
                       certificate.
                     </p>
+                    <a className="certs-start" href="/lessons">
+                      {state === "progress" ? "Continue" : "Start roadmap"}
+                    </a>
                   </article>
                 );
               })}
