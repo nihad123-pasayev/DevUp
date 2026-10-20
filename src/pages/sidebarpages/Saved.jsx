@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import Sidebar from "../Sidebar";
-import { supabase } from "../supabaseclient.js";
+import { supabase } from "/src/supabaseclient.js";
 import "./Saved.css";
 
 const TABS = [
