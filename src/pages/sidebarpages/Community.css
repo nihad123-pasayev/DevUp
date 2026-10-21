@@ -437,6 +437,15 @@
   font-size: 14px;
   cursor: pointer;
 }
+.community-answer-actions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.community-link-btn.is-danger {
+  color: #c0392b;
+}
 
 @media (max-width: 700px) {
   .community-page {

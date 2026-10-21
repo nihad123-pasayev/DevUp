@@ -1,4 +1,4 @@
-import { useState,useEffect } from "react";
+import { useState, useEffect } from "react";
 import Sidebar from "../Sidebar";
 import { supabase } from "/src/supabaseclient.js";
 import "./Community.css";
@@ -53,7 +53,7 @@ function Body({ text }) {
           </pre>
         ) : (
           part.trim() && <p key={i}>{part.trim()}</p>
-        )
+        ),
       )}
     </div>
   );
@@ -69,7 +69,12 @@ export default function Community() {
   const [loading, setLoading] = useState(true);
 
   const [askOpen, setAskOpen] = useState(false);
-  const [form, setForm] = useState({ field: "Frontend", title: "", body: "", tags: "" });
+  const [form, setForm] = useState({
+    field: "Frontend",
+    title: "",
+    body: "",
+    tags: "",
+  });
   const [formError, setFormError] = useState("");
 
   const [selected, setSelected] = useState(null);
@@ -79,32 +84,33 @@ export default function Community() {
   const [refreshKey, setRefreshKey] = useState(0);
 
   const authorName =
-    user?.user_metadata?.full_name || (user?.email ? user.email.split("@")[0] : "");
+    user?.user_metadata?.full_name ||
+    (user?.email ? user.email.split("@")[0] : "");
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data?.user ?? null));
   }, []);
 
   useEffect(() => {
-  let cancelled = false;
-  supabase
-    .from("posts")
-    .select(
-      "id, user_id, kind, title, body, field, tags, views, solved, author_name, created_at, answers(count)"
-    )
-    .eq("kind", tab)
-    .order("created_at", { ascending: false })
-    .then(({ data, error }) => {
-      if (cancelled) return;
-      setPosts(!error && data ? data : []);
-      setLoading(false);
-    });
-  return () => {
-    cancelled = true;
-  };
-}, [tab, refreshKey]);
+    let cancelled = false;
+    supabase
+      .from("posts")
+      .select(
+        "id, user_id, kind, title, body, field, tags, views, solved, author_name, created_at, answers(count)",
+      )
+      .eq("kind", tab)
+      .order("created_at", { ascending: false })
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        setPosts(!error && data ? data : []);
+        setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [tab, refreshKey]);
 
-const loadPosts = () => setRefreshKey((k) => k + 1);
+  const loadPosts = () => setRefreshKey((k) => k + 1);
 
   async function loadAnswers(postId) {
     const { data, error } = await supabase
@@ -199,7 +205,21 @@ const loadPosts = () => setRefreshKey((k) => k + 1);
       .eq("id", selected.id);
     if (e1 || e2) return;
     setSelected({ ...selected, solved: true });
-    setAnswers(answers.map((a) => (a.id === answer.id ? { ...a, is_accepted: true } : a)));
+    setAnswers(
+      answers.map((a) =>
+        a.id === answer.id ? { ...a, is_accepted: true } : a,
+      ),
+    );
+  }
+  async function deleteAnswer(answer) {
+    if (!window.confirm("Delete this answer?")) return;
+    const { error } = await supabase
+      .from("answers")
+      .delete()
+      .eq("id", answer.id);
+    if (error) return;
+    setAnswers((prev) => prev.filter((a) => a.id !== answer.id));
+    if (answer.is_accepted) setSelected((s) => ({ ...s, solved: false }));
   }
 
   const answerCount = (p) => p.answers?.[0]?.count ?? 0;
@@ -235,13 +255,18 @@ const loadPosts = () => setRefreshKey((k) => k + 1);
             <article className="community-detail">
               <div className="community-card-top">
                 <span className="community-field">{selected.field}</span>
-                {selected.solved && <span className="community-solved">Solved</span>}
+                {selected.solved && (
+                  <span className="community-solved">Solved</span>
+                )}
               </div>
               <h1>{selected.title}</h1>
               <div className="community-meta">
-                <span className="community-avatar">{initials(selected.author_name)}</span>
+                <span className="community-avatar">
+                  {initials(selected.author_name)}
+                </span>
                 <span>
-                  {selected.author_name} · {timeAgo(selected.created_at)} · {selected.views} views
+                  {selected.author_name} · {timeAgo(selected.created_at)} ·{" "}
+                  {selected.views} views
                 </span>
               </div>
               <Body text={selected.body} />
@@ -259,26 +284,52 @@ const loadPosts = () => setRefreshKey((k) => k + 1);
             </h2>
 
             <div className="community-answers">
-              {answers.map((a) => (
-                <div
-                  key={a.id}
-                  className={"community-answer" + (a.is_accepted ? " is-accepted" : "")}
-                >
-                  <div className="community-meta">
-                    <span className="community-avatar">{initials(a.author_name)}</span>
-                    <span>
-                      {a.author_name} · {timeAgo(a.created_at)}
-                    </span>
-                    {a.is_accepted && <span className="community-solved">Accepted</span>}
+              {answers.map((a) => {
+                const canMark =
+                  isOwner && selected.kind === "question" && !selected.solved;
+                const canDelete = user && a.user_id === user.id;
+                return (
+                  <div
+                    key={a.id}
+                    className={
+                      "community-answer" + (a.is_accepted ? " is-accepted" : "")
+                    }
+                  >
+                    <div className="community-meta">
+                      <span className="community-avatar">
+                        {initials(a.author_name)}
+                      </span>
+                      <span>
+                        {a.author_name} · {timeAgo(a.created_at)}
+                      </span>
+                      {a.is_accepted && (
+                        <span className="community-solved">Accepted</span>
+                      )}
+                    </div>
+                    <Body text={a.body} />
+                    {(canMark || canDelete) && (
+                      <div className="community-answer-actions">
+                        {canMark && (
+                          <button
+                            className="community-link-btn"
+                            onClick={() => markSolved(a)}
+                          >
+                            Mark as solved
+                          </button>
+                        )}
+                        {canDelete && (
+                          <button
+                            className="community-link-btn is-danger"
+                            onClick={() => deleteAnswer(a)}
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  <Body text={a.body} />
-                  {isOwner && selected.kind === "question" && !selected.solved && (
-                    <button className="community-link-btn" onClick={() => markSolved(a)}>
-                      Mark as solved
-                    </button>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <form className="community-form" onSubmit={submitAnswer}>
@@ -316,7 +367,10 @@ const loadPosts = () => setRefreshKey((k) => k + 1);
               <h1>Community</h1>
               <p>Ask questions, share experiences and help other learners.</p>
             </div>
-            <button className="community-primary" onClick={() => setAskOpen(!askOpen)}>
+            <button
+              className="community-primary"
+              onClick={() => setAskOpen(!askOpen)}
+            >
               {isQuestion ? "+ Ask a question" : "+ Share an experience"}
             </button>
           </header>
@@ -362,7 +416,9 @@ const loadPosts = () => setRefreshKey((k) => k + 1);
                   setFormError("");
                 }}
                 placeholder={
-                  isQuestion ? "How do I center a div with Flexbox?" : "How I learned React"
+                  isQuestion
+                    ? "How do I center a div with Flexbox?"
+                    : "How I learned React"
                 }
               />
 
@@ -405,7 +461,17 @@ const loadPosts = () => setRefreshKey((k) => k + 1);
 
           <div className="community-toolbar">
             <div className="community-search">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
                 <circle cx="11" cy="11" r="7" />
                 <path d="m20 20-3.5-3.5" />
               </svg>
@@ -459,7 +525,9 @@ const loadPosts = () => setRefreshKey((k) => k + 1);
           ) : visible.length === 0 ? (
             <div className="community-empty">
               <h2>No results</h2>
-              <p className="community-empty-text">Try a different search or field.</p>
+              <p className="community-empty-text">
+                Try a different search or field.
+              </p>
             </div>
           ) : (
             <div className="community-list">
@@ -474,10 +542,14 @@ const loadPosts = () => setRefreshKey((k) => k + 1);
                 >
                   <div className="community-card-top">
                     <span className="community-field">{p.field}</span>
-                    {p.solved && <span className="community-solved">Solved</span>}
+                    {p.solved && (
+                      <span className="community-solved">Solved</span>
+                    )}
                   </div>
                   <h3>{p.title}</h3>
-                  <p className="community-preview">{p.body.replace(/```/g, "")}</p>
+                  <p className="community-preview">
+                    {p.body.replace(/```/g, "")}
+                  </p>
                   {(p.tags || []).length > 0 && (
                     <div className="community-tags">
                       {p.tags.map((t) => (
@@ -487,7 +559,9 @@ const loadPosts = () => setRefreshKey((k) => k + 1);
                   )}
                   <div className="community-card-bottom">
                     <div className="community-meta">
-                      <span className="community-avatar">{initials(p.author_name)}</span>
+                      <span className="community-avatar">
+                        {initials(p.author_name)}
+                      </span>
                       <span>
                         {p.author_name} · {timeAgo(p.created_at)}
                       </span>
