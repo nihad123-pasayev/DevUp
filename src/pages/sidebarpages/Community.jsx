@@ -82,6 +82,7 @@ export default function Community() {
   const [answerText, setAnswerText] = useState("");
   const [answerError, setAnswerError] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const authorName =
     user?.user_metadata?.full_name ||
@@ -109,6 +110,14 @@ export default function Community() {
       cancelled = true;
     };
   }, [tab, refreshKey]);
+  useEffect(() => {
+    if (!deleteTarget) return;
+    function onKey(e) {
+      if (e.key === "Escape") setDeleteTarget(null);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [deleteTarget]);
 
   const loadPosts = () => setRefreshKey((k) => k + 1);
 
@@ -211,8 +220,9 @@ export default function Community() {
       ),
     );
   }
-  async function deleteAnswer(answer) {
-    if (!window.confirm("Delete this answer?")) return;
+  async function confirmDelete() {
+    const answer = deleteTarget;
+    setDeleteTarget(null);
     const { error } = await supabase
       .from("answers")
       .delete()
@@ -320,7 +330,7 @@ export default function Community() {
                         {canDelete && (
                           <button
                             className="community-link-btn is-danger"
-                            onClick={() => deleteAnswer(a)}
+                            onClick={() => setDeleteTarget(a)}
                           >
                             Delete
                           </button>
@@ -351,6 +361,38 @@ export default function Community() {
                 {selected.kind === "question" ? "Post answer" : "Post reply"}
               </button>
             </form>
+            {deleteTarget && (
+              <div
+                className="community-modal-backdrop"
+                onClick={() => setDeleteTarget(null)}
+              >
+                <div
+                  className="community-modal"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="delete-title"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <h2 id="delete-title">Delete this answer?</h2>
+                  <p>This can't be undone.</p>
+                  <div className="community-modal-actions">
+                    <button
+                      className="community-secondary"
+                      autoFocus
+                      onClick={() => setDeleteTarget(null)}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      className="community-danger"
+                      onClick={confirmDelete}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </main>
       </div>
