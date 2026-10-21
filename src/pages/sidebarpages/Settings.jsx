@@ -1,5 +1,6 @@
 import Sidebar from "../Sidebar";
 import "./Settings.css";
+import { useEffect, useState } from "react";
 
 const NAV = [
   { id: "profile", label: "Profile" },
@@ -71,6 +72,27 @@ const DOCS = [
 ];
 
 export default function Settings() {
+  const [active, setActive] = useState(NAV[0].id);
+
+  useEffect(() => {
+    function onScroll() {
+      const atBottom =
+        window.innerHeight + window.scrollY >=
+        document.documentElement.scrollHeight - 4;
+      if (atBottom) {
+        setActive(NAV[NAV.length - 1].id);
+        return;
+      }
+      let current = NAV[0].id;
+      NAV.forEach((n) => {
+        const el = document.getElementById(n.id);
+        if (el && el.getBoundingClientRect().top <= 120) current = n.id;
+      });
+      setActive(current);
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
   return (
     <div className="settings-layout">
       <Sidebar />
@@ -84,7 +106,14 @@ export default function Settings() {
           <div className="settings-body">
             <nav className="settings-nav" aria-label="Settings sections">
               {NAV.map((n) => (
-                <a key={n.id} href={"#" + n.id} className="settings-nav-link">
+                <a
+                  key={n.id}
+                  href={"#" + n.id}
+                  className={
+                    "settings-nav-link" + (active === n.id ? " is-active" : "")
+                  }
+                  aria-current={active === n.id ? "true" : undefined}
+                >
                   {n.label}
                 </a>
               ))}

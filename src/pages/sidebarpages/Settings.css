@@ -57,11 +57,18 @@
   font-weight: 700;
   font-size: 15px;
   text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+
 }
 
 .settings-nav-link:hover {
-  background: #e7f0fe;
+  background: rgba(11, 114, 245, 0.08);
   color: #0b5fd0;
+}
+.settings-nav-link.is-active {
+  background: rgba(11, 114, 245, 0.14);
+  color: #0b5fd0;
+  font-weight: 800;
 }
 
 .settings-content {
