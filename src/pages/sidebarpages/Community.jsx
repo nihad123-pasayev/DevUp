@@ -221,15 +221,18 @@ export default function Community() {
     );
   }
   async function confirmDelete() {
-    const answer = deleteTarget;
+    const { type, item } = deleteTarget;
     setDeleteTarget(null);
-    const { error } = await supabase
-      .from("answers")
-      .delete()
-      .eq("id", answer.id);
+    if (type === "post") {
+      const { error } = await supabase.from("posts").delete().eq("id", item.id);
+      if (error) return;
+      closePost();
+      return;
+    }
+    const { error } = await supabase.from("answers").delete().eq("id", item.id);
     if (error) return;
-    setAnswers((prev) => prev.filter((a) => a.id !== answer.id));
-    if (answer.is_accepted) setSelected((s) => ({ ...s, solved: false }));
+    setAnswers((prev) => prev.filter((a) => a.id !== item.id));
+    if (item.is_accepted) setSelected((s) => ({ ...s, solved: false }));
   }
 
   const answerCount = (p) => p.answers?.[0]?.count ?? 0;
@@ -288,6 +291,16 @@ export default function Community() {
                 </div>
               )}
             </article>
+            {isOwner && (
+              <button
+                className="community-link-btn is-danger"
+                onClick={() =>
+                  setDeleteTarget({ type: "post", item: selected })
+                }
+              >
+                Delete post
+              </button>
+            )}
 
             <h2 className="community-subtitle">
               {countLabel(answers.length, selected.kind)}
@@ -330,7 +343,9 @@ export default function Community() {
                         {canDelete && (
                           <button
                             className="community-link-btn is-danger"
-                            onClick={() => setDeleteTarget(a)}
+                            onClick={() =>
+                              setDeleteTarget({ type: "answer", item: a })
+                            }
                           >
                             Delete
                           </button>
@@ -373,8 +388,16 @@ export default function Community() {
                   aria-labelledby="delete-title"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <h2 id="delete-title">Delete this answer?</h2>
-                  <p>This can't be undone.</p>
+                  <h2 id="delete-title">
+                    {deleteTarget.type === "post"
+                      ? "Delete this post?"
+                      : "Delete this answer?"}
+                  </h2>
+                  <p>
+                    {deleteTarget.type === "post"
+                      ? "Its answers will be deleted too. This can't be undone."
+                      : "This can't be undone."}
+                  </p>
                   <div className="community-modal-actions">
                     <button
                       className="community-secondary"
