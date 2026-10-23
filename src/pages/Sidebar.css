@@ -9,8 +9,11 @@
 .dash .main {
   flex: 1;
   min-width: 0;
+  scrollbar-width: none;
 }
-
+.dash .menu::-webkit-scrollbar {
+  display: none;
+}
 .dash .side {
   flex: 0 0 260px;
   width: 260px;
