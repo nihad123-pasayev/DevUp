@@ -144,159 +144,164 @@ export default function DashboardPage() {
 
   return (
     <Sidebar>
-      <h1>Welcome back, {firstName}</h1>
-      <div className="chips">
-        <span className="chip">
-          Daily goal: <b>{profile?.daily_time ?? "Not set"}</b>
-        </span>
-        <span className="chip">
-          Goal: <b>{profile?.goal ?? "Not set"}</b>
-        </span>
-      </div>
+      <div className="dpage">
+        <h1>Welcome back, {firstName}</h1>
+        <div className="chips">
+          <span className="chip">
+            Daily goal: <b>{profile?.daily_time ?? "Not set"}</b>
+          </span>
+          <span className="chip">
+            Goal: <b>{profile?.goal ?? "Not set"}</b>
+          </span>
+        </div>
 
-      {error && <p className="form-error">{error}</p>}
+        {error && <p className="form-error">{error}</p>}
 
-      <section className="cont">
-        <small>Continue learning</small>
-        <h2>
-          {firstField
-            ? `Start ${firstField.name}`
-            : "Choose your first roadmap"}
-        </h2>
-        <p>
-          {firstField
-            ? `${firstField.name} · Lesson 1`
-            : "Add a roadmap below to begin"}
-        </p>
-        <div className="bar">
-          <i style={{ width: "0%" }} />
-        </div>
-        <button className="btn" type="button" disabled>
-          Lessons coming soon
-        </button>
-        <svg className="deco" viewBox="0 0 24 24">
-          <path d="M5 19L19 5M9 5h10v10" />
-        </svg>
-      </section>
+        <section className="cont">
+          <small>Continue learning</small>
+          <h2>
+            {firstField
+              ? `Start ${firstField.name}`
+              : "Choose your first roadmap"}
+          </h2>
+          <p>
+            {firstField
+              ? `${firstField.name} · Lesson 1`
+              : "Add a roadmap below to begin"}
+          </p>
+          <div className="bar">
+            <i style={{ width: "0%" }} />
+          </div>
+          <button className="btn" type="button" disabled>
+            Lessons coming soon
+          </button>
+          <svg className="deco" viewBox="0 0 24 24">
+            <path d="M5 19L19 5M9 5h10v10" />
+          </svg>
+        </section>
 
-      <div className="stats">
-        <div className="stat">
-          <span>Lessons completed</span>
-          <b>{stats.lessons}</b>
+        <div className="stats">
+          <div className="stat">
+            <span>Lessons completed</span>
+            <b>{stats.lessons}</b>
+          </div>
+          <div className="stat">
+            <span>Learning time</span>
+            <b>{stats.time}</b>
+          </div>
+          <div className="stat">
+            <span>Day streak</span>
+            <b>
+              {stats.streak} {stats.streak === 1 ? "day" : "days"}
+            </b>
+          </div>
         </div>
-        <div className="stat">
-          <span>Learning time</span>
-          <b>{stats.time}</b>
-        </div>
-        <div className="stat">
-          <span>Day streak</span>
-          <b>
-            {stats.streak} {stats.streak === 1 ? "day" : "days"}
-          </b>
-        </div>
-      </div>
 
-      <h3 className="sec">Your roadmaps</h3>
-      {myFields.length > 0 ? (
-        <div className="grid">
-          {myFields.map((f) => (
-            <div className="card" key={f.name}>
-              <button
-                className="del"
-                type="button"
-                aria-label={`Remove ${f.name} roadmap`}
-                onClick={() => setToDelete(f.name)}
-              >
-                <Icon>
-                  <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 10v6M14 10v6" />
-                </Icon>
-              </button>
-              <div className="top">
-                <div className="ic">
-                  <Icon>{f.icon}</Icon>
-                </div>
-                <div>
-                  <b>{f.name}</b>
-                  <span className="m">Not started</span>
-                </div>
-              </div>
-              <div className="row">
-                Progress<em>0%</em>
-              </div>
-              <div className="bar">
-                <i style={{ width: "0%" }} />
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="empty">
-          <b>You have not chosen any fields yet.</b>
-          <span>Pick a field below to start your first roadmap.</span>
-        </div>
-      )}
-
-      {otherFields.length > 0 && (
-        <>
-          <h3 className="sec">Explore other fields</h3>
-          <div className="list">
-            {otherFields.map((f) => (
-              <div className="item" key={f.name}>
-                <div className="ic">
-                  <Icon>{f.icon}</Icon>
-                </div>
-                <div className="txt">
-                  <b>{f.name}</b>
-                  <span>{f.desc}</span>
-                </div>
+        <h3 className="sec">Your roadmaps</h3>
+        {myFields.length > 0 ? (
+          <div className="grid">
+            {myFields.map((f) => (
+              <div className="card" key={f.name}>
                 <button
-                  className="add"
+                  className="del"
                   type="button"
-                  onClick={() => addField(f.name)}
+                  aria-label={`Remove ${f.name} roadmap`}
+                  onClick={() => setToDelete(f.name)}
                 >
-                  Add roadmap
+                  <Icon>
+                    <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 10v6M14 10v6" />
+                  </Icon>
                 </button>
+                <div className="top">
+                  <div className="ic">
+                    <Icon>{f.icon}</Icon>
+                  </div>
+                  <div>
+                    <b>{f.name}</b>
+                    <span className="m">Not started</span>
+                  </div>
+                </div>
+                <div className="row">
+                  Progress<em>0%</em>
+                </div>
+                <div className="bar">
+                  <i style={{ width: "0%" }} />
+                </div>
               </div>
             ))}
           </div>
-        </>
-      )}
+        ) : (
+          <div className="empty">
+            <b>You have not chosen any fields yet.</b>
+            <span>Pick a field below to start your first roadmap.</span>
+          </div>
+        )}
 
-      {toDelete && (
-        <div className="modal-bg" onClick={() => !saving && setToDelete(null)}>
+        {otherFields.length > 0 && (
+          <>
+            <h3 className="sec">Explore other fields</h3>
+            <div className="list">
+              {otherFields.map((f) => (
+                <div className="item" key={f.name}>
+                  <div className="ic">
+                    <Icon>{f.icon}</Icon>
+                  </div>
+                  <div className="txt">
+                    <b>{f.name}</b>
+                    <span>{f.desc}</span>
+                  </div>
+                  <button
+                    className="add"
+                    type="button"
+                    onClick={() => addField(f.name)}
+                  >
+                    Add roadmap
+                  </button>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {toDelete && (
           <div
-            className="modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="del-title"
-            onClick={(e) => e.stopPropagation()}
+            className="modal-bg"
+            onClick={() => !saving && setToDelete(null)}
           >
-            <h2 id="del-title">Remove roadmap?</h2>
-            <p>
-              Are you sure you want to remove <b>{toDelete}</b> from your
-              roadmaps? You can add it again later.
-            </p>
-            <div className="actions">
-              <button
-                className="btn ghost"
-                type="button"
-                onClick={() => setToDelete(null)}
-                disabled={saving}
-              >
-                Cancel
-              </button>
-              <button
-                className="btn danger"
-                type="button"
-                onClick={removeField}
-                disabled={saving}
-              >
-                {saving ? "Removing..." : "Yes, remove"}
-              </button>
+            <div
+              className="modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="del-title"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h2 id="del-title">Remove roadmap?</h2>
+              <p>
+                Are you sure you want to remove <b>{toDelete}</b> from your
+                roadmaps? You can add it again later.
+              </p>
+              <div className="actions">
+                <button
+                  className="btn ghost"
+                  type="button"
+                  onClick={() => setToDelete(null)}
+                  disabled={saving}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="btn danger"
+                  type="button"
+                  onClick={removeField}
+                  disabled={saving}
+                >
+                  {saving ? "Removing..." : "Yes, remove"}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </Sidebar>
   );
 }
