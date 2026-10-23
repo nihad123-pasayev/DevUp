@@ -90,7 +90,8 @@
   font-weight: 800;
 }
 
-.dash .i {
+.dash .side .i,
+.dash .topbar .i  {
   width: 22px;
   height: 22px;
   flex-shrink: 0;
