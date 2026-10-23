@@ -37,17 +37,23 @@ const MENU = [
       {
         label: "Projects",
         to: "/projects",
-        icon: <path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2z" />,
+        icon: (
+          <path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+        ),
       },
       {
         label: "Resources",
         to: "/resources",
-        icon: <path d="M10 13a5 5 0 007.07 0l3-3a5 5 0 00-7.07-7.07l-1 1M14 11a5 5 0 00-7.07 0l-3 3a5 5 0 007.07 7.07l1-1" />,
+        icon: (
+          <path d="M10 13a5 5 0 007.07 0l3-3a5 5 0 00-7.07-7.07l-1 1M14 11a5 5 0 00-7.07 0l-3 3a5 5 0 007.07 7.07l1-1" />
+        ),
       },
       {
         label: "Community",
         to: "/community",
-        icon: <path d="M17 21v-2a4 4 0 00-4-4H7a4 4 0 00-4 4v2M10 11a4 4 0 100-8 4 4 0 000 8zM21 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />,
+        icon: (
+          <path d="M17 21v-2a4 4 0 00-4-4H7a4 4 0 00-4 4v2M10 11a4 4 0 100-8 4 4 0 000 8zM21 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
+        ),
       },
     ],
   },
@@ -57,7 +63,9 @@ const MENU = [
       {
         label: "Notes",
         to: "/notes",
-        icon: <path d="M14 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V9zM14 3v6h6M8 13h8M8 17h5" />,
+        icon: (
+          <path d="M14 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V9zM14 3v6h6M8 13h8M8 17h5" />
+        ),
       },
       {
         label: "Saved",
@@ -67,7 +75,9 @@ const MENU = [
       {
         label: "Achievements",
         to: "/achievements",
-        icon: <path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0zM17 5h3v2a3 3 0 01-3 3M7 5H4v2a3 3 0 003 3" />,
+        icon: (
+          <path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0zM17 5h3v2a3 3 0 01-3 3M7 5H4v2a3 3 0 003 3" />
+        ),
       },
       {
         label: "Certificates",
@@ -111,7 +121,7 @@ const MENU = [
 
 function Icon({ children }) {
   return (
-    <svg className="i" viewBox="0 0 24 24">
+    <svg className="i" viewBox="0 0 24 24" aria-hidden="true">
       {children}
     </svg>
   );
@@ -122,6 +132,7 @@ export default function DashboardLayout({ children }) {
   const { pathname } = useLocation();
   const [user, setUser] = useState(null);
   const [confirmLogout, setConfirmLogout] = useState(false);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -136,6 +147,13 @@ export default function DashboardLayout({ children }) {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [confirmLogout]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e) => e.key === "Escape" && setOpen(false);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
 
   if (!user) return null;
 
@@ -159,11 +177,13 @@ export default function DashboardLayout({ children }) {
   );
 
   return (
-    <div className="dash">
+    <div className={"dash" + (open ? " open" : "")}>
       <aside className="side">
         <Link className="brand" to="/">
           <img src={logo} alt="" />
-          <span>Dev<b>Up</b></span>
+          <span>
+            Dev<b>Up</b>
+          </span>
         </Link>
 
         <div className="menu" role="navigation" aria-label="Main">
@@ -175,6 +195,7 @@ export default function DashboardLayout({ children }) {
                   className={`mi${isActive(it.to) ? " on" : ""}`}
                   key={it.label}
                   to={it.to}
+                  onClick={() => setOpen(false)}
                 >
                   <Icon>{it.icon}</Icon>
                   {it.label}
@@ -192,7 +213,11 @@ export default function DashboardLayout({ children }) {
               <span>Learner</span>
             </div>
           </div>
-          <button className="out" type="button" onClick={() => setConfirmLogout(true)}>
+          <button
+            className="out"
+            type="button"
+            onClick={() => setConfirmLogout(true)}
+          >
             {logoutIcon}
             Log out
           </button>
@@ -200,15 +225,36 @@ export default function DashboardLayout({ children }) {
       </aside>
 
       <header className="topbar">
-        <Link className="brand" to="/">
-          <img src={logo} alt="" />
-          <span>Dev<b>Up</b></span>
-        </Link>
-        <button className="out" type="button" onClick={() => setConfirmLogout(true)}>
+        <div className="top-left">
+          <button
+            className="menu-btn"
+            type="button"
+            aria-label="Open menu"
+            aria-expanded={open}
+            onClick={() => setOpen(true)}
+          >
+            <Icon>
+              <path d="M4 6h16M4 12h16M4 18h16" />
+            </Icon>
+          </button>
+          <Link className="brand" to="/">
+            <img src={logo} alt="" />
+            <span>
+              Dev<b>Up</b>
+            </span>
+          </Link>
+        </div>
+        <button
+          className="out"
+          type="button"
+          onClick={() => setConfirmLogout(true)}
+        >
           {logoutIcon}
           Log out
         </button>
       </header>
+
+      {open && <div className="side-bg" onClick={() => setOpen(false)} />}
 
       <main className="main">{children}</main>
 
@@ -224,8 +270,16 @@ export default function DashboardLayout({ children }) {
             <h2 id="out-title">Log out?</h2>
             <p>Are you sure you want to log out?</p>
             <div className="out-actions">
-              <button type="button" onClick={() => setConfirmLogout(false)}>Cancel</button>
-              <button className="out-yes" type="button" onClick={handleLogout}>Yes, log out</button>
+              <button
+                type="button"
+                autoFocus
+                onClick={() => setConfirmLogout(false)}
+              >
+                Cancel
+              </button>
+              <button className="out-yes" type="button" onClick={handleLogout}>
+                Yes, log out
+              </button>
             </div>
           </div>
         </div>
