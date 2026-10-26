@@ -155,7 +155,15 @@ function EntryPage() {
                   <path d="M7.5 7l9 1M7 8l3 8M17 10l-6 7" />
                 </svg>
               </i>
-              Data &amp; AI
+              Data
+            </div>
+            <div className="tile">
+              <i>
+                <svg viewBox="0 0 24 24">
+                  <path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z" />
+                </svg>
+              </i>
+              Artificial Intelligence
             </div>
             <div className="tile">
               <i>
