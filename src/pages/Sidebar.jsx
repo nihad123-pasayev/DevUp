@@ -126,7 +126,28 @@ function Icon({ children }) {
     </svg>
   );
 }
-
+function BrandText() {
+  return (
+    <span>
+      Dev
+      <b>
+        <svg
+          viewBox="0 0 20 26"
+          aria-hidden="true"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="3.4"
+          strokeLinejoin="round"
+          style={{ height: "1.1em", verticalAlign: "-0.15em", margin: "0 0.02em" }}
+        >
+          <path d="M3 6v9a6 6 0 0 0 12 0V3" />
+          <path d="M10.2 6.6L15 1.8l4.8 4.8" />
+        </svg>
+        p
+      </b>
+    </span>
+  );
+}
 export default function DashboardLayout({ children }) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -181,9 +202,7 @@ export default function DashboardLayout({ children }) {
       <aside className="side">
         <Link className="brand" to="/">
           <img src={logo} alt="" />
-          <span>
-            Dev<b>Up</b>
-          </span>
+            <BrandText />
         </Link>
 
         <div className="menu" role="navigation" aria-label="Main">
@@ -239,9 +258,7 @@ export default function DashboardLayout({ children }) {
           </button>
           <Link className="brand" to="/">
             <img src={logo} alt="" />
-            <span>
-              Dev<b>Up</b>
-            </span>
+              <BrandText />
           </Link>
         </div>
         <button
