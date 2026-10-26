@@ -36,15 +36,25 @@ const FIELDS = [
     desc: "Networking basics, help desk, and how to defend systems.",
     icon: <path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z" />,
   },
-  {
-    name: "Data & AI",
-    desc: "Work with data and learn how machine learning works.",
+    {
+    name: "Data",
+    desc: "Collect, analyze and visualize data to find insights.",
     icon: (
       <>
-        <circle cx="6" cy="6" r="2" />
-        <circle cx="18" cy="8" r="2" />
-        <circle cx="10" cy="18" r="2" />
-        <path d="M7.5 7l9 1M7 8l3 8M17 10l-6 7" />
+        <ellipse cx="12" cy="5" rx="8" ry="3" />
+        <path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5" />
+        <path d="M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6" />
+      </>
+    ),
+  },
+  {
+    name: "Artificial Intelligence",
+    desc: "Learn how machine learning and AI models work and build smart apps.",
+    icon: (
+      <>
+        <rect x="7" y="7" width="10" height="10" rx="2" />
+        <path d="M9 3v4M15 3v4M9 17v4M15 17v4M3 9h4M3 15h4M17 9h4M17 15h4" />
+        <path d="M12 9.5l.9 1.6 1.6.9-1.6.9-.9 1.6-.9-1.6-1.6-.9 1.6-.9z" />
       </>
     ),
   },

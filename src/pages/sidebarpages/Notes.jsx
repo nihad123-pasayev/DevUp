@@ -3,7 +3,16 @@ import Sidebar from "../Sidebar";
 import { supabase } from "/src/supabaseclient.js";
 import "./Notes.css";
 
-const FIELDS = ["All fields", "Frontend", "Backend", "Cybersecurity", "Mobile"];
+const FIELDS = [
+  "All fields",
+  "Web",
+  "Backend",
+  "Mobile",
+  "Cybersecurity",
+  "Data",
+  "Artificial Intelligence",
+  "DevOps & Cloud",
+];
 const NOTE_FIELDS = FIELDS.slice(1);
 
 function formatDate(date) {
@@ -23,7 +32,11 @@ export default function Notes() {
   const [field, setField] = useState("All fields");
 
   const [formOpen, setFormOpen] = useState(false);
-  const [form, setForm] = useState({ field: "Frontend", title: "", content: "" });
+  const [form, setForm] = useState({
+    field: "Frontend",
+    title: "",
+    content: "",
+  });
   const [formError, setFormError] = useState("");
 
   useEffect(() => {
@@ -88,7 +101,10 @@ export default function Notes() {
               <h1>Notes</h1>
               <p>Your private notes while you learn.</p>
             </div>
-            <button className="notes-primary" onClick={() => setFormOpen(!formOpen)}>
+            <button
+              className="notes-primary"
+              onClick={() => setFormOpen(!formOpen)}
+            >
               + Add note
             </button>
           </header>
@@ -147,7 +163,17 @@ export default function Notes() {
           )}
 
           <div className="notes-search">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
               <circle cx="11" cy="11" r="7" />
               <path d="m20 20-3.5-3.5" />
             </svg>
@@ -186,7 +212,9 @@ export default function Notes() {
           ) : visible.length === 0 ? (
             <div className="notes-empty">
               <h2>No notes here</h2>
-              <p className="notes-empty-text">Try a different search or field.</p>
+              <p className="notes-empty-text">
+                Try a different search or field.
+              </p>
             </div>
           ) : (
             <div className="notes-grid">
@@ -195,8 +223,12 @@ export default function Notes() {
                 <article className="notes-card" key={n.id}>
                   <span className="notes-field">{n.field}</span>
                   <h3>{n.title}</h3>
-                  <p className="notes-preview">{n.content.replace(/```/g, "")}</p>
-                  <span className="notes-date">Edited {formatDate(n.updated_at)}</span>
+                  <p className="notes-preview">
+                    {n.content.replace(/```/g, "")}
+                  </p>
+                  <span className="notes-date">
+                    Edited {formatDate(n.updated_at)}
+                  </span>
                 </article>
               ))}
             </div>

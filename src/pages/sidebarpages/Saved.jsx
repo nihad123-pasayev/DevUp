@@ -18,7 +18,16 @@ const TYPE_LABELS = {
   lesson: "Lesson",
 };
 
-const FIELDS = ["All fields", "Frontend", "Backend", "Cybersecurity", "Mobile"];
+const FIELDS = [
+  "All fields",
+  "Web",
+  "Backend",
+  "Mobile",
+  "Cybersecurity",
+  "Data",
+  "Artificial Intelligence",
+  "DevOps & Cloud",
+];
 
 export default function Saved() {
   const [items, setItems] = useState([]);

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import logo from "/photos/logo.png"; 
+import logo from "/photos/logo.png";
 import { supabase } from "../supabaseclient";
 import "./secondsignup.css";
 
@@ -22,10 +22,16 @@ const icons = {
   cyber: <path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z" />,
   data: (
     <>
-      <circle cx="6" cy="6" r="2" />
-      <circle cx="18" cy="8" r="2" />
-      <circle cx="10" cy="18" r="2" />
-      <path d="M7.5 7l9 1M7 8l3 8M17 10l-6 7" />
+      <ellipse cx="12" cy="5" rx="8" ry="3" />
+      <path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5" />
+      <path d="M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6" />
+    </>
+  ),
+  ai: (
+    <>
+      <rect x="7" y="7" width="10" height="10" rx="2" />
+      <path d="M9 3v4M15 3v4M9 17v4M15 17v4M3 9h4M3 15h4M17 9h4M17 15h4" />
+      <path d="M12 9.5l.9 1.6 1.6.9-1.6.9-.9 1.6-.9-1.6-1.6-.9 1.6-.9z" />
     </>
   ),
   cloud: <path d="M7 18a4 4 0 010-8 5 5 0 019.5-1A4.5 4.5 0 0117 18z" />,
@@ -43,7 +49,8 @@ const steps = [
       { label: "Backend", icon: icons.backend },
       { label: "Mobile", icon: icons.mobile },
       { label: "Cybersecurity", icon: icons.cyber },
-      { label: "Data & AI", icon: icons.data },
+      { label: "Data", icon: icons.data },
+      { label: "Artificial Intelligence", icon: icons.ai },
       { label: "DevOps & Cloud", icon: icons.cloud },
     ],
   },
@@ -86,7 +93,12 @@ export default function Secondsignup() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [step, setStep] = useState(0);
-  const [answers, setAnswers] = useState({ fields: [], level: [], goal: [], time: [] });
+  const [answers, setAnswers] = useState({
+    fields: [],
+    level: [],
+    goal: [],
+    time: [],
+  });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
@@ -146,7 +158,12 @@ export default function Secondsignup() {
           Dev<b>Up</b>
         </div>
         {!done && (
-          <button className="skip" type="button" onClick={finish} disabled={saving}>
+          <button
+            className="skip"
+            type="button"
+            onClick={finish}
+            disabled={saving}
+          >
             Skip for now
           </button>
         )}
@@ -156,12 +173,16 @@ export default function Secondsignup() {
         {done ? (
           <div className="done">
             <div className="tick">
-              <svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10" /></svg>
+              <svg viewBox="0 0 24 24">
+                <path d="M5 12l5 5 9-10" />
+              </svg>
             </div>
             <h1>You are all set!</h1>
             <p className="sub">Your roadmap is ready. Time to level up.</p>
-            
-            <Link className="btn primary" to="/">Go to dashboard</Link>
+
+            <Link className="btn primary" to="/">
+              Go to dashboard
+            </Link>
           </div>
         ) : (
           <>
@@ -170,7 +191,9 @@ export default function Secondsignup() {
                 <i key={i} className={i <= step ? "on" : ""} />
               ))}
             </div>
-            <p className="count">Step {step + 1} of {steps.length}</p>
+            <p className="count">
+              Step {step + 1} of {steps.length}
+            </p>
             <h1>{current.q}</h1>
             <p className="sub">{current.s}</p>
 
@@ -200,7 +223,11 @@ export default function Secondsignup() {
 
             <div className="nav">
               {step > 0 && (
-                <button className="btn" type="button" onClick={() => setStep(step - 1)}>
+                <button
+                  className="btn"
+                  type="button"
+                  onClick={() => setStep(step - 1)}
+                >
                   Back
                 </button>
               )}
@@ -210,7 +237,11 @@ export default function Secondsignup() {
                 onClick={next}
                 disabled={!canContinue || saving}
               >
-                {step === steps.length - 1 ? (saving ? "Saving..." : "Finish") : "Continue"}
+                {step === steps.length - 1
+                  ? saving
+                    ? "Saving..."
+                    : "Finish"
+                  : "Continue"}
               </button>
             </div>
           </>

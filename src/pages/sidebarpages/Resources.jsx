@@ -21,7 +21,16 @@ const TYPE_LABELS = {
   practice: "Practice",
 };
 
-const FIELDS = ["All fields", "Frontend", "Backend", "Cybersecurity", "Mobile"];
+const FIELDS = [
+  "All fields",
+  "Web",
+  "Backend",
+  "Mobile",
+  "Cybersecurity",
+  "Data",
+  "Artificial Intelligence",
+  "DevOps & Cloud",
+];
 
 // Yeni resurs əlavə etmək üçün bu siyahıya obyekt yaz:
 // { id: 1, type: "book", title: "Eloquent JavaScript", text: "Qısa təsvir.", field: "Frontend", price: "Free", url: "https://eloquentjavascript.net" }
@@ -57,7 +66,9 @@ export default function Resources() {
                 key={t.id}
                 role="tab"
                 aria-selected={type === t.id}
-                className={"resources-tab" + (type === t.id ? " is-active" : "")}
+                className={
+                  "resources-tab" + (type === t.id ? " is-active" : "")
+                }
                 onClick={() => setType(t.id)}
               >
                 {t.label}
@@ -67,7 +78,17 @@ export default function Resources() {
 
           <div className="resources-toolbar">
             <div className="resources-search">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
                 <circle cx="11" cy="11" r="7" />
                 <path d="m20 20-3.5-3.5" />
               </svg>
@@ -83,7 +104,9 @@ export default function Resources() {
               {FIELDS.map((f) => (
                 <button
                   key={f}
-                  className={"resources-field" + (field === f ? " is-active" : "")}
+                  className={
+                    "resources-field" + (field === f ? " is-active" : "")
+                  }
                   onClick={() => setField(f)}
                 >
                   {f}
@@ -102,16 +125,33 @@ export default function Resources() {
           ) : visible.length === 0 ? (
             <div className="resources-empty">
               <h2>No results</h2>
-              <p className="resources-empty-text">Try a different search or filter.</p>
+              <p className="resources-empty-text">
+                Try a different search or filter.
+              </p>
             </div>
           ) : (
             <div className="resources-grid">
               {visible.map((r) => (
                 <div className="resources-card" key={r.id}>
                   <div className="resources-card-top">
-                    <span className="resources-badge">{TYPE_LABELS[r.type]}</span>
-                    <button className="resources-save" aria-label="Save resource">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <span className="resources-badge">
+                      {TYPE_LABELS[r.type]}
+                    </span>
+                    <button
+                      className="resources-save"
+                      aria-label="Save resource"
+                    >
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                      >
                         <path d="M6 3h12v18l-6-4-6 4z" />
                       </svg>
                     </button>

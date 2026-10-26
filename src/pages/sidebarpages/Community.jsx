@@ -7,7 +7,16 @@ const TABS = [
   { id: "question", label: "Questions" },
   { id: "experience", label: "Experiences" },
 ];
-const FIELDS = ["All fields", "Frontend", "Backend", "Cybersecurity", "Mobile"];
+const FIELDS = [
+  "All fields",
+  "Web",
+  "Backend",
+  "Mobile",
+  "Cybersecurity",
+  "Data",
+  "Artificial Intelligence",
+  "DevOps & Cloud",
+];
 const POST_FIELDS = FIELDS.slice(1);
 const SORTS = [
   { id: "newest", label: "Newest" },

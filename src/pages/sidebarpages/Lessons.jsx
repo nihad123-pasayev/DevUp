@@ -1,9 +1,18 @@
 import { useEffect, useState } from "react";
-import Sidebar from "../Sidebar"
+import Sidebar from "../Sidebar";
 import { supabase } from "/src/supabaseclient.js";
 import "./Lessons.css";
 
-const FIELDS = ["All fields", "Frontend", "Backend", "Cybersecurity", "Mobile"];
+const FIELDS = [
+  "All fields",
+  "Web",
+  "Backend",
+  "Mobile",
+  "Cybersecurity",
+  "Data",
+  "Artificial Intelligence",
+  "DevOps & Cloud",
+];
 const STATUSES = ["All", "Not started", "In progress", "Completed"];
 
 export default function Lessons() {
@@ -26,7 +35,9 @@ export default function Lessons() {
   }, []);
 
   const visible = courses.filter((c) => {
-    const matchesQuery = c.title.toLowerCase().includes(query.trim().toLowerCase());
+    const matchesQuery = c.title
+      .toLowerCase()
+      .includes(query.trim().toLowerCase());
     const matchesField = field === "All fields" || c.field === field;
     // status filter user_progress cədvəli əlavə olunanda işləyəcək
     return matchesQuery && matchesField;
@@ -42,7 +53,17 @@ export default function Lessons() {
 
         <div className="lessons-toolbar">
           <div className="lessons-search">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
               <circle cx="11" cy="11" r="7" />
               <path d="m20 20-3.5-3.5" />
             </svg>
@@ -93,7 +114,9 @@ export default function Lessons() {
         ) : visible.length === 0 ? (
           <div className="lessons-empty">
             <h2>No results</h2>
-            <p className="lessons-empty-text">Try a different search or field.</p>
+            <p className="lessons-empty-text">
+              Try a different search or field.
+            </p>
           </div>
         ) : (
           <div className="lessons-grid">

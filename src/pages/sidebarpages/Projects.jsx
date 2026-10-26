@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import Sidebar from "../Sidebar"
+import Sidebar from "../Sidebar";
 import { supabase } from "/src/supabaseclient.js";
 import "./Projects.css";
 
@@ -9,24 +9,104 @@ const TABS = [
   { id: "find", label: "Find projects" },
 ];
 
-const FIELDS = ["All fields", "Frontend", "Backend", "Cybersecurity", "Mobile"];
-
+const FIELDS = [
+  "All fields",
+  "Web",
+  "Backend",
+  "Mobile",
+  "Cybersecurity",
+  "Data",
+  "Artificial Intelligence",
+  "DevOps & Cloud",
+];
 const IDEAS = [
-  { id: 1, title: "Todo App", field: "Frontend", level: "Beginner", tech: ["HTML", "CSS", "JavaScript"], text: "Add, complete and delete tasks, saved in the browser." },
-  { id: 2, title: "Weather App", field: "Frontend", level: "Beginner", tech: ["JavaScript", "API"], text: "Search a city and show its current weather from a public API." },
-  { id: 3, title: "Personal Portfolio", field: "Frontend", level: "Beginner", tech: ["React", "CSS"], text: "A multi-section site presenting your skills and projects." },
-  { id: 4, title: "Blog with Auth", field: "Backend", level: "Intermediate", tech: ["React", "Supabase"], text: "Sign up, log in, write and publish posts." },
-  { id: 5, title: "REST API", field: "Backend", level: "Intermediate", tech: ["Node.js", "Express"], text: "A CRUD API with validation and clear error messages." },
-  { id: 6, title: "Habit Tracker", field: "Mobile", level: "Intermediate", tech: ["React Native"], text: "Track daily habits and see your streaks." },
+  {
+    id: 1,
+    title: "Todo App",
+    field: "Frontend",
+    level: "Beginner",
+    tech: ["HTML", "CSS", "JavaScript"],
+    text: "Add, complete and delete tasks, saved in the browser.",
+  },
+  {
+    id: 2,
+    title: "Weather App",
+    field: "Frontend",
+    level: "Beginner",
+    tech: ["JavaScript", "API"],
+    text: "Search a city and show its current weather from a public API.",
+  },
+  {
+    id: 3,
+    title: "Personal Portfolio",
+    field: "Frontend",
+    level: "Beginner",
+    tech: ["React", "CSS"],
+    text: "A multi-section site presenting your skills and projects.",
+  },
+  {
+    id: 4,
+    title: "Blog with Auth",
+    field: "Backend",
+    level: "Intermediate",
+    tech: ["React", "Supabase"],
+    text: "Sign up, log in, write and publish posts.",
+  },
+  {
+    id: 5,
+    title: "REST API",
+    field: "Backend",
+    level: "Intermediate",
+    tech: ["Node.js", "Express"],
+    text: "A CRUD API with validation and clear error messages.",
+  },
+  {
+    id: 6,
+    title: "Habit Tracker",
+    field: "Mobile",
+    level: "Intermediate",
+    tech: ["React Native"],
+    text: "Track daily habits and see your streaks.",
+  },
 ];
 
 const SITES = [
-  { id: 1, name: "GitHub", url: "https://github.com", text: "Browse open source repositories and find projects to learn from." },
-  { id: 2, name: "Frontend Mentor", url: "https://www.frontendmentor.io", text: "Real design challenges with ready-made assets for frontend practice." },
-  { id: 3, name: "roadmap.sh Projects", url: "https://roadmap.sh/projects", text: "Project ideas grouped by roadmap and difficulty." },
-  { id: 4, name: "freeCodeCamp", url: "https://www.freecodecamp.org", text: "Hands-on projects as part of free certification courses." },
-  { id: 5, name: "Kaggle", url: "https://www.kaggle.com", text: "Datasets and competitions for data-focused projects." },
-  { id: 6, name: "Devpost", url: "https://devpost.com", text: "Hackathon projects for inspiration and teamwork." },
+  {
+    id: 1,
+    name: "GitHub",
+    url: "https://github.com",
+    text: "Browse open source repositories and find projects to learn from.",
+  },
+  {
+    id: 2,
+    name: "Frontend Mentor",
+    url: "https://www.frontendmentor.io",
+    text: "Real design challenges with ready-made assets for frontend practice.",
+  },
+  {
+    id: 3,
+    name: "roadmap.sh Projects",
+    url: "https://roadmap.sh/projects",
+    text: "Project ideas grouped by roadmap and difficulty.",
+  },
+  {
+    id: 4,
+    name: "freeCodeCamp",
+    url: "https://www.freecodecamp.org",
+    text: "Hands-on projects as part of free certification courses.",
+  },
+  {
+    id: 5,
+    name: "Kaggle",
+    url: "https://www.kaggle.com",
+    text: "Datasets and competitions for data-focused projects.",
+  },
+  {
+    id: 6,
+    name: "Devpost",
+    url: "https://devpost.com",
+    text: "Hackathon projects for inspiration and teamwork.",
+  },
 ];
 
 export default function Projects() {
@@ -95,7 +175,17 @@ export default function Projects() {
         {tab !== "find" && (
           <div className="projects-toolbar">
             <div className="projects-search">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
                 <circle cx="11" cy="11" r="7" />
                 <path d="m20 20-3.5-3.5" />
               </svg>
@@ -111,7 +201,9 @@ export default function Projects() {
               {FIELDS.map((f) => (
                 <button
                   key={f}
-                  className={"projects-field" + (field === f ? " is-active" : "")}
+                  className={
+                    "projects-field" + (field === f ? " is-active" : "")
+                  }
                   onClick={() => setField(f)}
                 >
                   {f}
@@ -136,7 +228,9 @@ export default function Projects() {
           ) : visibleMine.length === 0 ? (
             <div className="projects-empty">
               <h2>No results</h2>
-              <p className="projects-empty-text">Try a different search or field.</p>
+              <p className="projects-empty-text">
+                Try a different search or field.
+              </p>
             </div>
           ) : (
             <div className="projects-grid">
@@ -162,7 +256,9 @@ export default function Projects() {
           (visibleIdeas.length === 0 ? (
             <div className="projects-empty">
               <h2>No results</h2>
-              <p className="projects-empty-text">Try a different search or field.</p>
+              <p className="projects-empty-text">
+                Try a different search or field.
+              </p>
             </div>
           ) : (
             <div className="projects-grid">

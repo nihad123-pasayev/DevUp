@@ -3,7 +3,16 @@ import Sidebar from "../Sidebar";
 import { supabase } from "/src/supabaseclient.js";
 import "./Certificates.css";
 
-const FIELDS = ["All fields", "Frontend", "Backend", "Cybersecurity", "Mobile"];
+const FIELDS = [
+  "All fields",
+  "Web",
+  "Backend",
+  "Mobile",
+  "Cybersecurity",
+  "Data",
+  "Artificial Intelligence",
+  "DevOps & Cloud",
+];
 const RANK = { earned: 0, progress: 1, new: 2 };
 
 const EMPTY = {
