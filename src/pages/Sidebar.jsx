@@ -132,22 +132,22 @@ function BrandText() {
       Dev
       <b>
         <svg
-          viewBox="0 0 70 120"
+          viewBox="0 -20 68 120"
           aria-hidden="true"
           style={{
             height: "1.2em",
-            verticalAlign: "-0.01em",
-            margin: "0 0.12em 0 0.02em",
+            verticalAlign: "0",
+            margin: "0 0.02em 0 0.03em",
             overflow: "visible",
           }}
         >
           <path
-            d="M10 46V86A25 25 0 0 0 60 86V30"
+            d="M10 28V70.5A21 21 0 0 0 52 70.5V10"
             fill="none"
             stroke="currentColor"
-            strokeWidth="16"
+            strokeWidth="19"
           />
-          <path d="M38 31L60 2L82 31Z" fill="currentColor" />
+          <path d="M30 12L52 -16L74 12Z" fill="currentColor" />
         </svg>
         p
       </b>
