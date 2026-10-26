@@ -206,8 +206,19 @@ function EntryPage() {
             <span>View roadmap</span>
           </a>
           <a className="row" href="#">
-            <h3>Data &amp; AI</h3>
-            <p>Work with data and understand how machine learning works.</p>
+            <h3>Data</h3>
+            <p>
+              Collect, analyze and visualize data to turn it into useful
+              insights.
+            </p>
+            <span>View roadmap</span>
+          </a>
+          <a className="row" href="#">
+            <h3>Artificial Intelligence</h3>
+            <p>
+              Learn how machine learning and AI models work and build
+              intelligent applications.
+            </p>
             <span>View roadmap</span>
           </a>
           <a className="row" href="#">
