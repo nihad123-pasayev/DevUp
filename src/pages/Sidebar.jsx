@@ -136,12 +136,17 @@ function BrandText() {
           aria-hidden="true"
           fill="none"
           stroke="currentColor"
-          strokeWidth="3.4"
+          strokeWidth="4.4"
           strokeLinejoin="round"
-          style={{ height: "1.1em", verticalAlign: "-0.15em", margin: "0 0.02em" }}
+          style={{
+            height: "1.1em",
+            verticalAlign: "-0.15em",
+            margin: "0 0.08em 0 0.02em",
+            overflow: "visible",
+          }}
         >
-          <path d="M3 6v9a6 6 0 0 0 12 0V3" />
-          <path d="M10.2 6.6L15 1.8l4.8 4.8" />
+          <path d="M3 7v8a6 6 0 0 0 12 0V4" />
+          <path d="M9.8 7.2L15 2l5.2 5.2" />
         </svg>
         p
       </b>
@@ -202,7 +207,7 @@ export default function DashboardLayout({ children }) {
       <aside className="side">
         <Link className="brand" to="/">
           <img src={logo} alt="" />
-            <BrandText />
+          <BrandText />
         </Link>
 
         <div className="menu" role="navigation" aria-label="Main">
@@ -258,7 +263,7 @@ export default function DashboardLayout({ children }) {
           </button>
           <Link className="brand" to="/">
             <img src={logo} alt="" />
-              <BrandText />
+            <BrandText />
           </Link>
         </div>
         <button
