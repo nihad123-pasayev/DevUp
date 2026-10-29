@@ -33,7 +33,7 @@ function BrandText() {
 }
 const FIELD_LIST = [
   {
-    name: "Web",
+    name: "Frontend",
     desc: "HTML, CSS, JavaScript, React. Build what users see.",
     img: "/photos/fields/frontend.jpg",
   },
