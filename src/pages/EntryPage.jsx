@@ -31,6 +31,43 @@ function BrandText() {
     </span>
   );
 }
+const FIELD_LIST = [
+  {
+    name: "Web",
+    desc: "HTML, CSS, JavaScript, React. Build what users see.",
+    img: "/photos/fields/web.jpg",
+  },
+  {
+    name: "Backend",
+    desc: "Servers, databases, APIs. Build what makes apps work.",
+    img: "/photos/fields/backend.jpg",
+  },
+  {
+    name: "Mobile",
+    desc: "Ship apps for iOS and Android.",
+    img: "/photos/fields/mobile.jpg",
+  },
+  {
+    name: "Cybersecurity",
+    desc: "Networking basics, help desk, and how to defend systems.",
+    img: "/photos/fields/cybersecurity.jpg",
+  },
+  {
+    name: "Data",
+    desc: "Collect, analyze and visualize data to turn it into useful insights.",
+    img: "/photos/fields/data.jpg",
+  },
+  {
+    name: "Artificial Intelligence",
+    desc: "Learn how machine learning and AI models work and build intelligent applications.",
+    img: "/photos/fields/ai.jpg",
+  },
+  {
+    name: "DevOps & Cloud",
+    desc: "Deploy, automate, and run software in the cloud.",
+    img: "/photos/fields/devops.jpg",
+  },
+];
 function EntryPage() {
   const [user, setUser] = useState(null);
   const [checking, setChecking] = useState(true);
@@ -61,6 +98,26 @@ function EntryPage() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [confirmLogout]);
+  useEffect(() => {
+    const items = document.querySelectorAll(".field-item");
+    if (!("IntersectionObserver" in window)) {
+      items.forEach((el) => el.classList.add("in-view"));
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            e.target.classList.add("in-view");
+            io.unobserve(e.target);
+          }
+        });
+      },
+      { threshold: 0.25 },
+    );
+    items.forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, []);
   return (
     <div>
       <div className="wrap">
@@ -212,47 +269,31 @@ function EntryPage() {
             Every field starts at zero and is split into small lessons, so you
             always know what to learn next.
           </p>
-          <a className="row" href="#">
-            <h3>Frontend</h3>
-            <p>HTML, CSS, JavaScript, React. Build what users see.</p>
-            <span>View roadmap</span>
-          </a>
-          <a className="row" href="#">
-            <h3>Backend</h3>
-            <p>Servers, databases, APIs. Build what makes apps work.</p>
-            <span>View roadmap</span>
-          </a>
-          <a className="row" href="#">
-            <h3>Mobile</h3>
-            <p>Ship apps for iOS and Android.</p>
-            <span>View roadmap</span>
-          </a>
-          <a className="row" href="#">
-            <h3>Cybersecurity</h3>
-            <p>Networking basics, help desk, and how to defend systems.</p>
-            <span>View roadmap</span>
-          </a>
-          <a className="row" href="#">
-            <h3>Data</h3>
-            <p>
-              Collect, analyze and visualize data to turn it into useful
-              insights.
-            </p>
-            <span>View roadmap</span>
-          </a>
-          <a className="row" href="#">
-            <h3>Artificial Intelligence</h3>
-            <p>
-              Learn how machine learning and AI models work and build
-              intelligent applications.
-            </p>
-            <span>View roadmap</span>
-          </a>
-          <a className="row" href="#">
-            <h3>DevOps &amp; Cloud</h3>
-            <p>Deploy, automate, and run software in the cloud.</p>
-            <span>View roadmap</span>
-          </a>
+          <div className="fields-list">
+            {FIELD_LIST.map((f, i) => (
+              <article
+                className={"field-item" + (i % 2 === 1 ? " reverse" : "")}
+                key={f.name}
+              >
+                <div className="field-img">
+                  <img src={f.img} alt={`${f.name} roadmap illustration`} />
+                </div>
+                <div className="field-text">
+                  <span className="field-num">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <h3>{f.name}</h3>
+                  <p>{f.desc}</p>
+                  <a className="field-link" href="#">
+                    View roadmap
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M5 12h14M13 6l6 6-6 6" />
+                    </svg>
+                  </a>
+                </div>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
 
