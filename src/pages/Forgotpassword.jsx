@@ -1,13 +1,40 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import logo from "/photos/logo.png"; 
-import { supabase } from "../supabaseclient"; 
+import logo from "/photos/logo.png";
+import { supabase } from "../supabaseclient";
 import "./Forgotpassword.css";
 
 const cameFromResetLink =
   window.location.hash.includes("type=recovery") ||
   window.location.search.includes("code=");
-
+function BrandText() {
+  return (
+    <span>
+      Dev
+      <b>
+        <svg
+          viewBox="0 -20 68 120"
+          aria-hidden="true"
+          style={{
+            height: "1.2em",
+            verticalAlign: "0",
+            margin: "0 0.02em 0 0.03em",
+            overflow: "visible",
+          }}
+        >
+          <path
+            d="M10 28V70.5A21 21 0 0 0 52 70.5V10"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="19"
+          />
+          <path d="M30 12L52 -16L74 12Z" fill="currentColor" />
+        </svg>
+        p
+      </b>
+    </span>
+  );
+}
 export default function ForgotPassword() {
   const navigate = useNavigate();
   const [mode, setMode] = useState("request"); // request | sent | reset | done
@@ -22,7 +49,8 @@ export default function ForgotPassword() {
     const { data } = supabase.auth.onAuthStateChange((event, session) => {
       const isRecovery =
         event === "PASSWORD_RECOVERY" ||
-        (cameFromResetLink && (event === "SIGNED_IN" || event === "INITIAL_SESSION"));
+        (cameFromResetLink &&
+          (event === "SIGNED_IN" || event === "INITIAL_SESSION"));
       if (session && isRecovery) {
         setEmail(session.user.email ?? "");
         setMode("reset");
@@ -41,9 +69,12 @@ export default function ForgotPassword() {
     e.preventDefault();
     setError("");
     setLoading(true);
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/forgot-password`,
-    });
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(
+      email,
+      {
+        redirectTo: `${window.location.origin}/forgot-password`,
+      },
+    );
     setLoading(false);
     if (resetError) setError(resetError.message);
     else setMode("sent");
@@ -78,7 +109,7 @@ export default function ForgotPassword() {
           <span className="chip">
             <img src={logo} alt="" />
           </span>
-          Dev<b>Up</b>
+          <BrandText />
         </Link>
 
         <div>
@@ -97,29 +128,36 @@ export default function ForgotPassword() {
             <span className="chip">
               <img src={logo} alt="" />
             </span>
-            Dev<b>Up</b>
+            <BrandText />
           </Link>
 
           {mode === "sent" && (
             <div>
               <h2>Check your email</h2>
               <p className="sub">
-                We sent a password reset link to <b>{email}</b>. Open it to choose a new password.
+                We sent a password reset link to <b>{email}</b>. Open it to
+                choose a new password.
               </p>
-              <Link className="btn" to="/login">Back to log in</Link>
+              <Link className="btn" to="/login">
+                Back to log in
+              </Link>
             </div>
           )}
 
           {mode === "done" && (
             <div>
               <h2>All done</h2>
-              <p className="success">Password changed! Taking you to log in...</p>
+              <p className="success">
+                Password changed! Taking you to log in...
+              </p>
             </div>
           )}
 
           {(mode === "request" || mode === "reset") && (
             <>
-              <h2>{mode === "reset" ? "Set new password" : "Forgot password?"}</h2>
+              <h2>
+                {mode === "reset" ? "Set new password" : "Forgot password?"}
+              </h2>
               <p className="sub">
                 {mode === "reset"
                   ? "Choose a new password for your account."
@@ -176,10 +214,18 @@ export default function ForgotPassword() {
                 )}
 
                 {error && <p className="form-error">{error}</p>}
-                <button className="btn primary" type="submit" disabled={loading}>
+                <button
+                  className="btn primary"
+                  type="submit"
+                  disabled={loading}
+                >
                   {mode === "reset"
-                    ? loading ? "Saving..." : "Reset password"
-                    : loading ? "Sending..." : "Send reset link"}
+                    ? loading
+                      ? "Saving..."
+                      : "Reset password"
+                    : loading
+                      ? "Sending..."
+                      : "Send reset link"}
                 </button>
               </form>
 

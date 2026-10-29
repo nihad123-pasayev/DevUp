@@ -3,7 +3,34 @@ import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "../supabaseclient";
 import logo from "/photos/logo.png";
-
+function BrandText() {
+  return (
+    <span>
+      Dev
+      <b>
+        <svg
+          viewBox="0 -20 68 120"
+          aria-hidden="true"
+          style={{
+            height: "1.2em",
+            verticalAlign: "0",
+            margin: "0 0.02em 0 0.03em",
+            overflow: "visible",
+          }}
+        >
+          <path
+            d="M10 28V70.5A21 21 0 0 0 52 70.5V10"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="19"
+          />
+          <path d="M30 12L52 -16L74 12Z" fill="currentColor" />
+        </svg>
+        p
+      </b>
+    </span>
+  );
+}
 function EntryPage() {
   const [user, setUser] = useState(null);
   const [checking, setChecking] = useState(true);
@@ -40,7 +67,7 @@ function EntryPage() {
         <nav>
           <a className="brand" href="#">
             <img src={logo} alt="" />
-            Dev<b>Up</b>
+            <BrandText />
           </a>
           <div className="links">
             <a href="#fields">Fields</a>

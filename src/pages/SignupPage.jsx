@@ -7,7 +7,6 @@ import logo from "/photos/logo.png";
 import "./SignupPage.css";
 import { supabase } from "../supabaseclient";
 
-
 const strengthLabels = ["", "Weak", "Fair", "Good", "Strong"];
 
 function getStrength(pw) {
@@ -19,10 +18,35 @@ function getStrength(pw) {
   if (/[^A-Za-z0-9]/.test(pw)) score++;
   return pw.length < 8 ? Math.min(score, 1) : score;
 }
-
+function BrandText() {
+  return (
+    <span>
+      Dev
+      <b>
+        <svg
+          viewBox="0 -20 68 120"
+          aria-hidden="true"
+          style={{
+            height: "1.2em",
+            verticalAlign: "0",
+            margin: "0 0.02em 0 0.03em",
+            overflow: "visible",
+          }}
+        >
+          <path
+            d="M10 28V70.5A21 21 0 0 0 52 70.5V10"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="19"
+          />
+          <path d="M30 12L52 -16L74 12Z" fill="currentColor" />
+        </svg>
+        p
+      </b>
+    </span>
+  );
+}
 export default function Signup() {
-
-
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -33,13 +57,12 @@ export default function Signup() {
   const [sent, setSent] = useState(false);
   const strength = getStrength(password);
 
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     if (password.length < 8) {
-    setError("Password must be at least 8 characters.");
-    return;
+      setError("Password must be at least 8 characters.");
+      return;
     }
     if (!agree) {
       setError("Please accept the Terms and Privacy Policy.");
@@ -56,21 +79,21 @@ export default function Signup() {
     });
 
     setLoading(false);
-    if (signUpError) setError(
-    signUpError.message === "User already registered"
-      ? "An account with this email already exists."
-      : signUpError.message
-  );
+    if (signUpError)
+      setError(
+        signUpError.message === "User already registered"
+          ? "An account with this email already exists."
+          : signUpError.message,
+      );
     else setSent(true);
   };
   const handleOAuth = async (provider) => {
-  const { error } = await supabase.auth.signInWithOAuth({
-    provider, 
-    options: { redirectTo: `${window.location.origin}/` },
-  });
-  if (error) setError(error.message);
-};
-
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: { redirectTo: `${window.location.origin}/` },
+    });
+    if (error) setError(error.message);
+  };
 
   return (
     <div className="signup">
@@ -79,7 +102,7 @@ export default function Signup() {
           <span className="chip">
             <img src={logo} alt="" />
           </span>
-          Dev<b>Up</b>
+          <BrandText />
         </Link>
 
         <div>
@@ -89,15 +112,21 @@ export default function Signup() {
           <p>Create a free account and pick your first roadmap in minutes.</p>
           <ul className="perks">
             <li>
-              <svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10" /></svg>
+              <svg viewBox="0 0 24 24">
+                <path d="M5 12l5 5 9-10" />
+              </svg>
               Free to get started
             </li>
             <li>
-              <svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10" /></svg>
+              <svg viewBox="0 0 24 24">
+                <path d="M5 12l5 5 9-10" />
+              </svg>
               Roadmaps for every IT field
             </li>
             <li>
-              <svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10" /></svg>
+              <svg viewBox="0 0 24 24">
+                <path d="M5 12l5 5 9-10" />
+              </svg>
               Learn at your own pace
             </li>
           </ul>
@@ -112,15 +141,18 @@ export default function Signup() {
             <span className="chip">
               <img src={logo} alt="" />
             </span>
-            Dev<b>Up</b>
+            <BrandText />
           </Link>
           {sent ? (
             <div className="sent">
               <h2>Check your email</h2>
               <p className="sub">
-                We sent a confirmation link to <b>{email}</b>. Click it to activate your account.
+                We sent a confirmation link to <b>{email}</b>. Click it to
+                activate your account.
               </p>
-              <Link className="btn primary" to="/login">Back to log in</Link>
+              <Link className="btn primary" to="/login">
+                Back to log in
+              </Link>
             </div>
           ) : (
             <>
@@ -153,7 +185,6 @@ export default function Signup() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                   
                   />
                 </div>
 
@@ -174,16 +205,25 @@ export default function Signup() {
                     <button
                       className="eye"
                       type="button"
-                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }
                       onClick={() => setShowPassword(!showPassword)}
                     >
-                      {showPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
+                      {showPassword ? (
+                        <FiEyeOff size={20} />
+                      ) : (
+                        <FiEye size={20} />
+                      )}
                     </button>
                   </div>
                   {password && (
                     <div className="strength" data-level={strength}>
                       <div className="bars">
-                        <span /><span /><span /><span />
+                        <span />
+                        <span />
+                        <span />
+                        <span />
                       </div>
                       <small>{strengthLabels[strength]}</small>
                     </div>
@@ -204,7 +244,11 @@ export default function Signup() {
                 </label>
 
                 {error && <p className="form-error">{error}</p>}
-                <button className="btn primary" type="submit" disabled={loading}>
+                <button
+                  className="btn primary"
+                  type="submit"
+                  disabled={loading}
+                >
                   {loading ? "Creating..." : "Create account"}
                 </button>
               </form>
@@ -212,8 +256,20 @@ export default function Signup() {
               <div className="or">or sign up with</div>
 
               <div className="social">
-                <button className="btn" type="button" onClick={() => handleOAuth("google")}><FcGoogle size={18} /> Google</button>
-                <button className="btn" type="button" onClick={() => handleOAuth("github")}><FaGithub size={18} /> GitHub</button>
+                <button
+                  className="btn"
+                  type="button"
+                  onClick={() => handleOAuth("google")}
+                >
+                  <FcGoogle size={18} /> Google
+                </button>
+                <button
+                  className="btn"
+                  type="button"
+                  onClick={() => handleOAuth("github")}
+                >
+                  <FaGithub size={18} /> GitHub
+                </button>
               </div>
 
               <p className="switch">
@@ -221,7 +277,6 @@ export default function Signup() {
               </p>
             </>
           )}
-
         </div>
       </main>
     </div>
