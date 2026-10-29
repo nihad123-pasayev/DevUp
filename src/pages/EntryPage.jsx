@@ -35,7 +35,7 @@ const FIELD_LIST = [
   {
     name: "Web",
     desc: "HTML, CSS, JavaScript, React. Build what users see.",
-    img: "/photos/fields/web.jpg",
+    img: "/photos/fields/frontend.jpg",
   },
   {
     name: "Backend",
