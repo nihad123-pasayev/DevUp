@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "../supabaseclient";
 import logo from "/photos/logo.png";
+
 function BrandText() {
   return (
     <span>
@@ -31,43 +32,52 @@ function BrandText() {
     </span>
   );
 }
+
 const FIELD_LIST = [
   {
+    id: "frontend",
     name: "Frontend",
     desc: "HTML, CSS, JavaScript, React. Build what users see.",
     img: "/photos/fields/frontend.jpg",
   },
   {
+    id: "backend",
     name: "Backend",
     desc: "Servers, databases, APIs. Build what makes apps work.",
     img: "/photos/fields/backend.jpg",
   },
   {
+    id: "mobile",
     name: "Mobile",
     desc: "Ship apps for iOS and Android.",
     img: "/photos/fields/mobile.jpg",
   },
   {
+    id: "cybersecurity",
     name: "Cybersecurity",
     desc: "Networking basics, help desk, and how to defend systems.",
     img: "/photos/fields/cybersecurity.jpg",
   },
   {
+    id: "data",
     name: "Data",
     desc: "Collect, analyze and visualize data to turn it into useful insights.",
     img: "/photos/fields/data.jpg",
   },
   {
+    id: "ai",
     name: "Artificial Intelligence",
     desc: "Learn how machine learning and AI models work and build intelligent applications.",
     img: "/photos/fields/ai.jpg",
   },
   {
+    id: "devops",
     name: "DevOps & Cloud",
     desc: "Deploy, automate, and run software in the cloud.",
     img: "/photos/fields/devops.jpg",
   },
 ];
+
 function EntryPage() {
   const [user, setUser] = useState(null);
   const [checking, setChecking] = useState(true);
@@ -92,12 +102,14 @@ function EntryPage() {
     await supabase.auth.signOut();
     setConfirmLogout(false);
   };
+
   useEffect(() => {
     if (!confirmLogout) return;
     const onKey = (e) => e.key === "Escape" && setConfirmLogout(false);
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [confirmLogout]);
+
   useEffect(() => {
     const items = document.querySelectorAll(".field-item");
     if (!("IntersectionObserver" in window)) {
@@ -118,6 +130,7 @@ function EntryPage() {
     items.forEach((el) => io.observe(el));
     return () => io.disconnect();
   }, []);
+
   return (
     <div>
       <div className="wrap">
@@ -142,19 +155,19 @@ function EntryPage() {
                   Log out
                 </button>
               ) : (
-                <Link class="animated-button" to="/login">
+                <Link className="animated-button" to="/login">
                   <svg
                     viewBox="0 0 24 24"
-                    class="arr-2"
+                    className="arr-2"
                     xmlns="http://www.w3.org/2000/svg"
                   >
                     <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
                   </svg>
-                  <span class="text">Log in </span>
-                  <span class="circle"></span>
+                  <span className="text">Log in </span>
+                  <span className="circle"></span>
                   <svg
                     viewBox="0 0 24 24"
-                    class="arr-1"
+                    className="arr-1"
                     xmlns="http://www.w3.org/2000/svg"
                   >
                     <path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
@@ -195,15 +208,15 @@ function EntryPage() {
           </div>
 
           <div className="tiles" aria-label="IT fields you can learn on DevUp">
-            <div className="tile">
+            <a href="#frontend" className="tile">
               <i>
                 <svg viewBox="0 0 24 24">
                   <path d="M8 7l-5 5 5 5M16 7l5 5-5 5" />
                 </svg>
               </i>
               Web
-            </div>
-            <div className="tile">
+            </a>
+            <a href="#backend" className="tile">
               <i>
                 <svg viewBox="0 0 24 24">
                   <rect x="3" y="4" width="18" height="6" rx="1.5" />
@@ -212,8 +225,8 @@ function EntryPage() {
                 </svg>
               </i>
               Backend
-            </div>
-            <div className="tile">
+            </a>
+            <a href="#mobile" className="tile">
               <i>
                 <svg viewBox="0 0 24 24">
                   <rect x="7" y="2" width="10" height="20" rx="2" />
@@ -221,16 +234,16 @@ function EntryPage() {
                 </svg>
               </i>
               Mobile
-            </div>
-            <div className="tile">
+            </a>
+            <a href="#cybersecurity" className="tile">
               <i>
                 <svg viewBox="0 0 24 24">
                   <path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z" />
                 </svg>
               </i>
               Cybersecurity
-            </div>
-            <div className="tile">
+            </a>
+            <a href="#data" className="tile">
               <i>
                 <svg viewBox="0 0 24 24">
                   <ellipse cx="12" cy="5" rx="8" ry="3" />
@@ -239,8 +252,8 @@ function EntryPage() {
                 </svg>
               </i>
               Data
-            </div>
-            <div className="tile">
+            </a>
+            <a href="#ai" className="tile">
               <i>
                 <svg viewBox="0 0 24 24">
                   <rect x="7" y="7" width="10" height="10" rx="2" />
@@ -249,15 +262,15 @@ function EntryPage() {
                 </svg>
               </i>
               Artificial Intelligence
-            </div>
-            <div className="tile">
+            </a>
+            <a href="#devops" className="tile">
               <i>
                 <svg viewBox="0 0 24 24">
                   <path d="M7 18a4 4 0 010-8 5 5 0 019.5-1A4.5 4.5 0 0117 18z" />
                 </svg>
               </i>
               DevOps &amp; Cloud
-            </div>
+            </a>
           </div>
         </header>
       </div>
@@ -272,6 +285,7 @@ function EntryPage() {
           <div className="fields-list">
             {FIELD_LIST.map((f, i) => (
               <article
+                id={f.id}
                 className={"field-item" + (i % 2 === 1 ? " reverse" : "")}
                 key={f.name}
               >
