@@ -43,7 +43,9 @@ function LessonsPage() {
           .map((s) => ({
             ...s,
             lessons: s.lessons.filter((l) => {
-              const okStatus = status === "all" || stateOf(l.id) === status;
+              const okStatus =
+                status === "all" ||
+                (progress[l.id] || "not_started") === status;
               const okText =
                 !term ||
                 roadmapMatch ||
@@ -61,17 +63,26 @@ function LessonsPage() {
     setOpenStages((prev) => ({ ...prev, [id]: !prev[id] }));
 
   return (
-    <div className="lz-layout">
+    <>
       <Sidebar />
-      <main className="lz-main">
-        <h1>Lessons</h1>
-        <p className="lz-sub">
-          Browse every roadmap and pick up where you left off.
-        </p>
+      <main className="lessons-page">
+        <div className="lessons-header">
+          <h1>Lessons</h1>
+          <p>Browse every roadmap and pick up where you left off.</p>
+        </div>
 
-        <div className="lz-toolbar">
-          <label className="lz-search">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
+        <div className="lessons-toolbar">
+          <label className="lessons-search">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
               <circle cx="11" cy="11" r="7" />
               <path d="M20 20l-3.5-3.5" />
             </svg>
@@ -82,12 +93,14 @@ function LessonsPage() {
               onChange={(e) => setQ(e.target.value)}
             />
           </label>
-          <div className="lz-pills">
+          <div className="lessons-statuses">
             {STATUS_FILTERS.map((f) => (
               <button
                 key={f.id}
                 type="button"
-                className={status === f.id ? "on" : ""}
+                className={
+                  "lessons-pill" + (status === f.id ? " is-active" : "")
+                }
                 onClick={() => setStatus(f.id)}
               >
                 {f.label}
@@ -96,12 +109,12 @@ function LessonsPage() {
           </div>
         </div>
 
-        <div className="lz-tabs">
+        <div className="lessons-tabs">
           {["all", ...fields].map((f) => (
             <button
               key={f}
               type="button"
-              className={field === f ? "on" : ""}
+              className={"lessons-tab" + (field === f ? " is-active" : "")}
               onClick={() => setField(f)}
             >
               {f === "all" ? "All fields" : f}
@@ -109,109 +122,121 @@ function LessonsPage() {
           ))}
         </div>
 
-        {loading && <p className="lz-msg">Loading...</p>}
+        {loading && <p className="lessons-empty-text">Loading...</p>}
 
         {!loading && roadmaps.length === 0 && (
-          <div className="lz-empty">
+          <div className="lessons-empty">
             <h2>No lessons yet</h2>
-            <p>Add a roadmap from your dashboard to see its lessons here.</p>
-            <Link className="lz-btn" to="/dashboard">
+            <p className="lessons-empty-text">
+              Add a roadmap from your dashboard to see its lessons here.
+            </p>
+            <Link className="lessons-card-btn" to="/dashboard">
               Go to dashboard
             </Link>
           </div>
         )}
 
         {!loading && roadmaps.length > 0 && visible.length === 0 && (
-          <div className="lz-empty">
+          <div className="lessons-empty">
             <h2>Nothing found</h2>
-            <p>Try a different search or filter.</p>
+            <p className="lessons-empty-text">
+              Try a different search or filter.
+            </p>
           </div>
         )}
 
-        {visible.map((r) => {
-          const st = roadmapStats(r, progress);
-          return (
-            <section className="lz-roadmap" key={r.id}>
-              <div className="lz-rhead">
-                <h2>{r.title}</h2>
-                <span>
-                  {st.done} / {st.total} lessons
-                </span>
-              </div>
+        {visible.length > 0 && (
+          <div className="lessons-grid">
+            {visible.map((r) => {
+              const st = roadmapStats(r, progress);
+              return (
+                <section className="lessons-card lessons-card--wide" key={r.id}>
+                  <div className="lessons-card-head">
+                    <div>
+                      <span className="lessons-card-field">{r.field}</span>
+                      <h3>{r.title}</h3>
+                    </div>
+                    <p>
+                      {st.done} / {st.total} lessons
+                    </p>
+                  </div>
 
-              <ul className="lz-stages">
-                {r.visibleStages.map((s) => {
-                  const open = filtering || !!openStages[s.id];
-                  const full = r.stages.find((x) => x.id === s.id);
-                  const sDone = full.lessons.filter(
-                    (l) => progress[l.id] === "completed",
-                  ).length;
-                  return (
-                    <li
-                      key={s.id}
-                      className={"lz-stage" + (open ? " open" : "")}
-                    >
-                      <button
-                        type="button"
-                        className="lz-shead"
-                        onClick={() => toggleStage(s.id)}
-                      >
-                        <svg
-                          className="lz-chev"
-                          viewBox="0 0 24 24"
-                          aria-hidden="true"
+                  <ul className="lessons-stages">
+                    {r.visibleStages.map((s) => {
+                      const open = filtering || !!openStages[s.id];
+                      const full = r.stages.find((x) => x.id === s.id);
+                      const sDone = full.lessons.filter(
+                        (l) => progress[l.id] === "completed",
+                      ).length;
+                      return (
+                        <li
+                          key={s.id}
+                          className={"lessons-stage" + (open ? " is-open" : "")}
                         >
-                          <path d="M9 6l6 6-6 6" />
-                        </svg>
-                        <span className="lz-no">
-                          {r.stages.indexOf(full) + 1}
-                        </span>
-                        <span className="lz-stitle">{s.title || s.name}</span>
-                        <span className="lz-scount">
-                          {sDone}/{full.lessons.length}
-                        </span>
-                      </button>
-                      <div className="lz-sub-wrap">
-                        <ul>
-                          {s.lessons.map((l) => {
-                            const stt = stateOf(l.id);
-                            return (
-                              <li key={l.id}>
-                                <Link
-                                  to={`/lessons/lesson/${l.id}`}
-                                  className="lz-lesson"
-                                >
-                                  <i className={"lz-st " + stt} />
-                                  <span className="lz-ltitle">
-                                    {l.title || l.name}
-                                  </span>
-                                  {l.type && (
-                                    <em
-                                      className={
-                                        "lz-tag tag-" +
-                                        String(l.type)
-                                          .toLowerCase()
-                                          .replace(/\s+/g, "-")
-                                      }
-                                    >
-                                      {l.type}
-                                    </em>
-                                  )}
-                                </Link>
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            </section>
-          );
-        })}
+                          <button
+                            type="button"
+                            className="lessons-stage-head"
+                            onClick={() => toggleStage(s.id)}
+                          >
+                            <svg
+                              className="lessons-chev"
+                              viewBox="0 0 24 24"
+                              aria-hidden="true"
+                            >
+                              <path d="M9 6l6 6-6 6" />
+                            </svg>
+                            <span className="lessons-stage-no">
+                              {r.stages.indexOf(full) + 1}
+                            </span>
+                            <span className="lessons-stage-title">
+                              {s.title || s.name}
+                            </span>
+                            <span className="lessons-stage-count">
+                              {sDone}/{full.lessons.length}
+                            </span>
+                          </button>
+                          <div className="lessons-stage-body">
+                            <ul>
+                              {s.lessons.map((l) => (
+                                <li key={l.id}>
+                                  <Link
+                                    to={`/lessons/lesson/${l.id}`}
+                                    className="lessons-item"
+                                  >
+                                    <i
+                                      className={"lessons-dot " + stateOf(l.id)}
+                                    />
+                                    <span className="lessons-item-title">
+                                      {l.title || l.name}
+                                    </span>
+                                    {l.type && (
+                                      <em
+                                        className={
+                                          "lessons-tag tag-" +
+                                          String(l.type)
+                                            .toLowerCase()
+                                            .replace(/\s+/g, "-")
+                                        }
+                                      >
+                                        {l.type}
+                                      </em>
+                                    )}
+                                  </Link>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </section>
+              );
+            })}
+          </div>
+        )}
       </main>
-    </div>
+    </>
   );
 }
 

@@ -1,178 +1,50 @@
-.lz-layout {
-  display: flex;
-  min-height: 100vh;
-  background: #f2f5fe;
-  font-family: "Manrope", sans-serif;
-  color: #162136;
-}
-.lz-main {
-  flex: 1;
-  min-width: 0;
-  padding: 36px 40px 60px;
-}
-.lz-main h1 {
-  margin: 0;
-  font-size: 44px;
-  font-weight: 800;
-}
-.lz-sub {
-  margin: 6px 0 24px;
-  color: #5b6577;
-  font-size: 18px;
-}
-
-.lz-toolbar {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  align-items: center;
-}
-.lz-search {
-  flex: 1;
-  min-width: 240px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: #fff;
-  border: 1px solid #dfe5f1;
-  border-radius: 14px;
-  padding: 0 18px;
-  height: 58px;
-}
-.lz-search svg {
-  width: 20px;
-  height: 20px;
-  fill: none;
-  stroke: #5b6577;
-  stroke-width: 2;
-  stroke-linecap: round;
-}
-.lz-search input {
-  flex: 1;
-  border: 0;
-  outline: 0;
-  background: none;
-  font: inherit;
-  color: inherit;
-}
-.lz-pills {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-.lz-pills button {
-  height: 54px;
-  padding: 0 24px;
-  border-radius: 999px;
-  border: 1px solid #dfe5f1;
-  background: #fff;
-  font: inherit;
-  font-weight: 700;
-  color: #162136;
-  cursor: pointer;
-}
-.lz-pills button.on {
-  background: #162136;
-  border-color: #162136;
-  color: #fff;
-}
-
-.lz-tabs {
-  display: flex;
+.lessons-card--wide {
+  flex: 1 1 100%;
   gap: 8px;
-  flex-wrap: wrap;
-  margin: 22px 0 26px;
-  padding-bottom: 14px;
-  border-bottom: 1px solid #e3e8f2;
 }
-.lz-tabs button {
-  border: 0;
-  background: none;
-  padding: 14px 24px;
-  border-radius: 12px;
-  font: inherit;
-  font-weight: 700;
-  color: #162136;
-  cursor: pointer;
-}
-.lz-tabs button.on {
-  background: #e6efff;
-  color: #0b5fd6;
-}
-
-.lz-msg {
-  color: #5b6577;
-}
-.lz-empty {
-  text-align: center;
-  border: 2px dashed #c3cde0;
-  border-radius: 28px;
-  padding: 60px 20px;
-}
-.lz-empty h2 {
-  margin: 0 0 8px;
-  font-size: 28px;
-}
-.lz-empty p {
-  margin: 0 0 18px;
-  color: #5b6577;
-  font-size: 18px;
-}
-.lz-btn {
-  display: inline-block;
-  background: #0b72f5;
-  color: #fff;
-  text-decoration: none;
-  font-weight: 700;
-  padding: 12px 24px;
-  border-radius: 12px;
-}
-
-.lz-roadmap {
-  background: #fff;
-  border: 1px solid #e3e8f2;
-  border-radius: 20px;
-  padding: 8px 22px 12px;
-  margin-bottom: 22px;
-}
-.lz-rhead {
+.lessons-card-head {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  padding: 14px 0 6px;
+  gap: 16px;
 }
-.lz-rhead h2 {
-  margin: 0;
-  font-size: 22px;
-}
-.lz-rhead span {
-  color: #0b72f5;
-  font-weight: 700;
+.lessons-card-head p {
+  font-weight: 800;
+  color: #0b5fd0;
+  white-space: nowrap;
 }
 
-.lz-stages {
+.lessons-empty .lessons-card-btn {
+  display: inline-block;
+  margin-top: 18px;
+  padding: 12px 24px;
+  text-decoration: none;
+}
+
+.lessons-stages {
   list-style: none;
-  margin: 0;
+  margin: 8px 0 0;
   padding: 0;
 }
-.lz-stage {
-  border-top: 1px solid #edf0f6;
+.lessons-stage {
+  border-top: 1px solid #e3e9f3;
 }
-.lz-shead {
+.lessons-stage-head {
   width: 100%;
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 14px 0;
+  min-height: 52px;
+  padding: 0;
   background: none;
   border: 0;
-  font: inherit;
-  font-size: 17px;
+  font-family: inherit;
+  font-size: 16px;
   color: #162136;
   text-align: left;
   cursor: pointer;
 }
-.lz-chev {
+.lessons-chev {
   width: 18px;
   height: 18px;
   flex: none;
@@ -183,10 +55,10 @@
   stroke-linejoin: round;
   transition: transform 0.25s;
 }
-.lz-stage.open .lz-chev {
+.lessons-stage.is-open .lessons-chev {
   transform: rotate(90deg);
 }
-.lz-no {
+.lessons-stage-no {
   flex: none;
   width: 28px;
   height: 28px;
@@ -194,87 +66,86 @@
   background: #162136;
   color: #fff;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 800;
   display: grid;
   place-items: center;
 }
-.lz-stitle {
+.lessons-stage-title {
   flex: 1;
-  font-weight: 700;
+  font-weight: 800;
 }
-.lz-scount {
+.lessons-stage-count {
   font-size: 13px;
-  color: #5b6577;
-  border: 1px solid #d5dbe6;
+  font-weight: 600;
+  color: #5b6678;
+  border: 1px solid #d5deec;
   border-radius: 6px;
   padding: 1px 8px;
 }
 
-.lz-sub-wrap {
+.lessons-stage-body {
   display: grid;
   grid-template-rows: 0fr;
   transition: grid-template-rows 0.3s ease;
 }
-.lz-stage.open .lz-sub-wrap {
+.lessons-stage.is-open .lessons-stage-body {
   grid-template-rows: 1fr;
 }
-.lz-sub-wrap ul {
+.lessons-stage-body ul {
   min-height: 0;
   overflow: hidden;
   list-style: none;
   margin: 0;
   padding: 0 0 0 40px;
 }
-.lz-lesson {
+.lessons-item {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 11px 8px;
+  min-height: 44px;
+  padding: 0 8px;
   border-radius: 10px;
-  color: #26324a;
+  font-size: 15px;
+  color: #2a3650;
   text-decoration: none;
 }
-.lz-lesson:hover {
-  background: #f2f6ff;
+.lessons-item:hover {
+  background: #e7f0fe;
 }
-.lz-ltitle {
+.lessons-item-title {
   flex: 1;
 }
 
-.lz-st {
+.lessons-dot {
   flex: none;
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  border: 2px solid #b6c0d4;
+  border: 2px solid #b9c7e0;
   box-sizing: border-box;
 }
-.lz-st.in_progress {
+.lessons-dot.in_progress {
   border-color: #0b72f5;
   background: linear-gradient(90deg, #0b72f5 50%, transparent 50%);
 }
-.lz-st.completed {
+.lessons-dot.completed {
   border-color: #16a34a;
   background: #16a34a
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12l5 5 9-10'/%3E%3C/svg%3E")
     center / 12px no-repeat;
 }
 
-.lz-tag {
+.lessons-tag {
   font-style: normal;
   font-size: 12px;
+  font-weight: 600;
   padding: 1px 8px;
   border: 1px solid #8a93a5;
-  border-radius: 3px;
-  color: #5b6577;
+  border-radius: 4px;
+  color: #5b6678;
   text-transform: capitalize;
 }
 .tag-lesson { color: #0a6b2d; border-color: #0a6b2d; }
 .tag-quiz { color: #7a5b00; border-color: #7a5b00; }
 .tag-project, .tag-unit-project { color: #003ea8; border-color: #003ea8; }
 .tag-exam, .tag-final-exam { color: #a10000; border-color: #a10000; }
-
-@media (max-width: 700px) {
-  .lz-main { padding: 24px 16px 48px; }
-  .lz-main h1 { font-size: 34px; }
-}
