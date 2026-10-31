@@ -82,50 +82,61 @@ function EntryPage() {
   const [user, setUser] = useState(null);
   const [checking, setChecking] = useState(true);
   const [confirmLogout, setConfirmLogout] = useState(false);
+  const FIELD_COLUMN = "field"; // roadmaps cədvəlində field-i saxlayan sütun
+
   const [openField, setOpenField] = useState(null);
-  const [roadmapData, setRoadmapData] = useState({}); // fieldId -> { list, error }
+  const [roadmapData, setRoadmapData] = useState({});
   const [loadingField, setLoadingField] = useState(null);
-  const [openStages, setOpenStages] = useState({}); // stageId -> true/false
-  const [activePath, setActivePath] = useState({}); // fieldId -> hansı roadmap (Mobile üçün)
-  const toggleRoadmap = async (fieldId) => {
-    if (openField === fieldId) {
-      setOpenField(null);
-      return;
-    }
+  const [openStages, setOpenStages] = useState({});
+  const [activePath, setActivePath] = useState({});
+
+  const ord = (x) => x.position ?? x.order_index ?? x.sort_order ?? x.id;
+
+  const openRoadmap = async (fieldId) => {
     setOpenField(fieldId);
     if (roadmapData[fieldId]) return;
 
     setLoadingField(fieldId);
     const { data, error } = await supabase
       .from("roadmaps")
-      .select(
-        `id, title,
-       stages ( id, title, position,
-         lessons ( id, title, position )
-       )`,
-      )
-      .eq("field", fieldId)
-      .order("id");
+      .select("*, stages(*, lessons(*))")
+      .eq(FIELD_COLUMN, fieldId);
+
+    if (error) console.error("Roadmap error:", error);
+    else console.log("Roadmap data:", fieldId, data);
 
     const list = (data || []).map((r) => ({
       ...r,
       stages: (r.stages || [])
-        .sort((a, b) => a.position - b.position)
+        .sort((a, b) => ord(a) - ord(b))
         .map((s) => ({
           ...s,
-          lessons: (s.lessons || []).sort((a, b) => a.position - b.position),
+          lessons: (s.lessons || []).sort((a, b) => ord(a) - ord(b)),
         })),
     }));
 
     setRoadmapData((prev) => ({
       ...prev,
-      [fieldId]: { list, error: !!error },
+      [fieldId]: { list, error: error?.message || null },
     }));
     setLoadingField(null);
   };
 
+  const closeRoadmap = () => setOpenField(null);
+
   const toggleStage = (stageId) =>
     setOpenStages((prev) => ({ ...prev, [stageId]: !prev[stageId] }));
+
+  useEffect(() => {
+    if (!openField) return;
+    const onKey = (e) => e.key === "Escape" && setOpenField(null);
+    window.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+    };
+  }, [openField]);
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setUser(data.session?.user ?? null);
@@ -326,122 +337,34 @@ function EntryPage() {
             always know what to learn next.
           </p>
           <div className="fields-list">
-            {FIELD_LIST.map((f, i) => {
-              const isOpen = openField === f.id;
-              const info = roadmapData[f.id];
-              const list = info?.list || [];
-              const current = list[activePath[f.id] || 0];
-
-              return (
-                <div className="field-block" key={f.name}>
-                  <article
-                    id={f.id}
-                    className={"field-item" + (i % 2 === 1 ? " reverse" : "")}
-                  >
-                    <div className="field-img">
-                      <img src={f.img} alt={`${f.name} roadmap illustration`} />
-                    </div>
-                    <div className="field-text">
-                      <span className="field-num">
-                        {String(i + 1).padStart(2, "0")}
-                      </span>
-                      <h3>{f.name}</h3>
-                      <p>{f.desc}</p>
-                      <button
-                        type="button"
-                        className={"field-link" + (isOpen ? " open" : "")}
-                        aria-expanded={isOpen}
-                        onClick={() => toggleRoadmap(f.id)}
-                      >
-                        {isOpen ? "Hide roadmap" : "View roadmap"}
-                        <svg viewBox="0 0 24 24" aria-hidden="true">
-                          <path d="M5 12h14M13 6l6 6-6 6" />
-                        </svg>
-                      </button>
-                    </div>
-                  </article>
-
-                  <div className={"rm-panel" + (isOpen ? " open" : "")}>
-                    <div className="rm-inner">
-                      {loadingField === f.id && (
-                        <p className="rm-msg">Loading roadmap...</p>
-                      )}
-                      {info?.error && (
-                        <p className="rm-msg">
-                          Could not load the roadmap. Try again later.
-                        </p>
-                      )}
-                      {info && !info.error && list.length === 0 && (
-                        <p className="rm-msg">Roadmap is coming soon.</p>
-                      )}
-
-                      {list.length > 1 && (
-                        <div className="rm-tabs">
-                          {list.map((r, idx) => (
-                            <button
-                              key={r.id}
-                              type="button"
-                              className={
-                                (activePath[f.id] || 0) === idx ? "on" : ""
-                              }
-                              onClick={() =>
-                                setActivePath((prev) => ({
-                                  ...prev,
-                                  [f.id]: idx,
-                                }))
-                              }
-                            >
-                              {r.title}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-
-                      {current && (
-                        <ol className="rm-stages">
-                          {current.stages.map((s, si) => {
-                            const open = !!openStages[s.id];
-                            return (
-                              <li
-                                key={s.id}
-                                className={"rm-stage" + (open ? " open" : "")}
-                              >
-                                <button
-                                  type="button"
-                                  className="rm-head"
-                                  aria-expanded={open}
-                                  onClick={() => toggleStage(s.id)}
-                                >
-                                  <span className="rm-no">
-                                    {String(si + 1).padStart(2, "0")}
-                                  </span>
-                                  <span className="rm-title">{s.title}</span>
-                                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                                    <path d="M6 9l6 6 6-6" />
-                                  </svg>
-                                </button>
-                                <div className="rm-sub">
-                                  <ul>
-                                    {s.lessons.map((l, li) => (
-                                      <li key={l.id}>
-                                        <span>
-                                          {si + 1}.{li + 1}
-                                        </span>
-                                        {l.title}
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              </li>
-                            );
-                          })}
-                        </ol>
-                      )}
-                    </div>
-                  </div>
+            {FIELD_LIST.map((f, i) => (
+              <article
+                id={f.id}
+                className={"field-item" + (i % 2 === 1 ? " reverse" : "")}
+                key={f.name}
+              >
+                <div className="field-img">
+                  <img src={f.img} alt={`${f.name} roadmap illustration`} />
                 </div>
-              );
-            })}
+                <div className="field-text">
+                  <span className="field-num">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <h3>{f.name}</h3>
+                  <p>{f.desc}</p>
+                  <button
+                    type="button"
+                    className="field-link"
+                    onClick={() => openRoadmap(f.id)}
+                  >
+                    View roadmap
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M5 12h14M13 6l6 6-6 6" />
+                    </svg>
+                  </button>
+                </div>
+              </article>
+            ))}
           </div>
         </div>
       </section>
@@ -484,6 +407,137 @@ function EntryPage() {
           <span>© 2026 DevUp</span>
           <span>Contact · GitHub · Terms</span>
         </footer>
+      </div>
+      <div
+        className={"rm-overlay" + (openField ? " open" : "")}
+        onClick={closeRoadmap}
+      >
+        <aside
+          className="rm-drawer"
+          role="dialog"
+          aria-modal="true"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {(() => {
+            const f = FIELD_LIST.find((x) => x.id === openField);
+            const info = openField ? roadmapData[openField] : null;
+            const list = info?.list || [];
+            const current = list[activePath[openField] || 0];
+
+            return (
+              <>
+                <div className="rm-top">
+                  <h3>{f ? `${f.name} roadmap` : ""}</h3>
+                  <button
+                    type="button"
+                    className="rm-close"
+                    onClick={closeRoadmap}
+                  >
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M6 6l12 12M18 6L6 18" />
+                    </svg>
+                  </button>
+                </div>
+
+                <div className="rm-body">
+                  {loadingField === openField && (
+                    <p className="rm-msg">Loading roadmap...</p>
+                  )}
+                  {info?.error && (
+                    <p className="rm-msg">Could not load the roadmap.</p>
+                  )}
+                  {info && !info.error && list.length === 0 && (
+                    <p className="rm-msg">
+                      No roadmap found for this field yet.
+                    </p>
+                  )}
+
+                  {list.length > 1 && (
+                    <div className="rm-tabs">
+                      {list.map((r, idx) => (
+                        <button
+                          key={r.id}
+                          type="button"
+                          className={
+                            (activePath[openField] || 0) === idx ? "on" : ""
+                          }
+                          onClick={() =>
+                            setActivePath((prev) => ({
+                              ...prev,
+                              [openField]: idx,
+                            }))
+                          }
+                        >
+                          {r.title || r.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {current && (
+                    <ul className="rm-stages">
+                      {current.stages.map((s, si) => {
+                        const open = !!openStages[s.id];
+                        return (
+                          <li
+                            key={s.id}
+                            className={"rm-stage" + (open ? " open" : "")}
+                          >
+                            <button
+                              type="button"
+                              className="rm-head"
+                              aria-expanded={open}
+                              onClick={() => toggleStage(s.id)}
+                            >
+                              <svg
+                                className="rm-chev"
+                                viewBox="0 0 24 24"
+                                aria-hidden="true"
+                              >
+                                <path d="M9 6l6 6-6 6" />
+                              </svg>
+                              <span className="rm-no">{si + 1}</span>
+                              <span className="rm-title">
+                                {s.title || s.name}
+                              </span>
+                              <span className="rm-count">
+                                {s.lessons.length}
+                              </span>
+                            </button>
+                            <div className="rm-sub">
+                              <ul>
+                                {s.lessons.map((l) => (
+                                  <li key={l.id}>
+                                    <i className="rm-dot" />
+                                    <span className="rm-ltitle">
+                                      {l.title || l.name}
+                                    </span>
+                                    {l.type && (
+                                      <em
+                                        className={
+                                          "rm-tag tag-" +
+                                          String(l.type)
+                                            .toLowerCase()
+                                            .replace(/\s+/g, "-")
+                                        }
+                                      >
+                                        {l.type}
+                                      </em>
+                                    )}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
+              </>
+            );
+          })()}
+        </aside>
       </div>
       {confirmLogout && (
         <div className="lo-bg" onClick={() => setConfirmLogout(false)}>
