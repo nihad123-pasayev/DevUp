@@ -1,138 +1,218 @@
-import { useEffect, useState } from "react";
+import "./LessonsPage.css";
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import Sidebar from "../Sidebar";
-import { supabase } from "/src/supabaseclient.js";
-import "./Lessons.css";
+import { getMyRoadmaps, getProgress, roadmapStats } from "../progress.js";
 
-const FIELDS = [
-  "All fields",
-  "Web",
-  "Backend",
-  "Mobile",
-  "Cybersecurity",
-  "Data",
-  "Artificial Intelligence",
-  "DevOps & Cloud",
+const STATUS_FILTERS = [
+  { id: "all", label: "All" },
+  { id: "not_started", label: "Not started" },
+  { id: "in_progress", label: "In progress" },
+  { id: "completed", label: "Completed" },
 ];
-const STATUSES = ["All", "Not started", "In progress", "Completed"];
 
-export default function Lessons() {
-  const [courses, setCourses] = useState([]);
+function LessonsPage() {
+  const [roadmaps, setRoadmaps] = useState([]);
+  const [progress, setProgress] = useState({});
   const [loading, setLoading] = useState(true);
-  const [query, setQuery] = useState("");
-  const [field, setField] = useState("All fields");
-  const [status, setStatus] = useState("All");
+  const [q, setQ] = useState("");
+  const [status, setStatus] = useState("all");
+  const [field, setField] = useState("all");
+  const [openStages, setOpenStages] = useState({});
 
   useEffect(() => {
-    async function loadCourses() {
-      const { data, error } = await supabase
-        .from("courses")
-        .select("id, title, field, level, lesson_count")
-        .order("created_at", { ascending: true });
-      if (!error && data) setCourses(data);
+    Promise.all([getMyRoadmaps(), getProgress()]).then(([r, p]) => {
+      setRoadmaps(r);
+      setProgress(p);
       setLoading(false);
-    }
-    loadCourses();
+    });
   }, []);
 
-  const visible = courses.filter((c) => {
-    const matchesQuery = c.title
-      .toLowerCase()
-      .includes(query.trim().toLowerCase());
-    const matchesField = field === "All fields" || c.field === field;
-    // status filter user_progress cədvəli əlavə olunanda işləyəcək
-    return matchesQuery && matchesField;
-  });
+  const stateOf = (id) => progress[id] || "not_started";
+  const fields = [...new Set(roadmaps.map((r) => r.field))];
+  const filtering = q.trim() !== "" || status !== "all";
+
+  const visible = useMemo(() => {
+    const term = q.trim().toLowerCase();
+    return roadmaps
+      .filter((r) => field === "all" || r.field === field)
+      .map((r) => {
+        const roadmapMatch =
+          term && (r.title || "").toLowerCase().includes(term);
+        const stages = r.stages
+          .map((s) => ({
+            ...s,
+            lessons: s.lessons.filter((l) => {
+              const okStatus = status === "all" || stateOf(l.id) === status;
+              const okText =
+                !term ||
+                roadmapMatch ||
+                (l.title || l.name || "").toLowerCase().includes(term);
+              return okStatus && okText;
+            }),
+          }))
+          .filter((s) => s.lessons.length > 0);
+        return { ...r, visibleStages: stages };
+      })
+      .filter((r) => r.visibleStages.length > 0);
+  }, [roadmaps, progress, q, status, field]);
+
+  const toggleStage = (id) =>
+    setOpenStages((prev) => ({ ...prev, [id]: !prev[id] }));
 
   return (
-    <Sidebar>
-      <div className="lessons-page">
-        <header className="lessons-header">
-          <h1>Lessons</h1>
-          <p>Browse every roadmap and pick up where you left off.</p>
-        </header>
+    <div className="lz-layout">
+      <Sidebar />
+      <main className="lz-main">
+        <h1>Lessons</h1>
+        <p className="lz-sub">
+          Browse every roadmap and pick up where you left off.
+        </p>
 
-        <div className="lessons-toolbar">
-          <div className="lessons-search">
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
+        <div className="lz-toolbar">
+          <label className="lz-search">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
               <circle cx="11" cy="11" r="7" />
-              <path d="m20 20-3.5-3.5" />
+              <path d="M20 20l-3.5-3.5" />
             </svg>
             <input
-              type="search"
-              aria-label="Search lessons"
+              type="text"
               placeholder="Search lessons or roadmaps"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
             />
-          </div>
-          <div className="lessons-statuses">
-            {STATUSES.map((s) => (
+          </label>
+          <div className="lz-pills">
+            {STATUS_FILTERS.map((f) => (
               <button
-                key={s}
-                className={"lessons-pill" + (status === s ? " is-active" : "")}
-                onClick={() => setStatus(s)}
+                key={f.id}
+                type="button"
+                className={status === f.id ? "on" : ""}
+                onClick={() => setStatus(f.id)}
               >
-                {s}
+                {f.label}
               </button>
             ))}
           </div>
         </div>
 
-        <div className="lessons-tabs">
-          {FIELDS.map((f) => (
+        <div className="lz-tabs">
+          {["all", ...fields].map((f) => (
             <button
               key={f}
-              className={"lessons-tab" + (field === f ? " is-active" : "")}
+              type="button"
+              className={field === f ? "on" : ""}
               onClick={() => setField(f)}
             >
-              {f}
+              {f === "all" ? "All fields" : f}
             </button>
           ))}
         </div>
 
-        {loading ? (
-          <div className="lessons-empty">
-            <p className="lessons-empty-text">Loading...</p>
-          </div>
-        ) : courses.length === 0 ? (
-          <div className="lessons-empty">
+        {loading && <p className="lz-msg">Loading...</p>}
+
+        {!loading && roadmaps.length === 0 && (
+          <div className="lz-empty">
             <h2>No lessons yet</h2>
-            <p className="lessons-empty-text">
-              Roadmaps and lessons will appear here soon.
-            </p>
-          </div>
-        ) : visible.length === 0 ? (
-          <div className="lessons-empty">
-            <h2>No results</h2>
-            <p className="lessons-empty-text">
-              Try a different search or field.
-            </p>
-          </div>
-        ) : (
-          <div className="lessons-grid">
-            {visible.map((c) => (
-              <div className="lessons-card" key={c.id}>
-                <span className="lessons-card-field">{c.field}</span>
-                <h3>{c.title}</h3>
-                <p>
-                  {c.lesson_count} lessons · {c.level}
-                </p>
-                <button className="lessons-card-btn">Add roadmap</button>
-              </div>
-            ))}
+            <p>Add a roadmap from your dashboard to see its lessons here.</p>
+            <Link className="lz-btn" to="/dashboard">
+              Go to dashboard
+            </Link>
           </div>
         )}
-      </div>
-    </Sidebar>
+
+        {!loading && roadmaps.length > 0 && visible.length === 0 && (
+          <div className="lz-empty">
+            <h2>Nothing found</h2>
+            <p>Try a different search or filter.</p>
+          </div>
+        )}
+
+        {visible.map((r) => {
+          const st = roadmapStats(r, progress);
+          return (
+            <section className="lz-roadmap" key={r.id}>
+              <div className="lz-rhead">
+                <h2>{r.title}</h2>
+                <span>
+                  {st.done} / {st.total} lessons
+                </span>
+              </div>
+
+              <ul className="lz-stages">
+                {r.visibleStages.map((s) => {
+                  const open = filtering || !!openStages[s.id];
+                  const full = r.stages.find((x) => x.id === s.id);
+                  const sDone = full.lessons.filter(
+                    (l) => progress[l.id] === "completed",
+                  ).length;
+                  return (
+                    <li
+                      key={s.id}
+                      className={"lz-stage" + (open ? " open" : "")}
+                    >
+                      <button
+                        type="button"
+                        className="lz-shead"
+                        onClick={() => toggleStage(s.id)}
+                      >
+                        <svg
+                          className="lz-chev"
+                          viewBox="0 0 24 24"
+                          aria-hidden="true"
+                        >
+                          <path d="M9 6l6 6-6 6" />
+                        </svg>
+                        <span className="lz-no">
+                          {r.stages.indexOf(full) + 1}
+                        </span>
+                        <span className="lz-stitle">{s.title || s.name}</span>
+                        <span className="lz-scount">
+                          {sDone}/{full.lessons.length}
+                        </span>
+                      </button>
+                      <div className="lz-sub-wrap">
+                        <ul>
+                          {s.lessons.map((l) => {
+                            const stt = stateOf(l.id);
+                            return (
+                              <li key={l.id}>
+                                <Link
+                                  to={`/lessons/lesson/${l.id}`}
+                                  className="lz-lesson"
+                                >
+                                  <i className={"lz-st " + stt} />
+                                  <span className="lz-ltitle">
+                                    {l.title || l.name}
+                                  </span>
+                                  {l.type && (
+                                    <em
+                                      className={
+                                        "lz-tag tag-" +
+                                        String(l.type)
+                                          .toLowerCase()
+                                          .replace(/\s+/g, "-")
+                                      }
+                                    >
+                                      {l.type}
+                                    </em>
+                                  )}
+                                </Link>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          );
+        })}
+      </main>
+    </div>
   );
 }
+
+export default LessonsPage;
