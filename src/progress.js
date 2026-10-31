@@ -30,7 +30,7 @@ export async function getMyRoadmaps() {
 
   return (data || []).map((r) => ({
     ...r,
-    stages: (r.stages || [])s
+    stages: (r.stages || [])
       .sort((a, b) => ord(a) - ord(b))
       .map((s) => ({
         ...s,
