@@ -72,7 +72,41 @@ const FIELDS = [
     icon: <path d="M7 18a4 4 0 010-8 5 5 0 019.5-1A4.5 4.5 0 0117 18z" />,
   },
 ];
+function spot(e) {
+  const el = e.currentTarget;
+  const r = el.getBoundingClientRect();
+  const x = e.clientX - r.left;
+  const y = e.clientY - r.top;
+  el.style.setProperty("--mx", x + "px");
+  el.style.setProperty("--my", y + "px");
+  el.style.setProperty("--px", x / r.width);
+  el.style.setProperty("--py", y / r.height);
+}
 
+function spotOut(e) {
+  e.currentTarget.style.setProperty("--px", 0.5);
+  e.currentTarget.style.setProperty("--py", 0.5);
+}
+
+function CountUp({ value }) {
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const [n, setN] = useState(0);
+
+  useEffect(() => {
+    if (reduce) return;
+    let raf = 0;
+    const t0 = performance.now();
+    const step = (t) => {
+      const p = Math.min(1, (t - t0) / 900);
+      setN(Math.round(value * (1 - Math.pow(1 - p, 3))));
+      if (p < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [value, reduce]);
+
+  return reduce ? value : n;
+}
 function Icon({ children }) {
   return (
     <svg className="i" viewBox="0 0 24 24">
@@ -198,7 +232,7 @@ export default function DashboardPage() {
 
         {error && <p className="form-error">{error}</p>}
 
-        <section className="cont">
+        <section className="cont" onMouseMove={spot} onMouseLeave={spotOut}>
           <small>Continue learning</small>
           <h2>
             {firstField
@@ -229,15 +263,17 @@ export default function DashboardPage() {
         </section>
 
         <div className="stats">
-          <div className="stat">
+          <div className="stat" onMouseMove={spot}>
             <span>Lessons completed</span>
-            <b>{stats.lessons}</b>
+            <b>
+              <CountUp value={stats.lessons} />
+            </b>
           </div>
-          <div className="stat">
+          <div className="stat" onMouseMove={spot}>
             <span>Learning time</span>
             <b>{stats.time}</b>
           </div>
-          <div className="stat">
+          <div className="stat" onMouseMove={spot}>
             <span>Day streak</span>
             <b>
               {stats.streak} {stats.streak === 1 ? "day" : "days"}
@@ -251,7 +287,7 @@ export default function DashboardPage() {
             {myFields.map((f) => {
               const pct = fStats[f.name]?.percent ?? 0;
               return (
-                <div className="card" key={f.name}>
+                <div className="card" key={f.name} onMouseMove={spot}>
                   <button
                     className="del"
                     type="button"
@@ -293,7 +329,7 @@ export default function DashboardPage() {
             <h3 className="sec">Explore other fields</h3>
             <div className="list">
               {otherFields.map((f) => (
-                <div className="item" key={f.name}>
+                <div className="item" key={f.name} onMouseMove={spot}>
                   <div className="ic">
                     <Icon>{f.icon}</Icon>
                   </div>

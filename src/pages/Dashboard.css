@@ -213,3 +213,138 @@ body { margin: 0; }
 @media (prefers-reduced-motion: reduce) {
   .dash .dpage .btn, .dash .dpage .add { transition: none; }
 }
+/* ===== Dizayn interaktivliyi ===== */
+.dpage .cont,
+.dpage .stat,
+.dpage .card,
+.dpage .item {
+  position: relative;
+  isolation: isolate;
+}
+
+/* Spotlight */
+.dpage .cont::before,
+.dpage .stat::before,
+.dpage .card::before,
+.dpage .item::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.dpage .cont::before {
+  background: radial-gradient(
+    circle 280px at var(--mx, 50%) var(--my, 50%),
+    rgba(77, 163, 255, 0.3),
+    transparent 70%
+  );
+}
+.dpage .stat::before,
+.dpage .card::before,
+.dpage .item::before {
+  background: radial-gradient(
+    circle 170px at var(--mx, 50%) var(--my, 50%),
+    rgba(11, 114, 245, 0.1),
+    transparent 70%
+  );
+}
+
+/* Ox siçanın əksinə sürüşür */
+.dpage .cont .deco {
+  transition: transform 0.25s ease-out;
+  transform: translate(
+    calc((var(--px, 0.5) - 0.5) * -22px),
+    calc((var(--py, 0.5) - 0.5) * -22px)
+  );
+}
+
+/* Kartlar */
+.dpage .card,
+.dpage .stat {
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+.dpage .ic {
+  transition: transform 0.25s ease;
+}
+.dpage .chip {
+  transition: transform 0.2s ease;
+}
+
+/* Düymələr */
+.dpage .add {
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s, transform 0.2s;
+}
+.dpage .del {
+  transition: color 0.2s, background-color 0.2s, transform 0.2s;
+}
+
+@media (hover: hover) {
+  .dpage .cont:hover::before,
+  .dpage .stat:hover::before,
+  .dpage .card:hover::before,
+  .dpage .item:hover::before {
+    opacity: 1;
+  }
+  .dpage .card:hover,
+  .dpage .stat:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 32px rgba(22, 33, 54, 0.08);
+    border-color: rgba(11, 114, 245, 0.35);
+  }
+  .dpage .card:hover .ic,
+  .dpage .item:hover .ic {
+    transform: scale(1.08) rotate(-4deg);
+  }
+  .dpage .chip:hover {
+    transform: translateY(-2px);
+  }
+  .dpage .add:hover {
+    background: #0b72f5;
+    border-color: #0b72f5;
+    color: #fff;
+    transform: translateY(-1px);
+  }
+  .dpage .del:hover {
+    color: #d92d20;
+    background: #fdecea;
+    transform: rotate(-8deg) scale(1.1);
+  }
+}
+
+/* Yüklənmə animasiyası */
+.dpage > :not(.modal-bg) {
+  animation: dIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+.dpage > :nth-child(2) { animation-delay: 0.05s; }
+.dpage > :nth-child(3) { animation-delay: 0.1s; }
+.dpage > :nth-child(4) { animation-delay: 0.15s; }
+.dpage > :nth-child(5) { animation-delay: 0.2s; }
+.dpage > :nth-child(6) { animation-delay: 0.25s; }
+.dpage > :nth-child(7) { animation-delay: 0.3s; }
+.dpage > :nth-child(8) { animation-delay: 0.35s; }
+.dpage > :nth-child(9) { animation-delay: 0.4s; }
+@keyframes dIn {
+  from { opacity: 0; transform: translateY(16px); }
+}
+
+/* Progress barlar 0-dan dolur */
+.dpage .bar i {
+  transition: width 1s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: barGrow 1.1s cubic-bezier(0.22, 1, 0.36, 1) 0.25s backwards;
+}
+@keyframes barGrow {
+  from { width: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dpage > :not(.modal-bg),
+  .dpage .bar i { animation: none; }
+  .dpage .cont .deco,
+  .dpage .card,
+  .dpage .stat,
+  .dpage .ic { transition: none; }
+}
