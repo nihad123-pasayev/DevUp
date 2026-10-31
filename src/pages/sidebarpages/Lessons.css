@@ -149,3 +149,12 @@
 .tag-quiz { color: #7a5b00; border-color: #7a5b00; }
 .tag-project, .tag-unit-project { color: #003ea8; border-color: #003ea8; }
 .tag-exam, .tag-final-exam { color: #a10000; border-color: #a10000; }
+.lessons-layout {
+  display: flex;
+  min-height: 100vh;
+  background: #f2f5fe;
+}
+.lessons-page {
+  flex: 1;
+  min-width: 0;
+}

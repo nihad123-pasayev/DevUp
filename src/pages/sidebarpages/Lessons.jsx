@@ -63,7 +63,7 @@ function LessonsPage() {
     setOpenStages((prev) => ({ ...prev, [id]: !prev[id] }));
 
   return (
-    <>
+    <div className="lessons-layout">
       <Sidebar />
       <main className="lessons-page">
         <div className="lessons-header">
@@ -236,7 +236,7 @@ function LessonsPage() {
           </div>
         )}
       </main>
-    </>
+    </div>
   );
 }
 
