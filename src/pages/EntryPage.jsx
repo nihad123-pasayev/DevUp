@@ -389,6 +389,19 @@ function EntryPage() {
 
   const [wordIdx, setWordIdx] = useState(0);
   const [dark, setDark] = useState(() => prefersReduced());
+  const zoneRef = useRef(null);
+
+  useEffect(() => {
+    const zone = zoneRef.current;
+    const nav = zone?.querySelector("nav");
+    if (!zone || !nav) return;
+    const set = () =>
+      zone.style.setProperty("--nav-h", nav.offsetHeight + "px");
+    set();
+    const ro = new ResizeObserver(set);
+    ro.observe(nav);
+    return () => ro.disconnect();
+  }, []);
 
   useEffect(() => {
     if (prefersReduced()) return;
@@ -507,7 +520,7 @@ function EntryPage() {
 
   return (
     <div>
-      <div className={"hero-zone" + (dark ? " dark" : "")}>
+      <div ref={zoneRef} className={"hero-zone" + (dark ? " dark" : "")}>
         <CodeRain />
         <div className="wrap">
           <nav>
