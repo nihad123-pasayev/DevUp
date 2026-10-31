@@ -10,16 +10,13 @@ export async function getUserId() {
 }
 
 // İstifadəçinin seçdiyi roadmap-lar, mərhələləri və dərsləri ilə
+// İstifadəçinin seçdiyi roadmap-lar (dashboard ilə eyni mənbə: my_roadmap_progress)
 export async function getMyRoadmaps() {
-    const uid = await getUserId();
-    if (!uid) return [];
-
     const { data: mine, error: e1 } = await supabase
-        .from(MY_ROADMAPS_TABLE)
-        .select("roadmap_id")
-        .eq("user_id", uid);
+        .from("my_roadmap_progress")
+        .select("roadmap_id");
     if (e1) {
-        console.error("user_roadmaps error:", e1);
+        console.error("my_roadmap_progress error:", e1.code, e1.message);
         return [];
     }
     const ids = (mine || []).map((r) => r.roadmap_id);
@@ -30,7 +27,7 @@ export async function getMyRoadmaps() {
         .select("*, stages(*, lessons(*))")
         .in("id", ids);
     if (error) {
-        console.error("roadmaps error:", error);
+        console.error("roadmaps error:", error.code, error.message);
         return [];
     }
 
@@ -45,20 +42,17 @@ export async function getMyRoadmaps() {
     }));
 }
 
-// { [lessonId]: "in_progress" | "completed" }
+// { [lessonId]: "completed" } — dərs + keçilmiş quiz + layihə (my_completed_items)
 export async function getProgress() {
-    const uid = await getUserId();
-    if (!uid) return {};
     const { data, error } = await supabase
-        .from("user_progress")
-        .select("lesson_id, status")
-        .eq("user_id", uid);
+        .from("my_completed_items")
+        .select("lesson_id");
     if (error) {
-        console.error("progress error:", error);
+        console.error("progress error:", error.code, error.message);
         return {};
     }
     const map = {};
-    (data || []).forEach((p) => (map[p.lesson_id] = p.status));
+    (data || []).forEach((p) => (map[p.lesson_id] = "completed"));
     return map;
 }
 
@@ -83,37 +77,4 @@ export function roadmapStats(roadmap, progress) {
     const done = all.filter((l) => progress[l.id] === "completed").length;
     const total = all.length;
     return { done, total, percent: total ? Math.round((done / total) * 100) : 0 };
-}
-export async function getRoadmapsByField(fieldName) {
-    const { data, error } = await supabase
-        .from("roadmaps")
-        .select("id, title, field")
-        .eq("field", fieldName);
-    if (error) console.error("getRoadmapsByField error:", error);
-    return data || [];
-}
-
-export async function addMyRoadmap(roadmapId) {
-    const uid = await getUserId();
-    if (!uid) return false;
-    const { error } = await supabase
-        .from(MY_ROADMAPS_TABLE)
-        .upsert(
-            { user_id: uid, roadmap_id: roadmapId },
-            { onConflict: "user_id,roadmap_id" },
-        );
-    if (error) console.error("addMyRoadmap error:", error);
-    return !error;
-}
-
-export async function removeMyRoadmap(roadmapId) {
-    const uid = await getUserId();
-    if (!uid) return false;
-    const { error } = await supabase
-        .from(MY_ROADMAPS_TABLE)
-        .delete()
-        .eq("user_id", uid)
-        .eq("roadmap_id", roadmapId);
-    if (error) console.error("removeMyRoadmap error:", error);
-    return !error;
 }
