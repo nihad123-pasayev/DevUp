@@ -59,23 +59,36 @@ function CodeRain() {
     const canvas = ref.current;
     const zone = canvas.parentElement;
     const ctx = canvas.getContext("2d");
-    const SYMBOLS = "01{}</>;=()[]#$&|";
+    const SYMBOLS = "0101010101{}</>;=()[]#$&|"; // 0 və 1 daha tez-tez
     const rnd = () => SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
     const reduce = prefersReduced();
 
+    // üç qat: kiçik/yavaş/solğun -> böyük/sürətli/aydın
+    const LAYERS = [
+      { size: 12, speed: [10, 18], alpha: 0.12, share: 0.5 },
+      { size: 15, speed: [18, 28], alpha: 0.18, share: 0.32 },
+      { size: 19, speed: [28, 42], alpha: 0.26, share: 0.18 },
+    ];
+
     let w = 0;
     let h = 0;
-    let size = 16;
-    let rows = 0;
-    let cols = [];
+    let items = [];
     let raf = 0;
     let last = 0;
+    let clock = 0;
     let visible = true;
 
-    const spawn = (c, first) => {
-      c.len = 8 + Math.floor(Math.random() * 14);
-      c.speed = 2 + Math.random() * 3; // sətir / saniyə
-      c.head = first ? Math.random() * rows : -Math.random() * 12;
+    const place = (p, anywhere) => {
+      p.x = Math.random() * w;
+      p.y = anywhere ? Math.random() * h : -p.layer.size - Math.random() * 60;
+      p.speed =
+        p.layer.speed[0] +
+        Math.random() * (p.layer.speed[1] - p.layer.speed[0]);
+      p.phase = Math.random() * Math.PI * 2;
+      p.sway = 2 + Math.random() * 5;
+      p.ch = rnd();
+      p.change = 1 + Math.random() * 4; // simvol dəyişməsinə qədər saniyə
+      p.flash = 0;
     };
 
     const build = () => {
@@ -85,38 +98,48 @@ function CodeRain() {
       canvas.width = w * dpr;
       canvas.height = h * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      const small = w < 700;
-      size = small ? 14 : 16;
-      rows = Math.ceil(h / size);
-      const gap = size * (small ? 2.8 : 2);
-      cols = Array.from({ length: Math.ceil(w / gap) }, (_, i) => {
-        const c = {
-          x: i * gap + 4,
-          chars: Array.from({ length: rows+1 }, rnd),
-        };
-        spawn(c, true);
-        return c;
+
+      const total = Math.max(30, Math.min(140, Math.round((w * h) / 9000)));
+      items = [];
+      LAYERS.forEach((layer) => {
+        const n = Math.round(total * layer.share);
+        for (let i = 0; i < n; i++) {
+          const p = { layer };
+          place(p, true);
+          items.push(p);
+        }
       });
     };
 
     const draw = (dt) => {
+      clock += dt;
       ctx.clearRect(0, 0, w, h);
-      ctx.font = `${size}px "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace`;
       ctx.textBaseline = "top";
-      for (const c of cols) {
-        c.head += c.speed * dt;
-        if (c.head - c.len > rows) spawn(c, false);
-        for (let i = 0; i < c.len; i++) {
-          const y = (c.head - i) * size; // hamar mövqe, yuvarlaqlaşdırma yoxdur
-          if (y < -size || y > h) continue;
-          const a = (1 - i / c.len) * (i === 0 ? 0.5 : 0.22);
-          ctx.fillStyle = `rgba(11,114,245,${a})`;
-          ctx.fillText(c.chars[i], c.x, y);
+      ctx.fillStyle = "#0B72F5";
+      let cur = null;
+      for (const p of items) {
+        p.y += p.speed * dt;
+        p.change -= dt;
+        if (p.change <= 0) {
+          p.ch = rnd();
+          p.change = 1.5 + Math.random() * 4;
+          p.flash = 1;
         }
-        if (Math.random() < 0.03) {
-          c.chars[Math.floor(Math.random() * c.len)] = rnd();
+        if (p.flash > 0) p.flash = Math.max(0, p.flash - dt * 2.5);
+        if (p.y > h + p.layer.size) place(p, false);
+
+        if (p.layer !== cur) {
+          cur = p.layer;
+          ctx.font = `${cur.size}px "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace`;
         }
+        ctx.globalAlpha = Math.min(1, p.layer.alpha * (1 + p.flash * 1.5));
+        ctx.fillText(
+          p.ch,
+          p.x + Math.sin(clock * 0.6 + p.phase) * p.sway,
+          p.y,
+        );
       }
+      ctx.globalAlpha = 1;
     };
 
     const tick = (t) => {
@@ -126,7 +149,7 @@ function CodeRain() {
         return;
       }
       const dt = (t - last) / 1000;
-      if (dt < 0.022) return; // ~30 fps
+      if (dt < 0.022) return;
       last = t;
       draw(Math.min(dt, 0.1));
     };
