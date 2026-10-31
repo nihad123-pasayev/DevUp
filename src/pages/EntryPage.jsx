@@ -92,7 +92,7 @@ function CodeRain() {
       cols = Array.from({ length: Math.ceil(w / gap) }, (_, i) => {
         const c = {
           x: i * gap + 4,
-          chars: Array.from({ length: 24 }, rnd),
+          chars: Array.from({ length: rows+1 }, rnd),
         };
         spawn(c, true);
         return c;
