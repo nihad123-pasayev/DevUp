@@ -92,7 +92,7 @@ function CodeRain() {
       cols = Array.from({ length: Math.ceil(w / gap) }, (_, i) => {
         const c = {
           x: i * gap + 4,
-          chars: Array.from({ length: rows + 1 }, rnd),
+          chars: Array.from({ length: 24 }, rnd),
         };
         spawn(c, true);
         return c;
@@ -106,16 +106,15 @@ function CodeRain() {
       for (const c of cols) {
         c.head += c.speed * dt;
         if (c.head - c.len > rows) spawn(c, false);
-        const hr = Math.floor(c.head);
         for (let i = 0; i < c.len; i++) {
-          const r = hr - i;
-          if (r < 0 || r > rows) continue;
+          const y = (c.head - i) * size; // hamar mövqe, yuvarlaqlaşdırma yoxdur
+          if (y < -size || y > h) continue;
           const a = (1 - i / c.len) * (i === 0 ? 0.5 : 0.22);
           ctx.fillStyle = `rgba(11,114,245,${a})`;
-          ctx.fillText(c.chars[r % c.chars.length], c.x, r * size);
+          ctx.fillText(c.chars[i], c.x, y);
         }
-        if (Math.random() < 0.02) {
-          c.chars[Math.floor(Math.random() * c.chars.length)] = rnd();
+        if (Math.random() < 0.03) {
+          c.chars[Math.floor(Math.random() * c.len)] = rnd();
         }
       }
     };
@@ -127,7 +126,7 @@ function CodeRain() {
         return;
       }
       const dt = (t - last) / 1000;
-      if (dt < 1 / 30) return; // ~30 fps
+      if (dt < 0.022) return; // ~30 fps
       last = t;
       draw(Math.min(dt, 0.1));
     };
@@ -216,9 +215,22 @@ function HeroTerminal({ cmd }) {
   );
 }
 const TECH = [
-  "HTML", "CSS", "JavaScript", "TypeScript", "React", "Next.js",
-  "Git", "Node.js", "Redis", "Supabase", "React Native", "Flutter",
-  "AWS", "Docker", "SQL", "Python",
+  "HTML",
+  "CSS",
+  "JavaScript",
+  "TypeScript",
+  "React",
+  "Next.js",
+  "Git",
+  "Node.js",
+  "Redis",
+  "Supabase",
+  "React Native",
+  "Flutter",
+  "AWS",
+  "Docker",
+  "SQL",
+  "Python",
 ];
 const FIELD_LIST = [
   {
@@ -589,48 +601,54 @@ function EntryPage() {
       </section>
 
       <section className="how" id="how">
-  <div className="wrap">
-    <h2>How DevUp works</h2>
-    <p className="sub">Three steps, repeated until you reach your goal.</p>
-    <ol>
-      <li className="reveal" style={{ "--d": "0s" }}>
-        <b>Choose a field</b>
-        <span>Select the area you want to learn.</span>
-      </li>
-      <li className="reveal" style={{ "--d": "0.12s" }}>
-        <b>Follow the path</b>
-        <span>Complete short lessons in the right order.</span>
-      </li>
-      <li className="reveal" style={{ "--d": "0.24s" }}>
-        <b>Practice and level up</b>
-        <span>Do exercises and track your progress.</span>
-      </li>
-    </ol>
-  </div>
-</section>
+        <div className="wrap">
+          <h2>How DevUp works</h2>
+          <p className="sub">
+            Three steps, repeated until you reach your goal.
+          </p>
+          <ol>
+            <li className="reveal" style={{ "--d": "0s" }}>
+              <b>Choose a field</b>
+              <span>Select the area you want to learn.</span>
+            </li>
+            <li className="reveal" style={{ "--d": "0.12s" }}>
+              <b>Follow the path</b>
+              <span>Complete short lessons in the right order.</span>
+            </li>
+            <li className="reveal" style={{ "--d": "0.24s" }}>
+              <b>Practice and level up</b>
+              <span>Do exercises and track your progress.</span>
+            </li>
+          </ol>
+        </div>
+      </section>
 
       <section className="marquee" aria-label="Technologies you will learn">
-  <p className="marquee-label">Technologies you will learn</p>
-  <div className="marquee-track">
-    <div className="marquee-row">
-      {[...TECH, ...TECH].map((t, i) => (
-        <span className="tech-pill" key={i} aria-hidden={i >= TECH.length}>
-          {t}
-        </span>
-      ))}
-    </div>
-  </div>
-</section>
+        <p className="marquee-label">Technologies you will learn</p>
+        <div className="marquee-track">
+          <div className="marquee-row">
+            {[...TECH, ...TECH].map((t, i) => (
+              <span
+                className="tech-pill"
+                key={i}
+                aria-hidden={i >= TECH.length}
+              >
+                {t}
+              </span>
+            ))}
+          </div>
+        </div>
+      </section>
 
-<section className="cta" id="about">
-  <div className="wrap reveal">
-    <h2>Ready to level up?</h2>
-    <p>Create a free account and start your first lesson today.</p>
-    <a className="btn primary" href="#">
-      Get started
-    </a>
-  </div>
-</section>
+      <section className="cta" id="about">
+        <div className="wrap reveal">
+          <h2>Ready to level up?</h2>
+          <p>Create a free account and start your first lesson today.</p>
+          <a className="btn primary" href="#">
+            Get started
+          </a>
+        </div>
+      </section>
 
       <div className="wrap">
         <footer>
