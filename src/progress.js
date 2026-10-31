@@ -12,34 +12,31 @@ export async function getUserId() {
 // İstifadəçinin seçdiyi roadmap-lar, mərhələləri və dərsləri ilə
 // İstifadəçinin seçdiyi roadmap-lar (dashboard ilə eyni mənbə: my_roadmap_progress)
 export async function getMyRoadmaps() {
-    const { data: mine, error: e1 } = await supabase
-        .from("my_roadmap_progress")
-        .select("roadmap_id");
-    if (e1) {
-        console.error("my_roadmap_progress error:", e1.code, e1.message);
-        return [];
-    }
-    const ids = (mine || []).map((r) => r.roadmap_id);
-    if (!ids.length) return [];
+  const { data: mine, error: e1 } = await supabase
+    .from("my_roadmap_progress")
+    .select("roadmap_id");
+  console.log("DEBUG my_roadmap_progress:", mine, e1?.code, e1?.message);
+  if (e1) return [];
 
-    const { data, error } = await supabase
-        .from("roadmaps")
-        .select("*, stages(*, lessons(*))")
-        .in("id", ids);
-    if (error) {
-        console.error("roadmaps error:", error.code, error.message);
-        return [];
-    }
+  const ids = (mine || []).map((r) => r.roadmap_id);
+  if (!ids.length) return [];
 
-    return (data || []).map((r) => ({
-        ...r,
-        stages: (r.stages || [])
-            .sort((a, b) => ord(a) - ord(b))
-            .map((s) => ({
-                ...s,
-                lessons: (s.lessons || []).sort((a, b) => ord(a) - ord(b)),
-            })),
-    }));
+  const { data, error } = await supabase
+    .from("roadmaps")
+    .select("*, stages(*, lessons(*))")
+    .in("id", ids);
+  console.log("DEBUG roadmaps:", data, error?.code, error?.message);
+  if (error) return [];
+
+  return (data || []).map((r) => ({
+    ...r,
+    stages: (r.stages || [])s
+      .sort((a, b) => ord(a) - ord(b))
+      .map((s) => ({
+        ...s,
+        lessons: (s.lessons || []).sort((a, b) => ord(a) - ord(b)),
+      })),
+  }));
 }
 
 // { [lessonId]: "completed" } — dərs + keçilmiş quiz + layihə (my_completed_items)
