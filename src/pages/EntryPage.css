@@ -1078,8 +1078,8 @@ footer {
   pointer-events: none;
   opacity: 0;
   transition: opacity 2s ease;
- -webkit-mask-image: linear-gradient(to bottom, transparent 0, transparent var(--nav-h), #000 var(--nav-h), #000 100%);
-mask-image: linear-gradient(to bottom, transparent 0, transparent var(--nav-h), #000 var(--nav-h), #000 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, transparent var(--nav-h), #000 calc(var(--nav-h) + 70px), #000 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, transparent var(--nav-h), #000 calc(var(--nav-h) + 70px), #000 100%);
 }
 .hero-zone.dark .code-rain {
   opacity: 1;
