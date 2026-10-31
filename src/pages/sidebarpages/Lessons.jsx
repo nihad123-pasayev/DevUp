@@ -21,59 +21,59 @@ function LessonsPage() {
   const [openStages, setOpenStages] = useState({});
 
   useEffect(() => {
-  Promise.all([getMyRoadmaps(), getProgress()]).then(([r, p]) => {
-    setRoadmaps(r);
-    setProgress(p);
-    setLoading(false);
-  });
-}, []);
+    Promise.all([getMyRoadmaps(), getProgress()]).then(([r, p]) => {
+      setRoadmaps(r);
+      setProgress(p);
+      setLoading(false);
+    });
+  }, []);
 
-// hər roadmap-da növbəti tamamlanmamış dərs = "in progress"
-const currentIds = useMemo(() => {
-  const set = new Set();
-  roadmaps.forEach((r) => {
-    const next = r.stages
-      .flatMap((s) => s.lessons)
-      .find((l) => progress[l.id] !== "completed");
-    if (next) set.add(next.id);
-  });
-  return set;
-}, [roadmaps, progress]);
+  // hər roadmap-da növbəti tamamlanmamış dərs = "in progress"
+  const currentIds = useMemo(() => {
+    const set = new Set();
+    roadmaps.forEach((r) => {
+      const next = r.stages
+        .flatMap((s) => s.lessons)
+        .find((l) => progress[l.id] !== "completed");
+      if (next) set.add(next.id);
+    });
+    return set;
+  }, [roadmaps, progress]);
 
-const stateOf = (id) =>
-  progress[id] === "completed"
-    ? "completed"
-    : currentIds.has(id)
-      ? "in_progress"
-      : "not_started";
+  const stateOf = (id) =>
+    progress[id] === "completed"
+      ? "completed"
+      : currentIds.has(id)
+        ? "in_progress"
+        : "not_started";
 
-const fields = [...new Set(roadmaps.map((r) => r.field))];
-const filtering = q.trim() !== "" || status !== "all";
+  const fields = [...new Set(roadmaps.map((r) => r.field))];
+  const filtering = q.trim() !== "" || status !== "all";
 
-const visible = useMemo(() => {
-  const term = q.trim().toLowerCase();
-  return roadmaps
-    .filter((r) => field === "all" || r.field === field)
-    .map((r) => {
-      const roadmapMatch =
-        term && (r.title || "").toLowerCase().includes(term);
-      const stages = r.stages
-        .map((s) => ({
-          ...s,
-          lessons: s.lessons.filter((l) => {
-            const okStatus = status === "all" || stateOf(l.id) === status;
-            const okText =
-              !term ||
-              roadmapMatch ||
-              (l.title || l.name || "").toLowerCase().includes(term);
-            return okStatus && okText;
-          }),
-        }))
-        .filter((s) => s.lessons.length > 0);
-      return { ...r, visibleStages: stages };
-    })
-    .filter((r) => r.visibleStages.length > 0);
-}, [roadmaps, progress, currentIds, q, status, field]);
+  const visible = useMemo(() => {
+    const term = q.trim().toLowerCase();
+    return roadmaps
+      .filter((r) => field === "all" || r.field === field)
+      .map((r) => {
+        const roadmapMatch =
+          term && (r.title || "").toLowerCase().includes(term);
+        const stages = r.stages
+          .map((s) => ({
+            ...s,
+            lessons: s.lessons.filter((l) => {
+              const okStatus = status === "all" || stateOf(l.id) === status;
+              const okText =
+                !term ||
+                roadmapMatch ||
+                (l.title || l.name || "").toLowerCase().includes(term);
+              return okStatus && okText;
+            }),
+          }))
+          .filter((s) => s.lessons.length > 0);
+        return { ...r, visibleStages: stages };
+      })
+      .filter((r) => r.visibleStages.length > 0);
+  }, [roadmaps, progress, currentIds, q, status, field]);
   const toggleStage = (id) =>
     setOpenStages((prev) => ({ ...prev, [id]: !prev[id] }));
 
@@ -155,7 +155,7 @@ const visible = useMemo(() => {
           <div className="lessons-empty">
             <h2>Nothing found</h2>
             <p className="lessons-empty-text">
-              Try a different search or filter.
+              It seems you haven't completed any lessons yet.
             </p>
           </div>
         )}
