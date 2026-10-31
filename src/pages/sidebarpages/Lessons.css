@@ -1,3 +1,4 @@
+.lessons-page { outline: 4px solid red; }
 .lessons-card--wide {
   flex: 1 1 100%;
   gap: 8px;
