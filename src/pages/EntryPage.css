@@ -425,7 +425,7 @@ footer {
 }
 
 .field-num {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 800;
   letter-spacing: 0.08em;
   color: #0b72f5;
@@ -455,7 +455,8 @@ footer {
   color: #0b72f5;
   text-decoration: none;
   background: none;
-  border:none
+  border:none;
+  font-size: 16px;
 }
 
 .field-link svg {
@@ -1041,3 +1042,5 @@ footer {
   .reveal { opacity: 1; transform: none; transition: none; }
   .marquee-row, .cta::before, .cta .btn.primary { animation: none; }
 }
+
+
