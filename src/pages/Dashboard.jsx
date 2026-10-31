@@ -248,38 +248,38 @@ export default function DashboardPage() {
         <h3 className="sec">Your roadmaps</h3>
         {myFields.length > 0 ? (
           <div className="grid">
-            {myFields.map((f) => (
-              <div className="card" key={f.name}>
-                <button
-                  className="del"
-                  type="button"
-                  aria-label={`Remove ${f.name} roadmap`}
-                  onClick={() => setToDelete(f.name)}
-                >
-                  <Icon>
-                    <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 10v6M14 10v6" />
-                  </Icon>
-                </button>
-                <div className="top">
-                  <span className="m">
-                    {statusOf(fStats[f.name]?.percent ?? 0)}
-                  </span>
-                  ...
+            {myFields.map((f) => {
+              const pct = fStats[f.name]?.percent ?? 0;
+              return (
+                <div className="card" key={f.name}>
+                  <button
+                    className="del"
+                    type="button"
+                    aria-label={`Remove ${f.name} roadmap`}
+                    onClick={() => setToDelete(f.name)}
+                  >
+                    <Icon>
+                      <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 10v6M14 10v6" />
+                    </Icon>
+                  </button>
+                  <div className="top">
+                    <div className="ic">
+                      <Icon>{f.icon}</Icon>
+                    </div>
+                    <div>
+                      <b>{f.name}</b>
+                      <span className="m">{statusOf(pct)}</span>
+                    </div>
+                  </div>
                   <div className="row">
-                    Progress<em>{fStats[f.name]?.percent ?? 0}%</em>
+                    Progress<em>{pct}%</em>
                   </div>
                   <div className="bar">
-                    <i style={{ width: `${fStats[f.name]?.percent ?? 0}%` }} />
+                    <i style={{ width: `${pct}%` }} />
                   </div>
                 </div>
-                <div className="row">
-                  Progress<em>0%</em>
-                </div>
-                <div className="bar">
-                  <i style={{ width: "0%" }} />
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="empty">

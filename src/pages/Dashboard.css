@@ -191,7 +191,12 @@ body { margin: 0; }
 .dash .dpage .modal p { margin: 0 0 24px; color: var(--mute); }
 .dash .dpage .modal p b { color: var(--navy); }
 .dash .dpage .modal .actions { display: flex; gap: 12px; justify-content: flex-end; }
-
+.cont .btn {
+  padding: 10px 22px;
+  min-height: 0;
+  height: auto;
+  line-height: 1.2;
+}
 @media (max-width: 900px) {
   .dash .dpage { padding: 24px 20px 48px; }
   .dash .dpage .cont { padding: 22px; }
