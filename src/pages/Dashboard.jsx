@@ -3,6 +3,14 @@ import { useNavigate } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import { supabase } from "../supabaseclient.js";
 import "./Dashboard.css";
+import {
+  getMyRoadmaps,
+  getProgress,
+  getStreak,
+  fieldStats,
+  nextLesson,
+  roadmapStats,
+} from "../progress.js";
 
 const FIELDS = [
   {
@@ -36,7 +44,7 @@ const FIELDS = [
     desc: "Networking basics, help desk, and how to defend systems.",
     icon: <path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z" />,
   },
-    {
+  {
     name: "Data",
     desc: "Collect, analyze and visualize data to find insights.",
     icon: (
@@ -80,6 +88,9 @@ export default function DashboardPage() {
   const [error, setError] = useState("");
   const [toDelete, setToDelete] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [roadmaps, setRoadmaps] = useState([]);
+  const [progress, setProgress] = useState({});
+  const [streak, setStreak] = useState(0);
 
   useEffect(() => {
     const load = async () => {
@@ -108,6 +119,16 @@ export default function DashboardPage() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [toDelete, saving]);
+  useEffect(() => {
+    if (!user) return;
+    Promise.all([getMyRoadmaps(), getProgress(), getStreak()]).then(
+      ([r, p, s]) => {
+        setRoadmaps(r);
+        setProgress(p);
+        setStreak(s);
+      },
+    );
+  }, [user, profile]);
 
   if (!user) return null;
 
@@ -123,9 +144,19 @@ export default function DashboardPage() {
   const otherFields = FIELDS.filter((f) => !myFieldNames.includes(f.name));
   const firstField = myFields[0];
 
-  // Dərslər və irəliləyiş cədvəlləri qurulana qədər 0.
-  // Sonra bu dəyərlər user_progress cədvəlindən hesablanacaq.
-  const stats = { lessons: 0, time: "0h 0m", streak: 0 };
+  const fStats = fieldStats(roadmaps, progress);
+  const firstRoadmap = roadmaps.find((r) => r.field === firstField?.name);
+  const firstStats = firstRoadmap ? roadmapStats(firstRoadmap, progress) : null;
+  const next = firstRoadmap ? nextLesson(firstRoadmap, progress) : null;
+
+  const stats = {
+    lessons: roadmaps.reduce((n, r) => n + roadmapStats(r, progress).done, 0),
+    time: "0h 0m",
+    streak,
+  };
+
+  const statusOf = (p) =>
+    p >= 100 ? "Completed" : p > 0 ? "In progress" : "Not started";
 
   const saveFields = async (fields) => {
     const { error: saveError } = await supabase
@@ -171,19 +202,26 @@ export default function DashboardPage() {
           <small>Continue learning</small>
           <h2>
             {firstField
-              ? `Start ${firstField.name}`
+              ? `${firstStats?.done ? "Continue" : "Start"} ${firstField.name}`
               : "Choose your first roadmap"}
           </h2>
           <p>
             {firstField
-              ? `${firstField.name} · Lesson 1`
+              ? next
+                ? `${firstField.name} · ${next.title || next.name}`
+                : `${firstField.name} · All lessons completed`
               : "Add a roadmap below to begin"}
           </p>
           <div className="bar">
-            <i style={{ width: "0%" }} />
+            <i style={{ width: `${firstStats?.percent ?? 0}%` }} />
           </div>
-          <button className="btn" type="button" disabled>
-            Lessons coming soon
+          <button
+            className="btn"
+            type="button"
+            disabled={!firstField}
+            onClick={() => navigate("/lessons")}
+          >
+            {firstField ? "Go to lessons" : "Lessons coming soon"}
           </button>
           <svg className="deco" viewBox="0 0 24 24">
             <path d="M5 19L19 5M9 5h10v10" />
@@ -223,12 +261,15 @@ export default function DashboardPage() {
                   </Icon>
                 </button>
                 <div className="top">
-                  <div className="ic">
-                    <Icon>{f.icon}</Icon>
+                  <span className="m">
+                    {statusOf(fStats[f.name]?.percent ?? 0)}
+                  </span>
+                  ...
+                  <div className="row">
+                    Progress<em>{fStats[f.name]?.percent ?? 0}%</em>
                   </div>
-                  <div>
-                    <b>{f.name}</b>
-                    <span className="m">Not started</span>
+                  <div className="bar">
+                    <i style={{ width: `${fStats[f.name]?.percent ?? 0}%` }} />
                   </div>
                 </div>
                 <div className="row">
