@@ -1,8 +1,8 @@
-import "./LessonsPage.css";
+import "./Lessons.css";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import Sidebar from "../Sidebar";
-import { getMyRoadmaps, getProgress, roadmapStats } from "../progress.js";
+import { getMyRoadmaps, getProgress, roadmapStats } from "../../progress.js";
 
 const STATUS_FILTERS = [
   { id: "all", label: "All" },
