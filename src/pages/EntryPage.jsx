@@ -100,7 +100,7 @@ function EntryPage() {
     const { data, error } = await supabase
       .from("roadmaps")
       .select("*, stages(*, lessons(*))")
-      .eq(FIELD_COLUMN, fieldId);
+      .eq(FIELD_COLUMN, FIELD_LIST.find((x) => x.id === fieldId).name);
 
     if (error) console.error("Roadmap error:", error);
     else console.log("Roadmap data:", fieldId, data);
