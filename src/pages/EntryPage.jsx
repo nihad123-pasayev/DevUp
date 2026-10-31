@@ -215,7 +215,11 @@ function HeroTerminal({ cmd }) {
     </div>
   );
 }
-
+const TECH = [
+  "HTML", "CSS", "JavaScript", "TypeScript", "React", "Next.js",
+  "Git", "Node.js", "Redis", "Supabase", "React Native", "Flutter",
+  "AWS", "Docker", "SQL", "Python",
+];
 const FIELD_LIST = [
   {
     id: "frontend",
@@ -360,7 +364,7 @@ function EntryPage() {
   }, [confirmLogout]);
 
   useEffect(() => {
-    const items = document.querySelectorAll(".field-item");
+    const items = document.querySelectorAll(".field-item, .reveal");
     if (!("IntersectionObserver" in window)) {
       items.forEach((el) => el.classList.add("in-view"));
       return;
@@ -585,37 +589,48 @@ function EntryPage() {
       </section>
 
       <section className="how" id="how">
-        <div className="wrap">
-          <h2>How DevUp works</h2>
-          <p className="sub">
-            Three steps, repeated until you reach your goal.
-          </p>
-          <ol>
-            <li>
-              <b>Choose a field</b>
-              <span>Select the area you want to learn.</span>
-            </li>
-            <li>
-              <b>Follow the path</b>
-              <span>Complete short lessons in the right order.</span>
-            </li>
-            <li>
-              <b>Practice and level up</b>
-              <span>Do exercises and track your progress.</span>
-            </li>
-          </ol>
-        </div>
-      </section>
+  <div className="wrap">
+    <h2>How DevUp works</h2>
+    <p className="sub">Three steps, repeated until you reach your goal.</p>
+    <ol>
+      <li className="reveal" style={{ "--d": "0s" }}>
+        <b>Choose a field</b>
+        <span>Select the area you want to learn.</span>
+      </li>
+      <li className="reveal" style={{ "--d": "0.12s" }}>
+        <b>Follow the path</b>
+        <span>Complete short lessons in the right order.</span>
+      </li>
+      <li className="reveal" style={{ "--d": "0.24s" }}>
+        <b>Practice and level up</b>
+        <span>Do exercises and track your progress.</span>
+      </li>
+    </ol>
+  </div>
+</section>
 
-      <section className="cta" id="about">
-        <div className="wrap">
-          <h2>Ready to level up?</h2>
-          <p>Create a free account and start your first lesson today.</p>
-          <a className="btn primary" href="#">
-            Get started
-          </a>
-        </div>
-      </section>
+      <section className="marquee" aria-label="Technologies you will learn">
+  <p className="marquee-label">Technologies you will learn</p>
+  <div className="marquee-track">
+    <div className="marquee-row">
+      {[...TECH, ...TECH].map((t, i) => (
+        <span className="tech-pill" key={i} aria-hidden={i >= TECH.length}>
+          {t}
+        </span>
+      ))}
+    </div>
+  </div>
+</section>
+
+<section className="cta" id="about">
+  <div className="wrap reveal">
+    <h2>Ready to level up?</h2>
+    <p>Create a free account and start your first lesson today.</p>
+    <a className="btn primary" href="#">
+      Get started
+    </a>
+  </div>
+</section>
 
       <div className="wrap">
         <footer>

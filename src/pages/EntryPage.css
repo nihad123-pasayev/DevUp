@@ -253,8 +253,9 @@ nav { display: flex; align-items: center; justify-content: space-between; paddin
   display: grid;
   grid-template-columns: 1.1fr .9fr;
   gap: 48px;
-  align-items: center;
+  align-items: start;
   padding: 72px 0 88px;
+
 }
 h1 {
   font-size: clamp(40px, 6vw, 68px);
@@ -262,6 +263,7 @@ h1 {
   letter-spacing: -.03em;
   margin: 0 0 20px;
   font-weight: 800;
+  margin-top:0;
 }
 .hero p { font-size: 19px; color: var(--mute); max-width: 46ch; margin: 0 0 32px; }
 .actions { display: flex; gap: 12px; flex-wrap: wrap; }
@@ -890,4 +892,152 @@ footer {
 }
 @media (prefers-reduced-motion: reduce) {
   .h1-word, .term-out, .term-cursor { animation: none; }
+}
+/* Scroll reveal */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s ease var(--d, 0s), transform 0.6s ease var(--d, 0s),
+    box-shadow 0.25s ease, border-color 0.25s ease;
+}
+.reveal.in-view {
+  opacity: 1;
+  transform: none;
+}
+
+/* How it works: nömrəli kartlar */
+.how ol {
+  list-style: none;
+  counter-reset: step;
+  margin: 28px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+.how ol > li {
+  counter-increment: step;
+  background: #fff;
+  border: 1px solid #e3e9f3;
+  border-radius: 16px;
+  padding: 24px;
+}
+.how ol > li::before {
+  content: counter(step);
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  margin-bottom: 14px;
+  border-radius: 50%;
+  background: #0b72f5;
+  color: #fff;
+  font-weight: 800;
+}
+.how ol > li b {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 18px;
+  color: #162136;
+}
+.how ol > li span {
+  display: block;
+  color: #5b6678;
+  line-height: 1.55;
+}
+.how ol > li.reveal.in-view:hover {
+  transform: translateY(-4px);
+  border-color: #0b72f5;
+  box-shadow: 0 12px 28px rgba(11, 114, 245, 0.14);
+  transition-delay: 0s;
+}
+
+/* Texnologiya zolağı */
+.marquee {
+  padding: 40px 0 44px;
+  background: #fff;
+  overflow: hidden;
+}
+.marquee-label {
+  margin: 0 0 18px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6b7689;
+}
+.marquee-track {
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+}
+.marquee-row {
+  display: flex;
+  width: max-content;
+  animation: marquee 45s linear infinite;
+}
+.marquee-track:hover .marquee-row {
+  animation-play-state: paused;
+}
+.tech-pill {
+  margin-right: 12px;
+  padding: 10px 20px;
+  border: 1px solid #dfe6f2;
+  border-radius: 999px;
+  background: #f5f8fe;
+  color: #162136;
+  font-weight: 700;
+  font-size: 15px;
+  white-space: nowrap;
+}
+@keyframes marquee {
+  to { transform: translateX(-50%); }
+}
+
+/* CTA: işıq və şəbəkə */
+.cta {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.cta::before {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  z-index: -1;
+  background:
+    radial-gradient(40% 50% at 20% 30%, rgba(11, 114, 245, 0.38), transparent 70%),
+    radial-gradient(35% 45% at 80% 70%, rgba(11, 114, 245, 0.28), transparent 70%);
+  animation: ctaGlow 14s ease-in-out infinite alternate;
+}
+.cta::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 44px 44px;
+  -webkit-mask-image: radial-gradient(ellipse at center, #000 30%, transparent 75%);
+  mask-image: radial-gradient(ellipse at center, #000 30%, transparent 75%);
+}
+@keyframes ctaGlow {
+  from { transform: translate3d(-3%, -2%, 0) scale(1); }
+  to { transform: translate3d(3%, 2%, 0) scale(1.1); }
+}
+.cta .btn.primary {
+  animation: ctaPulse 2.4s ease-out infinite;
+}
+@keyframes ctaPulse {
+  0% { box-shadow: 0 0 0 0 rgba(11, 114, 245, 0.55); }
+  70%, 100% { box-shadow: 0 0 0 16px rgba(11, 114, 245, 0); }
+}
+
+@media (max-width: 800px) {
+  .how ol { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1; transform: none; transition: none; }
+  .marquee-row, .cta::before, .cta .btn.primary { animation: none; }
 }
