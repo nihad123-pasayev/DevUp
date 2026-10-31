@@ -51,7 +51,213 @@ const TERM_LINES = [
 
 const prefersReduced = () =>
   window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+function CodeRain() {
+  const ref = useRef(null);
 
+  useEffect(() => {
+    const canvas = ref.current;
+    if (!canvas) return;
+    const zone = canvas.parentElement;
+    const ctx = canvas.getContext("2d");
+    const SYMBOLS = "0101010101{}</>;=()[]#$&|";
+    const rnd = () => SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
+    const between = (a, b) => a + Math.random() * (b - a);
+    const reduce = prefersReduced();
+    const FONT = '"JetBrains Mono", ui-monospace, Menlo, Consolas, monospace';
+    const BLUE = "#2f78ff";
+    const TEAL = "#4df0e0";
+    const HEAD = "#d9fffb";
+
+    // iki hərəkətli qat: arxa (xırda, yavaş), ön (iri, parlaq başlı)
+    const LAYERS = [
+      {
+        size: 12,
+        gap: 17,
+        speed: [3, 5],
+        len: [14, 30],
+        alpha: 0.5,
+        glow: false,
+      },
+      {
+        size: 16,
+        gap: 28,
+        speed: [5, 8.5],
+        len: [10, 22],
+        alpha: 0.95,
+        glow: true,
+      },
+    ];
+
+    // başın ətrafındakı parıltı (bir dəfə çəkilir, hər kadrda kopyalanır)
+    const glow = document.createElement("canvas");
+    glow.width = glow.height = 64;
+    {
+      const g = glow.getContext("2d");
+      const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+      gr.addColorStop(0, "rgba(100,255,235,0.6)");
+      gr.addColorStop(0.35, "rgba(40,200,230,0.22)");
+      gr.addColorStop(1, "rgba(0,150,255,0)");
+      g.fillStyle = gr;
+      g.fillRect(0, 0, 64, 64);
+    }
+
+    // hərəkətsiz solğun fon sütunları (bir dəfə çəkilir)
+    const backdrop = document.createElement("canvas");
+
+    let w = 0;
+    let h = 0;
+    let streams = [];
+    let raf = 0;
+    let last = 0;
+    let visible = true;
+
+    const respawn = (s, first) => {
+      s.speed = between(s.L.speed[0], s.L.speed[1]);
+      s.len = Math.round(between(s.L.len[0], s.L.len[1]));
+      s.pos = first ? between(-s.len, s.rows + s.len) : -between(2, 40); // yuxarıdan, müxtəlif gecikmələrlə
+    };
+
+    const build = () => {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      w = zone.clientWidth;
+      h = zone.clientHeight;
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      streams = [];
+      LAYERS.forEach((L) => {
+        const rows = Math.ceil(h / L.size) + 1;
+        const count = Math.ceil(w / L.gap);
+        for (let i = 0; i < count; i++) {
+          const s = {
+            L,
+            rows,
+            x: i * L.gap + between(0, 4),
+            chars: Array.from({ length: rows + 2 }, rnd),
+          };
+          respawn(s, true);
+          streams.push(s);
+        }
+      });
+
+      backdrop.width = w * dpr;
+      backdrop.height = h * dpr;
+      const b = backdrop.getContext("2d");
+      b.setTransform(dpr, 0, 0, dpr, 0, 0);
+      b.font = `12px ${FONT}`;
+      b.textBaseline = "top";
+      b.fillStyle = BLUE;
+      for (let x = 2; x < w; x += 14) {
+        b.globalAlpha = between(0.05, 0.16);
+        for (let y = 0; y < h; y += 12) {
+          if (Math.random() < 0.8) b.fillText(rnd(), x, y);
+        }
+      }
+    };
+
+    const draw = (dt) => {
+      ctx.clearRect(0, 0, w, h);
+      ctx.drawImage(backdrop, 0, 0, w, h);
+      ctx.textBaseline = "top";
+
+      // 1) izlər
+      let cur = null;
+      for (const s of streams) {
+        if (!reduce) {
+          s.pos += s.speed * dt;
+          if (s.pos - s.len > s.rows + 1) respawn(s, false);
+          if (Math.random() < 0.6 * dt) {
+            s.chars[Math.floor(Math.random() * s.chars.length)] = rnd();
+          }
+        }
+        const { L } = s;
+        if (L !== cur) {
+          cur = L;
+          ctx.font = `${L.size}px ${FONT}`;
+        }
+        const top = Math.max(0, Math.floor(s.pos - s.len));
+        const bot = Math.min(s.rows, Math.ceil(s.pos));
+        for (let r = top; r <= bot; r++) {
+          const d = s.pos - r;
+          const a = d < 0 ? 1 + d : Math.pow(1 - d / s.len, 1.6);
+          if (a <= 0.02) continue;
+          ctx.globalAlpha = a * L.alpha;
+          ctx.fillStyle = d < 3 ? TEAL : BLUE;
+          ctx.fillText(s.chars[r], s.x, r * L.size);
+        }
+      }
+
+      // 2) parlaq başlar və parıltı
+      cur = null;
+      for (const s of streams) {
+        const { L } = s;
+        const r = Math.floor(s.pos);
+        if (r < 0 || r > s.rows) continue;
+        if (L !== cur) {
+          cur = L;
+          ctx.font = `${L.size}px ${FONT}`;
+        }
+        if (L.glow) {
+          const gs = L.size * 3.4;
+          ctx.globalAlpha = 1;
+          ctx.globalCompositeOperation = "lighter";
+          ctx.drawImage(
+            glow,
+            s.x + L.size * 0.3 - gs / 2,
+            s.pos * L.size + L.size / 2 - gs / 2,
+            gs,
+            gs,
+          );
+          ctx.globalCompositeOperation = "source-over";
+        }
+        ctx.globalAlpha = L.alpha;
+        ctx.fillStyle = HEAD;
+        ctx.fillText(s.chars[r], s.x, r * L.size);
+      }
+      ctx.globalAlpha = 1;
+    };
+
+    const tick = (t) => {
+      raf = requestAnimationFrame(tick);
+      if (!visible) {
+        last = t;
+        return;
+      }
+      const dt = (t - last) / 1000;
+      if (dt < 0.025) return;
+      last = t;
+      draw(Math.min(dt, 0.08));
+    };
+
+    build();
+    if (reduce) draw(0);
+    else raf = requestAnimationFrame(tick);
+
+    // yalnız həqiqi ölçü dəyişəndə sıfırla (terminal yazılanda yox)
+    const ro = new ResizeObserver(() => {
+      const nw = zone.clientWidth;
+      const nh = zone.clientHeight;
+      if (nw === w && Math.abs(nh - h) < 24) return;
+      build();
+      if (reduce) draw(0);
+    });
+    ro.observe(zone);
+
+    const io = new IntersectionObserver(([e]) => {
+      visible = e.isIntersecting;
+    });
+    io.observe(zone);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+      io.disconnect();
+    };
+  }, []);
+
+  return <canvas className="code-rain" ref={ref} aria-hidden="true" />;
+}
 function HeroTerminal({ cmd }) {
   const full = `devup start ${cmd}`;
   const [typed, setTyped] = useState(() =>
@@ -182,6 +388,13 @@ function EntryPage() {
   const [confirmLogout, setConfirmLogout] = useState(false);
 
   const [wordIdx, setWordIdx] = useState(0);
+  const [dark, setDark] = useState(() => prefersReduced());
+
+  useEffect(() => {
+    if (prefersReduced()) return;
+    const id = setTimeout(() => setDark(true), 250);
+    return () => clearTimeout(id);
+  }, []);
   const heroWord = HERO_WORDS[wordIdx];
 
   const [openField, setOpenField] = useState(null);
@@ -294,8 +507,8 @@ function EntryPage() {
 
   return (
     <div>
-      <div className="hero-zone">
-        
+      <div className={"hero-zone" + (dark ? " dark" : "")}>
+        <CodeRain />
         <div className="wrap">
           <nav>
             <a className="brand" href="#">

@@ -1043,4 +1043,84 @@ footer {
   .marquee-row, .cta::before, .cta .btn.primary { animation: none; }
 }
 
+/* Hero: tədricən qaralma */
+.hero-zone {
+  --nav-h: 92px; /* navbar hündürlüyü: bunun üstü açıq qalır */
+}
+.hero-zone::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(55% 60% at 68% 58%, rgba(0, 170, 200, 0.22), transparent 70%),
+    linear-gradient(
+      to bottom,
+      rgba(7, 14, 29, 0) 0,
+      rgba(7, 14, 29, 0) var(--nav-h),
+      #07101f calc(var(--nav-h) + 90px),
+      #050b17 100%
+    );
+  opacity: 0;
+  transition: opacity 2s ease;
+}
+.hero-zone.dark::before {
+  opacity: 1;
+}
 
+.code-rain {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 2s ease;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, transparent var(--nav-h), #000 calc(var(--nav-h) + 110px), #000 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, transparent var(--nav-h), #000 calc(var(--nav-h) + 110px), #000 100%);
+}
+.hero-zone.dark .code-rain {
+  opacity: 1;
+}
+
+/* Qaralanda mətn və düymələr ağarır */
+.hero-zone h1,
+.hero-zone .hero p,
+.h1-word {
+  transition: color 1.8s ease;
+}
+.hero-zone.dark .hero h1 { color: #fff; }
+.hero-zone.dark .hero p { color: #b9c5d9; }
+.hero-zone.dark .h1-word { color: #4da3ff; }
+
+.hero-zone .actions .btn {
+  transition: transform 0.15s, color 1.8s ease, border-color 1.8s ease,
+    background-color 0.2s;
+}
+.hero-zone.dark .actions .btn {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.85);
+}
+.hero-zone.dark .actions .btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Terminal tünd fonda seçilsin */
+.term {
+  transition: box-shadow 1.8s ease;
+}
+.hero-zone.dark .term {
+  box-shadow: 0 0 0 1px rgba(77, 163, 255, 0.28), 0 18px 50px rgba(0, 0, 0, 0.5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-zone::before,
+  .code-rain,
+  .hero-zone h1,
+  .hero-zone .hero p,
+  .h1-word,
+  .hero-zone .actions .btn,
+  .term { transition: none; }
+}
