@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import { supabase } from "../supabaseclient.js";
@@ -114,7 +114,172 @@ function Icon({ children }) {
     </svg>
   );
 }
+function ContinueCarousel({ slides }) {
+  const [index, setIndex] = useState(0);
+  const [dx, setDx] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const viewport = useRef(null);
+  const drag = useRef({
+    id: null,
+    x0: 0,
+    y0: 0,
+    t0: 0,
+    active: false,
+    moved: false,
+  });
 
+  const count = slides.length;
+  const idx = Math.min(index, count - 1);
+  const go = (i) => setIndex(Math.max(0, Math.min(count - 1, i)));
+
+  const onDown = (e) => {
+    if (count < 2 || (e.pointerType === "mouse" && e.button !== 0)) return;
+    drag.current = {
+      id: e.pointerId,
+      x0: e.clientX,
+      y0: e.clientY,
+      t0: performance.now(),
+      active: false,
+      moved: false,
+    };
+  };
+
+  const onMove = (e) => {
+    const d = drag.current;
+    if (d.id !== e.pointerId) return;
+    const mx = e.clientX - d.x0;
+    const my = e.clientY - d.y0;
+    if (!d.active) {
+      // kiçik tərpənmə klik sayılsın, şaquli hərəkət səhifəni sürüşdürsün
+      if (Math.abs(mx) < 6 || Math.abs(mx) < Math.abs(my)) return;
+      d.active = true;
+      d.moved = true;
+      viewport.current.setPointerCapture(e.pointerId);
+      setDragging(true);
+    }
+    const edge = (idx === 0 && mx > 0) || (idx === count - 1 && mx < 0);
+    setDx(edge ? mx * 0.3 : mx); // kənarda rezin effekti
+  };
+
+  const finish = (e, cancelled) => {
+    const d = drag.current;
+    if (d.id !== e.pointerId) return;
+    if (d.active) {
+      const mx = e.clientX - d.x0;
+      const dt = Math.max(1, performance.now() - d.t0);
+      const w = viewport.current.clientWidth;
+      const fast = Math.abs(mx) > 30 && Math.abs(mx) / dt > 0.5;
+      if (!cancelled && (Math.abs(mx) > w * 0.2 || fast)) {
+        go(idx + (mx < 0 ? 1 : -1));
+      }
+      setDragging(false);
+      setDx(0);
+    }
+    d.id = null;
+    d.active = false;
+  };
+
+  const onKey = (e) => {
+    if (e.key === "ArrowLeft") go(idx - 1);
+    if (e.key === "ArrowRight") go(idx + 1);
+  };
+
+  return (
+    <div className="cont-carousel">
+      <div
+        className={"cont-viewport" + (dragging ? " dragging" : "")}
+        ref={viewport}
+        tabIndex={count > 1 ? 0 : undefined}
+        onPointerDown={onDown}
+        onPointerMove={onMove}
+        onPointerUp={(e) => finish(e, false)}
+        onPointerCancel={(e) => finish(e, true)}
+        onKeyDown={onKey}
+        onClickCapture={(e) => {
+          if (drag.current.moved) {
+            e.preventDefault();
+            e.stopPropagation();
+            drag.current.moved = false;
+          }
+        }}
+      >
+        <div
+          className="cont-track"
+          style={{
+            transform: `translateX(calc(${idx} * (-100% - var(--cont-gap)) + ${dx}px))`,
+          }}
+        >
+          {slides.map((s, i) => (
+            <section
+              className={"cont" + (i === idx ? " active" : "")}
+              key={s.key}
+              onMouseMove={spot}
+              onMouseLeave={spotOut}
+              aria-hidden={i !== idx}
+            >
+              <small>Continue learning</small>
+              <h2>{s.title}</h2>
+              <p>{s.sub}</p>
+              <div className="bar">
+                <i style={{ width: `${s.pct}%` }} />
+              </div>
+              <button
+                className="btn"
+                type="button"
+                disabled={s.disabled}
+                onClick={s.onGo}
+                tabIndex={i === idx ? 0 : -1}
+              >
+                {s.cta}
+              </button>
+              <svg className="deco" viewBox="0 0 24 24">
+                <path d="M5 19L19 5M9 5h10v10" />
+              </svg>
+            </section>
+          ))}
+        </div>
+      </div>
+
+      {count > 1 && (
+        <div className="cont-nav">
+          <button
+            type="button"
+            className="cont-arrow"
+            onClick={() => go(idx - 1)}
+            disabled={idx === 0}
+            aria-label="Previous roadmap"
+          >
+            <svg viewBox="0 0 24 24">
+              <path d="M15 6l-6 6 6 6" />
+            </svg>
+          </button>
+          <div className="cont-dots">
+            {slides.map((s, i) => (
+              <button
+                key={s.key}
+                type="button"
+                className={"cont-dot" + (i === idx ? " on" : "")}
+                onClick={() => go(i)}
+                aria-label={`Show ${s.name}`}
+              />
+            ))}
+          </div>
+          <button
+            type="button"
+            className="cont-arrow"
+            onClick={() => go(idx + 1)}
+            disabled={idx === count - 1}
+            aria-label="Next roadmap"
+          >
+            <svg viewBox="0 0 24 24">
+              <path d="M9 6l6 6-6 6" />
+            </svg>
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 export default function DashboardPage() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
@@ -176,13 +341,47 @@ export default function DashboardPage() {
   const myFieldNames = profile?.fields ?? [];
   const myFields = FIELDS.filter((f) => myFieldNames.includes(f.name));
   const otherFields = FIELDS.filter((f) => !myFieldNames.includes(f.name));
-  const firstField = myFields[0];
-
   const fStats = fieldStats(roadmaps, progress);
-  const firstRoadmap = roadmaps.find((r) => r.field === firstField?.name);
-  const firstStats = firstRoadmap ? roadmapStats(firstRoadmap, progress) : null;
-  const next = firstRoadmap ? nextLesson(firstRoadmap, progress) : null;
 
+  const slides = myFields.length
+    ? myFields.map((f) => {
+        // Mobile-də iki yol var: irəli olanı götürürük
+        const rm = roadmaps
+          .filter((r) => r.field === f.name)
+          .sort(
+            (a, b) =>
+              roadmapStats(b, progress).done - roadmapStats(a, progress).done,
+          )[0];
+        const pct = rm ? roadmapStats(rm, progress).percent : 0;
+        const nxt = rm ? nextLesson(rm, progress) : null;
+        return {
+          key: f.name,
+          name: f.name,
+          title: `${pct > 0 ? "Continue" : "Start"} ${f.name}`,
+          sub: `${f.name} · ${
+            nxt
+              ? nxt.title || nxt.name
+              : rm
+                ? "All lessons completed"
+                : "Lesson 1"
+          }`,
+          pct,
+          cta: "Go to lessons",
+          disabled: false,
+          onGo: () => navigate("/lessons"),
+        };
+      })
+    : [
+        {
+          key: "empty",
+          name: "",
+          title: "Choose your first roadmap",
+          sub: "Add a roadmap below to begin",
+          pct: 0,
+          cta: "Lessons coming soon",
+          disabled: true,
+        },
+      ];
   const stats = {
     lessons: roadmaps.reduce((n, r) => n + roadmapStats(r, progress).done, 0),
     time: "0h 0m",
@@ -232,35 +431,8 @@ export default function DashboardPage() {
 
         {error && <p className="form-error">{error}</p>}
 
-        <section className="cont" onMouseMove={spot} onMouseLeave={spotOut}>
-          <small>Continue learning</small>
-          <h2>
-            {firstField
-              ? `${firstStats?.done ? "Continue" : "Start"} ${firstField.name}`
-              : "Choose your first roadmap"}
-          </h2>
-          <p>
-            {firstField
-              ? next
-                ? `${firstField.name} · ${next.title || next.name}`
-                : `${firstField.name} · All lessons completed`
-              : "Add a roadmap below to begin"}
-          </p>
-          <div className="bar">
-            <i style={{ width: `${firstStats?.percent ?? 0}%` }} />
-          </div>
-          <button
-            className="btn"
-            type="button"
-            disabled={!firstField}
-            onClick={() => navigate("/lessons")}
-          >
-            {firstField ? "Go to lessons" : "Lessons coming soon"}
-          </button>
-          <svg className="deco" viewBox="0 0 24 24">
-            <path d="M5 19L19 5M9 5h10v10" />
-          </svg>
-        </section>
+          <ContinueCarousel slides={slides} />
+        
 
         <div className="stats">
           <div className="stat" onMouseMove={spot}>

@@ -348,3 +348,120 @@ body { margin: 0; }
   .dpage .stat,
   .dpage .ic { transition: none; }
 }
+/* ===== Continue learning slayderi ===== */
+.cont-carousel {
+  margin-bottom: 24px;
+}
+.cont-viewport {
+  --cont-gap: 16px;
+  overflow: hidden;
+  border-radius: 24px;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: grab;
+}
+.cont-viewport:focus-visible {
+  outline: 3px solid #0b72f5;
+  outline-offset: 3px;
+}
+.cont-viewport.dragging {
+  cursor: grabbing;
+}
+.cont-track {
+  display: flex;
+  gap: var(--cont-gap);
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.cont-viewport.dragging .cont-track {
+  transition: none;
+}
+.cont-track > .cont {
+  flex: 0 0 100%;
+  margin: 0;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+.cont-track > .cont:not(.active) {
+  opacity: 0.55;
+  transform: scale(0.97);
+}
+.cont-viewport.dragging .cont .btn {
+  pointer-events: none;
+}
+
+/* Aktiv slaydın yazıları ardıcıl gəlir */
+.cont.active > :not(.deco) {
+  animation: contIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+.cont.active > :nth-child(2) { animation-delay: 0.05s; }
+.cont.active > :nth-child(3) { animation-delay: 0.1s; }
+.cont.active > :nth-child(4) { animation-delay: 0.15s; }
+.cont.active > :nth-child(5) { animation-delay: 0.2s; }
+@keyframes contIn {
+  from { opacity: 0; transform: translateY(12px); }
+}
+
+/* Nöqtələr və oxlar */
+.cont-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 14px;
+}
+.cont-dots {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.cont-dot {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border: 0;
+  border-radius: 99px;
+  background: #c3cde0;
+  cursor: pointer;
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+.cont-dot.on {
+  width: 26px;
+  background: #0b72f5;
+}
+.cont-arrow {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid #d5deec;
+  border-radius: 50%;
+  background: #fff;
+  color: #162136;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s, opacity 0.2s;
+}
+.cont-arrow svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.cont-arrow:hover:not(:disabled) {
+  background: #0b72f5;
+  border-color: #0b72f5;
+  color: #fff;
+}
+.cont-arrow:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cont-track,
+  .cont-track > .cont { transition: none; }
+  .cont.active > :not(.deco) { animation: none; }
+}
