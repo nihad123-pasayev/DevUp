@@ -33,12 +33,16 @@ const OPTIONS = [
 export default function MobilePicker({ open, onPick, onClose }) {
   // Seçimi yalnız istifadəçi klikləyəndə saxlamaq üçün lokal state
   const [selected, setSelected] = useState(null);
+  const [prevOpen, setPrevOpen] = useState(open);
+
+  // Pəncərə hər dəfə açılanda seçimi sıfırla (effektsiz)
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    if (open) setSelected(null);
+  }
 
   useEffect(() => {
-    if (!open) {
-      setSelected(null); 
-      return;
-    }
+    if (!open) return;
     const onKey = (e) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
     document.body.style.overflow = "hidden";
