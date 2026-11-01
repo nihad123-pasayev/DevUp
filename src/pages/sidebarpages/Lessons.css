@@ -1,4 +1,7 @@
+/* ===== Səhifə ===== */
 .lessons-page {
+  --lz-bg: #f2f5fe;
+  min-width: 0;
   padding: 48px;
   display: flex;
   flex-direction: column;
@@ -8,17 +11,40 @@
   box-sizing: border-box;
 }
 
+.lessons-page > * {
+  animation: lzPage 0.55s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+.lessons-page > :nth-child(2) { animation-delay: 0.06s; }
+.lessons-page > :nth-child(3) { animation-delay: 0.12s; }
+.lessons-page > :nth-child(4) { animation-delay: 0.18s; }
+.lessons-page > :nth-child(5) { animation-delay: 0.24s; }
+@keyframes lzPage {
+  from { opacity: 0; transform: translateY(16px); }
+}
+
 .lessons-header h1 {
   margin: 0 0 8px;
   font-size: 42px;
   font-weight: 800;
   letter-spacing: -1px;
 }
-
 .lessons-header p {
   margin: 0;
   font-size: 17px;
   color: #5b6678;
+}
+
+/* ===== Yapışqan panel: axtarış, filtrlər, tablar ===== */
+.lessons-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  margin: 0 -48px;
+  padding: 12px 48px 0;
+  background: var(--lz-bg);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .lessons-toolbar {
@@ -27,7 +53,6 @@
   align-items: center;
   gap: 16px;
 }
-
 .lessons-search {
   flex: 1 1 320px;
   display: flex;
@@ -40,11 +65,9 @@
   min-height: 48px;
   color: #5b6678;
 }
-
 .lessons-search:focus-within {
   border-color: #0b72f5;
 }
-
 .lessons-search input {
   flex: 1;
   border: 0;
@@ -55,15 +78,16 @@
   color: #162136;
   min-height: 44px;
 }
-
 .lessons-statuses {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
-
 .lessons-pill {
-  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px 0 18px;
   min-height: 44px;
   border-radius: 99px;
   border: 1px solid #d5deec;
@@ -73,41 +97,89 @@
   font-weight: 700;
   font-size: 14px;
   cursor: pointer;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
 }
-
+.lessons-pill-count {
+  min-width: 24px;
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: #eef2fa;
+  color: #5b6678;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: center;
+  transition: background-color 0.2s, color 0.2s;
+}
 .lessons-pill.is-active {
   background: #162136;
   border-color: #162136;
   color: #fff;
 }
-
-.lessons-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  border-bottom: 1px solid #e3e9f3;
-  padding-bottom: 16px;
+.lessons-pill.is-active .lessons-pill-count {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
 }
 
+/* Tablar + sürüşən alt xətt */
+.lessons-tabs {
+  position: relative;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  border-bottom: 1px solid #e3e9f3;
+}
+.lessons-tabs::-webkit-scrollbar {
+  display: none;
+}
 .lessons-tab {
-  padding: 0 20px;
-  min-height: 44px;
-  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  padding: 0 18px;
+  min-height: 46px;
   border: 0;
+  border-radius: 12px 12px 0 0;
   background: transparent;
   color: #2a3650;
   font-family: inherit;
   font-weight: 700;
   font-size: 15px;
   cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
 }
-
+.lessons-tab:hover {
+  background: #e9f0fd;
+}
 .lessons-tab.is-active {
-  background: #e7f0fe;
+  background: #eaf2ff;
   color: #0b5fd0;
   font-weight: 800;
 }
+.lessons-tab-ic {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.lessons-tab-ind {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: 0;
+  border-radius: 3px 3px 0 0;
+  background: #0b72f5;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    width 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
 
+/* ===== Boş vəziyyət ===== */
 .lessons-empty {
   background: #fff;
   border: 2px dashed #b9c7e0;
@@ -115,57 +187,20 @@
   padding: 56px 24px;
   text-align: center;
 }
-
 .lessons-empty h2 {
   margin: 0 0 8px;
   font-size: 22px;
   font-weight: 800;
 }
-
 .lessons-empty-text {
   margin: 0;
   font-size: 16px;
   color: #5b6678;
 }
-
-.lessons-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-}
-
-.lessons-card {
-  flex: 1 1 300px;
-  background: #fff;
-  border: 1px solid #e3e9f3;
-  border-radius: 20px;
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.lessons-card-field {
-  font-size: 13px;
-  font-weight: 600;
-  color: #5b6678;
-}
-
-.lessons-card h3 {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 800;
-}
-
-.lessons-card p {
-  margin: 0;
-  font-size: 14px;
-  color: #5b6678;
-}
-
 .lessons-card-btn {
-  margin-top: 6px;
-  padding: 12px;
+  display: inline-block;
+  margin-top: 18px;
+  padding: 12px 24px;
   border-radius: 12px;
   border: 1px solid #0b72f5;
   background: transparent;
@@ -173,60 +208,189 @@
   font-family: inherit;
   font-weight: 800;
   font-size: 15px;
+  text-decoration: none;
   cursor: pointer;
 }
 
-@media (max-width: 700px) {
-  .lessons-page {
-    padding: 24px 16px;
+/* ===== Roadmap kartı ===== */
+.lessons-roadmap {
+  background: #fff;
+  border: 1px solid #e3e9f3;
+  border-radius: 20px;
+  overflow: hidden;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+@media (hover: hover) {
+  .lessons-roadmap:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 40px rgba(22, 33, 54, 0.08);
   }
 }
-.lessons-card--wide {
-  flex: 1 1 100%;
+
+/* Başlıq zolağı */
+.lessons-hero {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 26px 28px;
+  background: #162136;
+  color: #fff;
+  overflow: hidden;
+}
+.lessons-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    circle 260px at var(--mx, 85%) var(--my, 0%),
+    rgba(77, 163, 255, 0.32),
+    transparent 70%
+  );
+}
+.lessons-card-field {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8fa6c7;
+}
+.lessons-hero h3 {
+  margin: 0 0 12px;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: #fff;
+}
+.lessons-hero-meta {
+  display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 }
-.lessons-card-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
+.lessons-hero-meta span {
+  padding: 4px 12px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 13px;
+  font-weight: 700;
+  color: #d6e2f5;
 }
-.lessons-card-head p {
+
+/* Faiz halqası */
+.lessons-ring {
+  position: relative;
+  flex: none;
+  width: 76px;
+  height: 76px;
+}
+.lessons-ring svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+.lessons-ring circle {
+  fill: none;
+  stroke-width: 6;
+}
+.lessons-ring .ring-bg {
+  stroke: rgba(255, 255, 255, 0.15);
+}
+.lessons-ring .ring-fg {
+  stroke: #4da3ff;
+  stroke-linecap: round;
+  stroke-dasharray: 163.36;
+  transition: stroke-dashoffset 0.8s ease;
+  animation: ringFill 1.2s cubic-bezier(0.22, 1, 0.36, 1) 0.3s backwards;
+}
+@keyframes ringFill {
+  from { stroke-dashoffset: 163.36; }
+}
+.lessons-ring b {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 15px;
   font-weight: 800;
-  color: #0b5fd0;
-  white-space: nowrap;
 }
 
-.lessons-empty .lessons-card-btn {
-  display: inline-block;
-  margin-top: 18px;
-  padding: 12px 24px;
-  text-decoration: none;
-}
-
+/* ===== Mərhələlər + zaman xətti ===== */
 .lessons-stages {
+  --tl-x: 60px; /* xəttin sol mövqeyi (nömrə dairəsinin mərkəzi) */
   list-style: none;
-  margin: 8px 0 0;
-  padding: 0;
+  margin: 0;
+  padding: 10px 20px 16px;
 }
 .lessons-stage {
-  border-top: 1px solid #e3e9f3;
+  position: relative;
 }
+.lessons-stage::before,
+.lessons-stage::after {
+  content: "";
+  position: absolute;
+  left: calc(var(--tl-x) - 1px);
+  width: 2px;
+  border-radius: 2px;
+  background: #dfe6f2;
+  transition: background-color 0.4s ease;
+}
+.lessons-stage::before { top: 28px; bottom: 0; }   /* dairədən aşağı */
+.lessons-stage::after { top: 0; height: 28px; }    /* dairədən yuxarı */
+.lessons-stage.is-first::after,
+.lessons-stage.is-last::before { display: none; }
+.lessons-stage.is-done::before,
+.lessons-stage.prev-done::after { background: #0b72f5; }
+.lessons-stages.is-filtering .lessons-stage::before,
+.lessons-stages.is-filtering .lessons-stage::after { display: none; }
+
 .lessons-stage-head {
+  position: relative;
+  z-index: 1;
+  isolation: isolate;
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 12px;
-  min-height: 52px;
-  padding: 0;
+  gap: 14px;
+  min-height: 56px;
+  padding: 0 12px;
   background: none;
   border: 0;
+  border-radius: 12px;
   font-family: inherit;
   font-size: 16px;
   color: #162136;
   text-align: left;
   cursor: pointer;
 }
+.lessons-stage-head::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  background: radial-gradient(
+    circle 150px at var(--mx, 50%) var(--my, 50%),
+    rgba(11, 114, 245, 0.1),
+    transparent 70%
+  );
+}
+@media (hover: hover) {
+  .lessons-stage-head:hover::before { opacity: 1; }
+}
+.lessons-stage-head:focus-visible {
+  outline: 3px solid #0b72f5;
+  outline-offset: 2px;
+}
+
 .lessons-chev {
   width: 18px;
   height: 18px;
@@ -238,65 +402,146 @@
   stroke-linejoin: round;
   transition: transform 0.25s;
 }
-.lessons-stage.is-open .lessons-chev {
-  transform: rotate(90deg);
-}
+.lessons-stage.is-open .lessons-chev { transform: rotate(90deg); }
+
 .lessons-stage-no {
   flex: none;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: #162136;
   color: #fff;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 800;
   display: grid;
   place-items: center;
+  box-shadow: 0 0 0 4px #fff;
+  transition: background-color 0.3s;
 }
-.lessons-stage-title {
-  flex: 1;
-  font-weight: 800;
+.lessons-stage-no svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: #fff;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
-.lessons-stage-count {
-  font-size: 13px;
-  font-weight: 600;
-  color: #5b6678;
-  border: 1px solid #d5deec;
-  border-radius: 6px;
-  padding: 1px 8px;
+.lessons-stage.is-done .lessons-stage-no { background: #16a34a; }
+.lessons-stage.is-current .lessons-stage-no {
+  background: #0b72f5;
+  animation: lzPulse 2.2s ease-out infinite;
+}
+@keyframes lzPulse {
+  0% { box-shadow: 0 0 0 4px #fff, 0 0 0 4px rgba(11, 114, 245, 0.45); }
+  70%, 100% { box-shadow: 0 0 0 4px #fff, 0 0 0 14px rgba(11, 114, 245, 0); }
 }
 
+.lessons-stage-title {
+  font-weight: 800;
+}
+.lessons-current {
+  padding: 2px 10px;
+  border-radius: 99px;
+  background: #e7f0fe;
+  color: #0b5fd0;
+  font-size: 12px;
+  font-weight: 800;
+}
+.lessons-stage-meter {
+  margin-left: auto;
+  flex: none;
+  width: 96px;
+  height: 6px;
+  border-radius: 99px;
+  background: #e8edf6;
+  overflow: hidden;
+}
+.lessons-stage-meter i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #0b72f5;
+  transition: width 0.6s ease;
+}
+.lessons-stage.is-done .lessons-stage-meter i { background: #16a34a; }
+.lessons-stage-count {
+  flex: none;
+  min-width: 44px;
+  text-align: right;
+  font-size: 13px;
+  font-weight: 700;
+  color: #5b6678;
+}
+
+/* ===== Dərslər ===== */
 .lessons-stage-body {
   display: grid;
   grid-template-rows: 0fr;
   transition: grid-template-rows 0.3s ease;
 }
-.lessons-stage.is-open .lessons-stage-body {
-  grid-template-rows: 1fr;
-}
-.lessons-stage-body ul {
+.lessons-stage.is-open .lessons-stage-body { grid-template-rows: 1fr; }
+.lessons-stage-body > ul {
   min-height: 0;
   overflow: hidden;
   list-style: none;
   margin: 0;
-  padding: 0 0 0 40px;
+  padding: 0 0 0 72px;
 }
+.lessons-stage.is-open .lessons-stage-body > ul { padding-bottom: 10px; }
+.lessons-stage.is-open .lessons-stage-body li {
+  animation: lzItem 0.35s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  animation-delay: calc(var(--i, 0) * 20ms);
+}
+@keyframes lzItem {
+  from { opacity: 0; transform: translateY(8px); }
+}
+
 .lessons-item {
   display: flex;
   align-items: center;
   gap: 14px;
   min-height: 44px;
-  padding: 0 8px;
+  padding: 0 12px 0 8px;
   border-radius: 10px;
   font-size: 15px;
   color: #2a3650;
   text-decoration: none;
+  transition: transform 0.2s ease, background-color 0.2s ease;
 }
-.lessons-item:hover {
-  background: #e7f0fe;
+.lessons-item.is-current { background: #f2f7ff; }
+.lessons-item.is-completed .lessons-item-title { color: #8a96ad; }
+.lessons-item-title { flex: 1; }
+@media (hover: hover) {
+  .lessons-item:hover {
+    transform: translateX(4px);
+    background: #e7f0fe;
+  }
+  .lessons-item:hover .lessons-go {
+    opacity: 1;
+    transform: none;
+  }
 }
-.lessons-item-title {
-  flex: 1;
+.lessons-go {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: #0b72f5;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0;
+  transform: translateX(-6px);
+  transition: opacity 0.2s, transform 0.2s;
+}
+.lessons-start {
+  padding: 3px 12px;
+  border-radius: 99px;
+  background: #0b72f5;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
 }
 
 .lessons-dot {
@@ -332,12 +577,50 @@
 .tag-quiz { color: #7a5b00; border-color: #7a5b00; }
 .tag-project, .tag-unit-project { color: #003ea8; border-color: #003ea8; }
 .tag-exam, .tag-final-exam { color: #a10000; border-color: #a10000; }
-.lessons-layout {
-  display: flex;
-  min-height: 100vh;
-  background: #f2f5fe;
+
+/* ===== Yüklənmə skeleti ===== */
+.lessons-skel {
+  padding-bottom: 12px;
 }
-.lessons-page {
-  flex: 1;
-  min-width: 0;
+.skel-hero,
+.skel-row {
+  background: linear-gradient(90deg, #eef2fa 25%, #f8faff 37%, #eef2fa 63%);
+  background-size: 400% 100%;
+  animation: lzShimmer 1.4s ease infinite;
+}
+.skel-hero { height: 128px; }
+.skel-row {
+  height: 22px;
+  margin: 22px 28px 0;
+  border-radius: 8px;
+}
+@keyframes lzShimmer {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+
+/* ===== Telefon ===== */
+@media (max-width: 700px) {
+  .lessons-page { padding: 24px 16px; }
+  .lessons-header h1 { font-size: 34px; }
+  .lessons-sticky { margin: 0 -16px; padding: 10px 16px 0; }
+  .lessons-hero { padding: 20px; }
+  .lessons-hero h3 { font-size: 21px; }
+  .lessons-stages { padding: 8px 8px 12px; --tl-x: 48px; }
+  .lessons-stage-head { padding: 0 6px; gap: 10px; }
+  .lessons-stage-meter { display: none; }
+  .lessons-stage-count { margin-left: auto; }
+  .lessons-stage-body > ul { padding-left: 56px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lessons-page > *,
+  .lessons-stage.is-open .lessons-stage-body li,
+  .lessons-ring .ring-fg,
+  .lessons-stage.is-current .lessons-stage-no,
+  .skel-hero,
+  .skel-row { animation: none; }
+  .lessons-roadmap,
+  .lessons-item,
+  .lessons-tab-ind { transition: none; }
 }
