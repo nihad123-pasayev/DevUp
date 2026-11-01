@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
 import { FaGithub } from "react-icons/fa";
 import { supabase } from "../supabaseclient";
-import { useNavigate } from "react-router-dom";
 import logo from "/photos/logo.png";
 import "./LoginPage.css";
+
 function BrandText() {
   return (
     <span>
@@ -34,12 +34,14 @@ function BrandText() {
     </span>
   );
 }
+
 export default function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPw, setShowPw] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -64,6 +66,7 @@ export default function Login() {
 
     navigate("/");
   };
+
   const handleOAuth = async (provider) => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
@@ -107,6 +110,21 @@ export default function Login() {
               Track your progress every day
             </li>
           </ul>
+
+          <div className="preview" aria-hidden="true">
+            <div className="preview-top">
+              <span className="preview-dot" />
+              <span className="preview-label">Continue learning</span>
+            </div>
+            <div className="preview-title">Web · JavaScript Basics</div>
+            <div className="preview-bar">
+              <i />
+            </div>
+            <div className="preview-meta">
+              <span>Lesson 12 of 28</span>
+              <b>42%</b>
+            </div>
+          </div>
         </div>
 
         <small>© 2026 DevUp</small>
@@ -130,6 +148,7 @@ export default function Login() {
               <input
                 type="email"
                 name="email"
+                className={error ? "invalid" : ""}
                 placeholder="you@example.com"
                 autoComplete="email"
                 value={email}
@@ -145,19 +164,46 @@ export default function Login() {
                   Forgot password?
                 </Link>
               </div>
-              <input
-                type="password"
-                name="password"
-                placeholder="Enter your password"
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
+              <div className="pw-wrap">
+                <input
+                  type={showPw ? "text" : "password"}
+                  name="password"
+                  className={error ? "invalid" : ""}
+                  placeholder="Enter your password"
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+                <button
+                  type="button"
+                  className="pw-toggle"
+                  onClick={() => setShowPw((v) => !v)}
+                  aria-label={showPw ? "Hide password" : "Show password"}
+                >
+                  {showPw ? (
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M3 3l18 18" />
+                      <path d="M10.6 6.1A9.8 9.8 0 0112 6c5 0 8.5 4 9.5 6a14 14 0 01-3.2 3.9M6.6 6.7A14 14 0 002.5 12c1 2 4.5 6 9.5 6 1.5 0 2.8-.3 4-.9" />
+                      <path d="M9.9 9.9a3 3 0 004.2 4.2" />
+                    </svg>
+                  ) : (
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M2.5 12C3.5 10 7 6 12 6s8.5 4 9.5 6c-1 2-4.5 6-9.5 6s-8.5-4-9.5-6z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  )}
+                </button>
+              </div>
             </label>
 
-            {error && <p className="form-error">{error}</p>}
+            {error && (
+              <p className="form-error" role="alert">
+                {error}
+              </p>
+            )}
             <button className="btn primary" type="submit" disabled={loading}>
+              {loading && <span className="spin" aria-hidden="true" />}
               {loading ? "Logging in..." : "Log in"}
             </button>
           </form>

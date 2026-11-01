@@ -36,7 +36,7 @@ export default function MobilePicker({ open, onPick, onClose }) {
 
   useEffect(() => {
     if (!open) {
-      setSelected(null); // Modal bağlananda seçimi sıfırla
+      setSelected(null); 
       return;
     }
     const onKey = (e) => e.key === "Escape" && onClose();
