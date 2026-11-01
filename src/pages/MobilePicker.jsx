@@ -63,18 +63,7 @@ export default function MobilePicker({ open, current, onPick, onClose }) {
             onClick={onClose}
             aria-label="Close"
           >
-            <svg
-              viewBox="0 0 24 24"
-              width="20"
-              height="20"
-              stroke="#333333"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              fill="none"
-              aria-hidden="true"
-            >
-              <path d="M6 6l12 12M18 6L6 18" />
-            </svg>
+            ✕
           </button>
         </div>
 
@@ -87,7 +76,9 @@ export default function MobilePicker({ open, current, onPick, onClose }) {
             {OPTIONS.map((o) => (
               <div
                 key={o.id}
-                className={"mp-card" + (current === o.id ? " is-current" : "")}
+                className={
+                  "mp-card" + (current && current === o.id ? " is-current" : "")
+                }
               >
                 <div className="mp-card-top">
                   <span className="mp-icon" aria-hidden="true">
@@ -112,7 +103,9 @@ export default function MobilePicker({ open, current, onPick, onClose }) {
                   className="mp-btn"
                   onClick={() => onPick(o.id)}
                 >
-                  {current === o.id ? "Selected" : `Choose ${o.title}`}
+                  {current && current === o.id
+                    ? "Selected"
+                    : `Choose ${o.title}`}
                 </button>
               </div>
             ))}
