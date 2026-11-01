@@ -63,7 +63,16 @@ export default function MobilePicker({ open, current, onPick, onClose }) {
             onClick={onClose}
             aria-label="Close"
           >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
+            <svg
+              viewBox="0 0 24 24"
+              width="20"
+              height="20"
+              stroke="#333333"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              fill="none"
+              aria-hidden="true"
+            >
               <path d="M6 6l12 12M18 6L6 18" />
             </svg>
           </button>
