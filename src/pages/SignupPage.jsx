@@ -18,6 +18,7 @@ function getStrength(pw) {
   if (/[^A-Za-z0-9]/.test(pw)) score++;
   return pw.length < 8 ? Math.min(score, 1) : score;
 }
+
 function BrandText() {
   return (
     <span>
@@ -46,6 +47,7 @@ function BrandText() {
     </span>
   );
 }
+
 export default function Signup() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -87,6 +89,7 @@ export default function Signup() {
       );
     else setSent(true);
   };
+
   const handleOAuth = async (provider) => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
@@ -143,6 +146,7 @@ export default function Signup() {
             </span>
             <BrandText />
           </Link>
+
           {sent ? (
             <div className="sent">
               <h2>Check your email</h2>
@@ -243,12 +247,17 @@ export default function Signup() {
                   </span>
                 </label>
 
-                {error && <p className="form-error">{error}</p>}
+                {error && (
+                  <p className="form-error" role="alert">
+                    {error}
+                  </p>
+                )}
                 <button
                   className="btn primary"
                   type="submit"
                   disabled={loading}
                 >
+                  {loading && <span className="spin" aria-hidden="true" />}
                   {loading ? "Creating..." : "Create account"}
                 </button>
               </form>

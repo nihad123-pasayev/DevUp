@@ -102,59 +102,6 @@ a { color: inherit; text-decoration: none; }
 }
 .auth .side small { color: #7F8CA3; }
 
-/* Preview kartı */
-.auth .preview {
-  width: min(340px, 100%);
-  margin-top: 40px;
-  padding: 18px 20px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(6px);
-  animation: authFloat 6s ease-in-out infinite alternate;
-}
-@keyframes authFloat {
-  to { transform: translateY(-8px); }
-}
-.auth .preview-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-.auth .preview-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #34d399;
-  box-shadow: 0 0 0 4px rgba(52, 211, 153, 0.2);
-}
-.auth .preview-label { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #8fa6c7; }
-.auth .preview-title { font-weight: 800; font-size: 17px; margin-bottom: 14px; }
-.auth .preview-bar { height: 8px; border-radius: 99px; background: rgba(255, 255, 255, 0.14); overflow: hidden; }
-.auth .preview-bar i {
-  display: block;
-  height: 100%;
-  width: 42%;
-  border-radius: inherit;
-  background: linear-gradient(90deg, var(--blue), var(--sky));
-  animation: authBar 1.4s cubic-bezier(.22, 1, .36, 1) .6s backwards;
-}
-@keyframes authBar { from { width: 0; } }
-.auth .preview-meta { display: flex; justify-content: space-between; margin-top: 10px; font-size: 13px; color: #B7C2D6; }
-.auth .preview-meta b { color: #fff; }
-
-/* Giriş animasiyası */
-.auth .side h1,
-.auth .side > div > p,
-.auth .perks li,
-.auth .preview {
-  animation-name: authIn;
-  animation-duration: .7s;
-  animation-timing-function: cubic-bezier(.22, 1, .36, 1);
-  animation-fill-mode: backwards;
-}
-.auth .preview { animation: authIn .7s cubic-bezier(.22, 1, .36, 1) .55s backwards, authFloat 6s ease-in-out 1.3s infinite alternate; }
-.auth .side > div > p { animation-delay: .1s; }
-.auth .perks li:nth-child(1) { animation-delay: .2s; }
-.auth .perks li:nth-child(2) { animation-delay: .3s; }
-.auth .perks li:nth-child(3) { animation-delay: .4s; }
-@keyframes authIn { from { opacity: 0; transform: translateY(18px); } }
 
 /* ===== Sağ panel ===== */
 .auth .main { display: grid; place-items: center; padding: 40px 24px; }
@@ -226,7 +173,7 @@ a { color: inherit; text-decoration: none; }
 .auth .btn {
   display: block;
   width: 100%;
-  padding: 13px 22px;
+  padding: 10px 22px;
   border-radius: 10px;
   font: inherit;
   font-weight: 700;

@@ -111,20 +111,7 @@ export default function Login() {
             </li>
           </ul>
 
-          <div className="preview" aria-hidden="true">
-            <div className="preview-top">
-              <span className="preview-dot" />
-              <span className="preview-label">Continue learning</span>
-            </div>
-            <div className="preview-title">Web · JavaScript Basics</div>
-            <div className="preview-bar">
-              <i />
-            </div>
-            <div className="preview-meta">
-              <span>Lesson 12 of 28</span>
-              <b>42%</b>
-            </div>
-          </div>
+          
         </div>
 
         <small>© 2026 DevUp</small>
