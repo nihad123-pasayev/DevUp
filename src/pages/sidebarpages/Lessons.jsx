@@ -2,7 +2,7 @@ import "./Lessons.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import Sidebar from "../Sidebar";
-import { getMyRoadmaps, getProgress, roadmapStats } from "../progress.js";
+import { getMyRoadmaps, getProgress, roadmapStats } from "../../progress.js";
 
 const STATUS_FILTERS = [
   { id: "all", label: "All" },
@@ -301,7 +301,9 @@ function LessonsPage() {
               </header>
 
               <ul
-                className={"lessons-stages" + (filtering ? " is-filtering" : "")}
+                className={
+                  "lessons-stages" + (filtering ? " is-filtering" : "")
+                }
               >
                 {r.visibleStages.map((s) => {
                   const full = r.stages.find((x) => x.id === s.id);
@@ -359,7 +361,10 @@ function LessonsPage() {
                         {isCurrent && (
                           <span className="lessons-current">Current</span>
                         )}
-                        <span className="lessons-stage-meter" aria-hidden="true">
+                        <span
+                          className="lessons-stage-meter"
+                          aria-hidden="true"
+                        >
                           <i
                             style={{
                               width: `${total ? (sDone / total) * 100 : 0}%`,
@@ -376,12 +381,17 @@ function LessonsPage() {
                           {s.lessons.map((l, li) => {
                             const stt = stateOf(l.id);
                             return (
-                              <li key={l.id} style={{ "--i": Math.min(li, 14) }}>
+                              <li
+                                key={l.id}
+                                style={{ "--i": Math.min(li, 14) }}
+                              >
                                 <Link
                                   to={`/lessons/lesson/${l.id}`}
                                   className={
                                     "lessons-item" +
-                                    (stt === "completed" ? " is-completed" : "") +
+                                    (stt === "completed"
+                                      ? " is-completed"
+                                      : "") +
                                     (stt === "in_progress" ? " is-current" : "")
                                   }
                                 >
