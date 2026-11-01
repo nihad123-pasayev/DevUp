@@ -1,5 +1,5 @@
 import "./MobilePicker.css";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 const OPTIONS = [
   {
@@ -30,9 +30,15 @@ const OPTIONS = [
   },
 ];
 
-export default function MobilePicker({ open, current, onPick, onClose }) {
+export default function MobilePicker({ open, onPick, onClose }) {
+  // Seçimi yalnız istifadəçi klikləyəndə saxlamaq üçün lokal state
+  const [selected, setSelected] = useState(null);
+
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setSelected(null); // Modal bağlananda seçimi sıfırla
+      return;
+    }
     const onKey = (e) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
     document.body.style.overflow = "hidden";
@@ -41,6 +47,11 @@ export default function MobilePicker({ open, current, onPick, onClose }) {
       document.body.style.overflow = "";
     };
   }, [open, onClose]);
+
+  const handleSelect = (id) => {
+    setSelected(id); // Klik olunanda lokal state-i dəyiş
+    if (onPick) onPick(id); // Əgər xarici funksiyan varsa onu çağır
+  };
 
   return (
     <div
@@ -85,12 +96,12 @@ export default function MobilePicker({ open, current, onPick, onClose }) {
 
           <div className="mp-grid">
             {OPTIONS.map((o) => {
-              const isSelected = Boolean(current) && current === o.id;
+              const isChosen = selected === o.id;
 
               return (
                 <div
                   key={o.id}
-                  className={"mp-card" + (isSelected ? " is-current" : "")}
+                  className={"mp-card" + (isChosen ? " is-current" : "")}
                 >
                   <div className="mp-card-top">
                     <span className="mp-icon" aria-hidden="true">
@@ -113,9 +124,9 @@ export default function MobilePicker({ open, current, onPick, onClose }) {
                   <button
                     type="button"
                     className="mp-btn"
-                    onClick={() => onPick(o.id)}
+                    onClick={() => handleSelect(o.id)}
                   >
-                    {isSelected ? "Selected" : `Choose ${o.title}`}
+                    {isChosen ? "Selected" : `Choose ${o.title}`}
                   </button>
                 </div>
               );
