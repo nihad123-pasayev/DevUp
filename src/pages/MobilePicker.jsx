@@ -63,7 +63,18 @@ export default function MobilePicker({ open, current, onPick, onClose }) {
             onClick={onClose}
             aria-label="Close"
           >
-            ✕
+            <svg
+              viewBox="0 0 24 24"
+              width="20"
+              height="20"
+              stroke="#333333"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path d="M6 6l12 12M18 6L6 18" />
+            </svg>
           </button>
         </div>
 
@@ -73,42 +84,42 @@ export default function MobilePicker({ open, current, onPick, onClose }) {
           </p>
 
           <div className="mp-grid">
-            {OPTIONS.map((o) => (
-              <div
-                key={o.id}
-                className={
-                  "mp-card" + (current && current === o.id ? " is-current" : "")
-                }
-              >
-                <div className="mp-card-top">
-                  <span className="mp-icon" aria-hidden="true">
-                    {o.icon}
-                  </span>
-                  <h3>{o.title}</h3>
-                </div>
-                <p className="mp-desc">{o.desc}</p>
-                <ul>
-                  {o.points.map(([ic, t]) => (
-                    <li key={t}>
-                      <span aria-hidden="true">{ic}</span>
-                      {t}
-                    </li>
-                  ))}
-                </ul>
-                <p className="mp-best">
-                  <b>Best for:</b> {o.best}
-                </p>
-                <button
-                  type="button"
-                  className="mp-btn"
-                  onClick={() => onPick(o.id)}
+            {OPTIONS.map((o) => {
+              const isSelected = Boolean(current) && current === o.id;
+
+              return (
+                <div
+                  key={o.id}
+                  className={"mp-card" + (isSelected ? " is-current" : "")}
                 >
-                  {current && current === o.id
-                    ? "Selected"
-                    : `Choose ${o.title}`}
-                </button>
-              </div>
-            ))}
+                  <div className="mp-card-top">
+                    <span className="mp-icon" aria-hidden="true">
+                      {o.icon}
+                    </span>
+                    <h3>{o.title}</h3>
+                  </div>
+                  <p className="mp-desc">{o.desc}</p>
+                  <ul>
+                    {o.points.map(([ic, t]) => (
+                      <li key={t}>
+                        <span aria-hidden="true">{ic}</span>
+                        {t}
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="mp-best">
+                    <b>Best for:</b> {o.best}
+                  </p>
+                  <button
+                    type="button"
+                    className="mp-btn"
+                    onClick={() => onPick(o.id)}
+                  >
+                    {isSelected ? "Selected" : `Choose ${o.title}`}
+                  </button>
+                </div>
+              );
+            })}
           </div>
 
           <p className="mp-foot">
