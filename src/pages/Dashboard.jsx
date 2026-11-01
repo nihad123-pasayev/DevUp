@@ -10,7 +10,10 @@ import {
   fieldStats,
   nextLesson,
   roadmapStats,
+  getMobileTrack,
+  setMobileTrack,
 } from "../progress.js";
+import MobilePicker from "./MobilePicker";
 
 const FIELDS = [
   {
@@ -290,6 +293,11 @@ export default function DashboardPage() {
   const [roadmaps, setRoadmaps] = useState([]);
   const [progress, setProgress] = useState({});
   const [streak, setStreak] = useState(0);
+  const [mobilePick, setMobilePick] = useState(false);
+  const [mobileTrack, setTrack] = useState(null);
+  useEffect(() => {
+    getMobileTrack().then(setTrack);
+  }, []);
 
   useEffect(() => {
     const load = async () => {
@@ -431,8 +439,7 @@ export default function DashboardPage() {
 
         {error && <p className="form-error">{error}</p>}
 
-          <ContinueCarousel slides={slides} />
-        
+        <ContinueCarousel slides={slides} />
 
         <div className="stats">
           <div className="stat" onMouseMove={spot}>
@@ -512,7 +519,11 @@ export default function DashboardPage() {
                   <button
                     className="add"
                     type="button"
-                    onClick={() => addField(f.name)}
+                    onClick={() =>
+                      f.name === "Mobile"
+                        ? setMobilePick(true)
+                        : addField(f.name)
+                    }
                   >
                     Add roadmap
                   </button>
@@ -561,6 +572,18 @@ export default function DashboardPage() {
           </div>
         )}
       </div>
+      <MobilePicker
+        open={mobilePick}
+        current={mobileTrack}
+        onClose={() => setMobilePick(false)}
+        onPick={async (track) => {
+          await setMobileTrack(track);
+          setTrack(track);
+          if (!myFields.some((x) => x.name === "Mobile"))
+            await addField("Mobile");
+          setMobilePick(false);
+        }}
+      />
     </Sidebar>
   );
 }

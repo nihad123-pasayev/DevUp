@@ -37,7 +37,7 @@ export async function getMyRoadmaps() {
     return [];
   }
 
-  return (data || [])
+  const sorted = (data || [])
     .sort((a, b) => names.indexOf(a.field) - names.indexOf(b.field))
     .map((r) => ({
       ...r,
@@ -48,6 +48,8 @@ export async function getMyRoadmaps() {
           lessons: (s.lessons || []).sort((a, b) => ord(a) - ord(b)),
         })),
     }));
+
+  return filterByTrack(sorted, await getMobileTrack());
 }
 
 // { [lessonId]: "completed" } — dərs + keçilmiş quiz + layihə (my_completed_items view-su)
@@ -141,4 +143,33 @@ export async function getStreak() {
     d.setDate(d.getDate() - 1);
   }
   return streak;
+}
+export async function getMobileTrack() {
+  const uid = await getUserId();
+  if (!uid) return null;
+  const { data } = await supabase
+    .from("profiles")
+    .select("mobile_track")
+    .eq("id", uid)
+    .maybeSingle();
+  return data?.mobile_track || null;
+}
+
+export async function setMobileTrack(track) {
+  const uid = await getUserId();
+  if (!uid) return;
+  const { error } = await supabase
+    .from("profiles")
+    .update({ mobile_track: track })
+    .eq("id", uid);
+  if (error) console.error("mobile track error", error);
+}
+
+// Mobile-ın iki roadmap-ından yalnız seçiləni saxla
+export function filterByTrack(roadmaps, track) {
+  if (!track) return roadmaps;
+  const key = track.toLowerCase().startsWith("flutter") ? "flutter" : "react";
+  return roadmaps.filter(
+    (r) => r.field !== "Mobile" || (r.title || "").toLowerCase().includes(key),
+  );
 }
