@@ -624,3 +624,81 @@
   .lessons-item,
   .lessons-tab-ind { transition: none; }
 }
+/* ===== Dərs: düymə + açılan 3 hissə ===== */
+button.lessons-item {
+  width: 100%;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.lessons-drop {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: #5b6678;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.25s;
+}
+.lessons-item.is-open .lessons-drop { transform: rotate(90deg); }
+.lessons-item.is-open { background: #f2f7ff; }
+
+.lessons-parts {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.25s ease;
+}
+.lessons-parts.is-open { grid-template-rows: 1fr; }
+.lessons-parts > div {
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-left: 32px;
+}
+.lessons-parts.is-open > div { padding-bottom: 8px; }
+
+.lessons-part {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 42px;
+  padding: 0 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2a3650;
+  text-decoration: none;
+  transition: background-color 0.2s, transform 0.2s;
+}
+.lessons-part::before {
+  content: "";
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #b9c7e0;
+}
+.lessons-part > span { flex: 1; }
+.lessons-part-tag {
+  font-style: normal;
+  padding: 2px 10px;
+  border-radius: 99px;
+  background: rgba(11, 114, 245, 0.12);
+  color: #0b5fd0;
+  font-size: 12px;
+  font-weight: 800;
+}
+@media (hover: hover) {
+  .lessons-part:hover { background: #eef4ff; transform: translateX(4px); }
+}
+.lessons-part:focus-visible { outline: 3px solid #0b72f5; outline-offset: -2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .lessons-parts, .lessons-drop, .lessons-part { transition: none; }
+}

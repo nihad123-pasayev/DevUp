@@ -10,6 +10,11 @@ const STATUS_FILTERS = [
   { id: "in_progress", label: "In progress" },
   { id: "completed", label: "Completed" },
 ];
+const PARTS = [
+  { id: "theory", label: null, tag: "Theory" }, // label = mövzunun adı
+  { id: "quiz", label: "Repeat lesson", tag: "Quiz" },
+  { id: "lab", label: "Practice your learnings", tag: "Lab" },
+];
 
 const TAB_ICONS = {
   all: <path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z" />,
@@ -72,6 +77,7 @@ function LessonsPage() {
   const [openStages, setOpenStages] = useState({});
   const tabsRef = useRef(null);
   const indRef = useRef(null);
+  const [openLesson, setOpenLesson] = useState(null);
 
   useEffect(() => {
     Promise.all([getMyRoadmaps(), getProgress()]).then(([r, p]) => {
@@ -380,50 +386,112 @@ function LessonsPage() {
                         <ul>
                           {s.lessons.map((l, li) => {
                             const stt = stateOf(l.id);
+                            const title = l.title || l.name;
+                            const isLesson =
+                              !l.type ||
+                              String(l.type).toLowerCase() === "lesson";
+                            const isOpen = openLesson === l.id;
+                            const cls =
+                              "lessons-item" +
+                              (stt === "completed" ? " is-completed" : "") +
+                              (stt === "in_progress" ? " is-current" : "") +
+                              (isOpen ? " is-open" : "");
+
+                            const pill = stt === "in_progress" && (
+                              <span className="lessons-start">
+                                {st.done > 0 ? "Continue" : "Start"}
+                              </span>
+                            );
+
+                            // Quiz / layihə / imtahan sətirləri: əvvəlki kimi birbaşa keçid
+                            if (!isLesson) {
+                              return (
+                                <li
+                                  key={l.id}
+                                  style={{ "--i": Math.min(li, 14) }}
+                                >
+                                  <Link
+                                    to={`/lessons/lesson/${l.id}`}
+                                    className={cls}
+                                  >
+                                    <i className={"lessons-dot " + stt} />
+                                    <span className="lessons-item-title">
+                                      {title}
+                                    </span>
+                                    {l.type && (
+                                      <em
+                                        className={
+                                          "lessons-tag tag-" +
+                                          String(l.type)
+                                            .toLowerCase()
+                                            .replace(/\s+/g, "-")
+                                        }
+                                      >
+                                        {l.type}
+                                      </em>
+                                    )}
+                                    {pill}
+                                    <svg
+                                      className="lessons-go"
+                                      viewBox="0 0 24 24"
+                                      aria-hidden="true"
+                                    >
+                                      <path d="M5 12h14M13 6l6 6-6 6" />
+                                    </svg>
+                                  </Link>
+                                </li>
+                              );
+                            }
+
+                            // Adi dərs: klikləyəndə 3 hissə açılır
                             return (
                               <li
                                 key={l.id}
                                 style={{ "--i": Math.min(li, 14) }}
                               >
-                                <Link
-                                  to={`/lessons/lesson/${l.id}`}
-                                  className={
-                                    "lessons-item" +
-                                    (stt === "completed"
-                                      ? " is-completed"
-                                      : "") +
-                                    (stt === "in_progress" ? " is-current" : "")
+                                <button
+                                  type="button"
+                                  className={cls}
+                                  aria-expanded={isOpen}
+                                  onClick={() =>
+                                    setOpenLesson(isOpen ? null : l.id)
                                   }
                                 >
                                   <i className={"lessons-dot " + stt} />
                                   <span className="lessons-item-title">
-                                    {l.title || l.name}
+                                    {title}
                                   </span>
-                                  {l.type && (
-                                    <em
-                                      className={
-                                        "lessons-tag tag-" +
-                                        String(l.type)
-                                          .toLowerCase()
-                                          .replace(/\s+/g, "-")
-                                      }
-                                    >
-                                      {l.type}
-                                    </em>
-                                  )}
-                                  {stt === "in_progress" && (
-                                    <span className="lessons-start">
-                                      {st.done > 0 ? "Continue" : "Start"}
-                                    </span>
-                                  )}
+                                  {pill}
                                   <svg
-                                    className="lessons-go"
+                                    className="lessons-drop"
                                     viewBox="0 0 24 24"
                                     aria-hidden="true"
                                   >
-                                    <path d="M5 12h14M13 6l6 6-6 6" />
+                                    <path d="M9 6l6 6-6 6" />
                                   </svg>
-                                </Link>
+                                </button>
+
+                                <div
+                                  className={
+                                    "lessons-parts" + (isOpen ? " is-open" : "")
+                                  }
+                                >
+                                  <div>
+                                    {PARTS.map((p) => (
+                                      <Link
+                                        key={p.id}
+                                        to={`/lessons/lesson/${l.id}/${p.id}`}
+                                        className="lessons-part"
+                                        tabIndex={isOpen ? 0 : -1}
+                                      >
+                                        <span>{p.label || title}</span>
+                                        <em className="lessons-part-tag">
+                                          {p.tag}
+                                        </em>
+                                      </Link>
+                                    ))}
+                                  </div>
+                                </div>
                               </li>
                             );
                           })}
