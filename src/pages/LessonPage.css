@@ -1,83 +1,412 @@
-.lp-page {
-  min-width: 0;
-  padding: 48px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  font-family: "Manrope", system-ui, sans-serif;
+.lp-shell {
+  min-height: 100vh;
+  background: #f6f8fb;
   color: #162136;
-  box-sizing: border-box;
+  font-family: Manrope, system-ui, sans-serif;
 }
-.lp-back {
-  align-self: flex-start;
-  font-weight: 700;
-  font-size: 15px;
-  color: #5b6678;
-  text-decoration: none;
-}
-.lp-back:hover { color: #0b72f5; }
-.lp-page h1 { margin: 0; font-size: 36px; font-weight: 800; letter-spacing: -0.8px; }
 
-.lp-tabs { display: flex; gap: 6px; border-bottom: 1px solid #e3e9f3; }
-.lp-tab {
+.lp-shell a:focus-visible,
+.lp-shell button:focus-visible {
+  outline: 2px solid #0b72f5;
+  outline-offset: 2px;
+}
+
+/* Yuxarı zolaq */
+.lp-top {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  height: 64px;
+  box-sizing: border-box;
   padding: 0 20px;
-  min-height: 46px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #fff;
+  border-bottom: 1px solid #e3e8ef;
+}
+
+.lp-toggle {
+  width: 44px;
+  height: 44px;
+  padding: 0;
   display: inline-flex;
   align-items: center;
-  border-radius: 12px 12px 0 0;
-  font-weight: 700;
+  justify-content: center;
+  border: 1px solid #cbd3df;
+  border-radius: 8px;
+  background: #fff;
+  color: #162136;
+  cursor: pointer;
+}
+
+.lp-toggle:hover {
+  background: #f1f4f9;
+}
+
+.lp-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
   font-size: 15px;
-  color: #2a3650;
-  text-decoration: none;
-  border-bottom: 3px solid transparent;
-  transition: background-color 0.2s, color 0.2s;
-}
-.lp-tab:hover { background: #e9f0fd; }
-.lp-tab.is-active { color: #0b5fd0; border-bottom-color: #0b72f5; font-weight: 800; }
-
-.lp-pane { display: flex; flex-direction: column; gap: 20px; }
-.lp-video {
-  aspect-ratio: 16 / 9;
-  max-width: 900px;
-  width: 100%;
-  display: grid;
-  place-items: center;
-  border: 2px dashed #b9c7e0;
-  border-radius: 16px;
-  background: #fff;
-  color: #5b6678;
   font-weight: 700;
-}
-.lp-text {
-  max-width: 900px;
-  padding: 28px;
-  border: 1px solid #e3e9f3;
-  border-radius: 16px;
-  background: #fff;
-}
-.lp-text h2, .lp-soon h2 { margin: 0 0 8px; font-size: 24px; font-weight: 800; border: 0; padding: 0; }
-.lp-text p, .lp-soon p { margin: 0; color: #5b6678; font-size: 16px; }
-.lp-soon {
-  max-width: 900px;
-  padding: 48px 24px;
-  text-align: center;
-  border: 2px dashed #b9c7e0;
-  border-radius: 16px;
-  background: #fff;
+  color: #162136;
+  text-decoration: none;
 }
 
-@media (max-width: 700px) {
-  .lp-page { padding: 24px 16px; }
-  .lp-page h1 { font-size: 28px; }
+.lp-crumb {
+  margin-left: auto;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #5b6679;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.lp-kind {
-  align-self: flex-start;
-  padding: 2px 12px;
-  border-radius: 99px;
-  background: rgba(11, 114, 245, 0.12);
-  color: #0b5fd0;
+
+/* Gövdə */
+.lp-body {
+  display: flex;
+  align-items: flex-start;
+}
+
+.lp-backdrop {
+  display: none;
+}
+
+/* Kurs paneli */
+.lpc {
+  position: sticky;
+  top: 64px;
+  flex: none;
+  width: 300px;
+  height: calc(100vh - 64px);
+  box-sizing: border-box;
+  overflow-y: auto;
+  padding: 20px 12px 28px;
+  background: #fff;
+  border-right: 1px solid #e3e8ef;
+}
+
+.lpc-head {
+  padding: 0 8px 14px;
+}
+
+.lpc-eyebrow {
   font-size: 12px;
   font-weight: 800;
-  text-transform: uppercase;
   letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #0a5fcc;
+}
+
+.lpc-title {
+  margin: 4px 0 0;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.lpc-list,
+.lpc-parts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.lpc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lpc-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 8px;
+  box-sizing: border-box;
+  border-radius: 8px;
+  font-size: 14.5px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: #2b364a;
+  text-decoration: none;
+}
+
+.lpc-item:hover {
+  background: #f1f4f9;
+}
+
+.lpc-item.is-current {
+  background: #e8f1fe;
+  color: #162136;
+  font-weight: 800;
+}
+
+.lpc-mark {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #aab5c6;
+  border-radius: 50%;
+}
+
+.lpc-item.is-current .lpc-mark {
+  border-color: #0b72f5;
+  background: #0b72f5;
+  box-shadow: inset 0 0 0 3px #e8f1fe;
+}
+
+.lpc-mark.is-done {
+  border-color: #0b72f5;
+  background: #0b72f5;
+  box-shadow: none;
+}
+
+.lpc-name {
+  min-width: 0;
+}
+
+.lpc-tag {
+  flex: none;
+  margin-left: auto;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #eef2f7;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #5b6679;
+}
+
+.lpc-parts {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 2px 0 6px 38px;
+}
+
+.lpc-part {
+  display: flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 10px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #5b6679;
+  text-decoration: none;
+}
+
+.lpc-part:hover {
+  background: #f1f4f9;
+}
+
+.lpc-part.is-current {
+  background: #eef4fd;
+  color: #0a5fcc;
+  font-weight: 800;
+}
+
+.lpc-next {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 8px 0;
+  padding: 12px;
+  border: 1px dashed #cbd3df;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #5b6679;
+}
+
+.lpc-next svg {
+  flex: none;
+}
+
+/* Əsas hissə */
+.lp-main {
+  flex: 1;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 40px 24px 80px;
+}
+
+.lp-page {
+  max-width: 860px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.lp-head {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.lp-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.lp-kind {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: #e8f1fe;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #0a5fcc;
+}
+
+.lp-count {
+  font-size: 14px;
+  font-weight: 600;
+  color: #5b6679;
+}
+
+.lp-head h1 {
+  margin: 0;
+  font-size: 38px;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+/* Video */
+.lp-video {
+  aspect-ratio: 16 / 9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: #162136;
+  font-size: 15px;
+  font-weight: 600;
+  color: #b8c4d9;
+}
+
+/* Mətn kartı */
+.lp-card {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: clamp(20px, 4vw, 40px);
+  background: #fff;
+  border: 1px solid #e3e8ef;
+  border-radius: 12px;
+}
+
+.lp-card h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.lp-card p {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.7;
+  color: #2b364a;
+}
+
+.lp-soon {
+  text-align: center;
+  padding: 56px 24px;
+}
+
+/* Alt naviqasiya */
+.lp-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.lp-step {
+  font-size: 14px;
+  font-weight: 600;
+  color: #5b6679;
+}
+
+.lp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 20px;
+  box-sizing: border-box;
+  border: 1px solid #cbd3df;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  color: #162136;
+  text-decoration: none;
+}
+
+.lp-btn:hover {
+  background: #f1f4f9;
+}
+
+.lp-btn.is-primary {
+  padding: 0 22px;
+  border-color: #0b6be8;
+  background: #0b6be8;
+  color: #fff;
+}
+
+.lp-btn.is-primary:hover {
+  background: #0a5fcc;
+  border-color: #0a5fcc;
+}
+
+/* Telefon və kiçik ekran: panel yandan açılır */
+@media (max-width: 899px) {
+  .lpc {
+    position: fixed;
+    top: 64px;
+    left: 0;
+    bottom: 0;
+    z-index: 40;
+    width: min(320px, 86vw);
+    height: auto;
+    box-shadow: 0 8px 24px rgba(22, 33, 54, 0.18);
+  }
+
+  .lp-backdrop {
+    display: block;
+    position: fixed;
+    inset: 64px 0 0 0;
+    z-index: 35;
+    background: rgba(22, 33, 54, 0.4);
+  }
+
+  .lp-main {
+    padding: 28px 16px 64px;
+  }
+
+  .lp-head h1 {
+    font-size: 28px;
+  }
 }
