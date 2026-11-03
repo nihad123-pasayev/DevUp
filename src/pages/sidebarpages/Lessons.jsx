@@ -2,7 +2,12 @@ import "./Lessons.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import Sidebar from "../Sidebar";
-import { getMyRoadmaps, getProgress, roadmapStats } from "../../progress.js";
+import {
+  getMyRoadmaps,
+  getProgress,
+  roadmapStats,
+  lessonKind,
+} from "../../progress.js";
 
 const STATUS_FILTERS = [
   { id: "all", label: "All" },
@@ -387,9 +392,7 @@ function LessonsPage() {
                           {s.lessons.map((l, li) => {
                             const stt = stateOf(l.id);
                             const title = l.title || l.name;
-                            const isLesson =
-                              !l.type ||
-                              String(l.type).toLowerCase() === "lesson";
+                            const isLesson = lessonKind(l) === "lesson";
                             const isOpen = openLesson === l.id;
                             const cls =
                               "lessons-item" +
@@ -418,16 +421,13 @@ function LessonsPage() {
                                     <span className="lessons-item-title">
                                       {title}
                                     </span>
-                                    {l.type && (
+                                    {l.kind && (
                                       <em
                                         className={
-                                          "lessons-tag tag-" +
-                                          String(l.type)
-                                            .toLowerCase()
-                                            .replace(/\s+/g, "-")
+                                          "lessons-tag tag-" + lessonKind(l)
                                         }
                                       >
-                                        {l.type}
+                                        {String(l.kind).replace(/_/g, " ")}
                                       </em>
                                     )}
                                     {pill}

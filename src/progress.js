@@ -173,3 +173,10 @@ export function filterByTrack(roadmaps, track) {
     (r) => r.field !== "Mobile" || (r.title || "").toLowerCase().includes(key),
   );
 }
+export function lessonKind(l) {
+  const t = String(l?.kind || "").toLowerCase();
+  if (t.includes("exam")) return "exam";
+  if (t.includes("project")) return "project";
+  if (t.includes("quiz")) return "quiz";
+  return "lesson";
+}

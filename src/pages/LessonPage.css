@@ -70,3 +70,14 @@
   .lp-page { padding: 24px 16px; }
   .lp-page h1 { font-size: 28px; }
 }
+.lp-kind {
+  align-self: flex-start;
+  padding: 2px 12px;
+  border-radius: 99px;
+  background: rgba(11, 114, 245, 0.12);
+  color: #0b5fd0;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
