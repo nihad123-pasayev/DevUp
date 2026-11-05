@@ -79,7 +79,7 @@ export default function Community() {
 
   const [askOpen, setAskOpen] = useState(false);
   const [form, setForm] = useState({
-    field: "Frontend",
+    field: "Web",
     title: "",
     body: "",
     tags: "",
@@ -181,7 +181,7 @@ export default function Community() {
       setFormError("Couldn't post. Try again.");
       return;
     }
-    setForm({ field: "Frontend", title: "", body: "", tags: "" });
+    setForm({ field: "Web", title: "", body: "", tags: "" });
     setFormError("");
     setAskOpen(false);
     loadPosts();
@@ -430,9 +430,9 @@ export default function Community() {
   }
 
   return (
-    <div className="community-layout">
-      <Sidebar />
-      <main className="community-main">
+    
+      <Sidebar >
+      
         <div className="community-page">
           <header className="community-header">
             <div>
@@ -648,7 +648,7 @@ export default function Community() {
             </div>
           )}
         </div>
-      </main>
-    </div>
+      
+    </Sidebar>
   );
 }
