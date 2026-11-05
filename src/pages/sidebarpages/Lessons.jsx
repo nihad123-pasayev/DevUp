@@ -441,7 +441,7 @@ function LessonsPage() {
                               </span>
                             );
 
-                            // Quiz / layihə / imtahan sətirləri: əvvəlki kimi birbaşa keçid
+                            // Quiz / layihə / imtahan sətirləri
                             if (!isLesson) {
                               const inner = (
                                 <>
@@ -460,14 +460,14 @@ function LessonsPage() {
                                   )}
                                   {pill}
                                   {locked ? (
-                                    <LockIcon className="lessons-drop" />
+                                    <LockIcon className="lessons-go" />
                                   ) : (
                                     <svg
-                                      className="lessons-drop"
+                                      className="lessons-go"
                                       viewBox="0 0 24 24"
                                       aria-hidden="true"
                                     >
-                                      <path d="M9 6l6 6-6 6" />
+                                      <path d="M5 12h14M13 6l6 6-6 6" />
                                     </svg>
                                   )}
                                 </>
@@ -482,11 +482,7 @@ function LessonsPage() {
                                       type="button"
                                       className={cls}
                                       aria-disabled="true"
-                                      onClick={() =>
-                                        locked
-                                          ? showLock()
-                                          : setOpenLesson(isOpen ? null : l.id)
-                                      }
+                                      onClick={showLock}
                                     >
                                       {inner}
                                     </button>
@@ -502,7 +498,7 @@ function LessonsPage() {
                               );
                             }
 
-                            // Adi dərs: klikləyəndə 3 hissə açılır
+                            // Adi dərs: bağlıdırsa bildiriş çıxır, açıqdırsa 3 hissə açılır
                             return (
                               <li
                                 key={l.id}
@@ -512,8 +508,11 @@ function LessonsPage() {
                                   type="button"
                                   className={cls}
                                   aria-expanded={isOpen}
+                                  aria-disabled={locked}
                                   onClick={() =>
-                                    setOpenLesson(isOpen ? null : l.id)
+                                    locked
+                                      ? showLock()
+                                      : setOpenLesson(isOpen ? null : l.id)
                                   }
                                 >
                                   <i className={"lessons-dot " + stt} />
@@ -521,13 +520,17 @@ function LessonsPage() {
                                     {title}
                                   </span>
                                   {pill}
-                                  <svg
-                                    className="lessons-drop"
-                                    viewBox="0 0 24 24"
-                                    aria-hidden="true"
-                                  >
-                                    <path d="M9 6l6 6-6 6" />
-                                  </svg>
+                                  {locked ? (
+                                    <LockIcon className="lessons-drop" />
+                                  ) : (
+                                    <svg
+                                      className="lessons-drop"
+                                      viewBox="0 0 24 24"
+                                      aria-hidden="true"
+                                    >
+                                      <path d="M9 6l6 6-6 6" />
+                                    </svg>
+                                  )}
                                 </button>
 
                                 <div
