@@ -63,9 +63,7 @@ const RATING_LABELS = ["Poor", "Fair", "Good", "Very good", "Great"];
 
 export default function Help() {
   return (
-    <div className="help-layout">
-      <Sidebar />
-      <main className="help-main">
+     <Sidebar >
         <div className="help-page">
           <header className="help-header">
             <h1>Help</h1>
@@ -306,7 +304,6 @@ export default function Help() {
             </div>
           </div>
         </div>
-      </main>
-    </div>
+    </Sidebar>
   );
 }

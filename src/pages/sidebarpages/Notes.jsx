@@ -92,9 +92,9 @@ export default function Notes() {
   });
 
   return (
-    <div className="notes-layout">
-      <Sidebar />
-      <main className="notes-main">
+   
+      <Sidebar >
+      
         <div className="notes-page">
           <header className="notes-header">
             <div>
@@ -234,7 +234,7 @@ export default function Notes() {
             </div>
           )}
         </div>
-      </main>
-    </div>
+      
+    </Sidebar>
   );
 }

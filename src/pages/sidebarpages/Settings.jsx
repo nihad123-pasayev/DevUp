@@ -94,9 +94,9 @@ export default function Settings() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
   return (
-    <div className="settings-layout">
-      <Sidebar />
-      <main className="settings-main">
+    
+      <Sidebar >
+      
         <div className="settings-page">
           <header className="settings-header">
             <h1>Settings</h1>
@@ -378,7 +378,7 @@ export default function Settings() {
             </div>
           </div>
         </div>
-      </main>
-    </div>
+      
+    </Sidebar>
   );
 }

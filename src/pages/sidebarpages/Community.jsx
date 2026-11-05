@@ -266,9 +266,9 @@ export default function Community() {
   if (selected) {
     const isOwner = user && selected.user_id === user.id;
     return (
-      <div className="community-layout">
-        <Sidebar />
-        <main className="community-main">
+      
+        <Sidebar >
+        
           <div className="community-page">
             <button className="community-back" onClick={closePost}>
               ← Back to community
@@ -426,8 +426,8 @@ export default function Community() {
               </div>
             )}
           </div>
-        </main>
-      </div>
+        </Sidebar>
+      
     );
   }
 

@@ -117,9 +117,9 @@ export default function Certificates() {
   );
 
   return (
-    <div className="certs-layout">
-      <Sidebar />
-      <main className="certs-main">
+    
+      <Sidebar >
+      
         <div className="certs-page">
           <header className="certs-header">
             <h1>Certificates</h1>
@@ -239,7 +239,7 @@ export default function Certificates() {
             </div>
           )}
         </div>
-      </main>
-    </div>
+      
+    </Sidebar>
   );
 }
