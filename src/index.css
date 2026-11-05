@@ -1,3 +1,7 @@
+html,
+body {
+  overflow-x: hidden;
+}
 :root {
   --navy: #162136;
   --blue: #0B72F5;
