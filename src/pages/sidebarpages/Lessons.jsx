@@ -1,12 +1,14 @@
 import "./Lessons.css";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
 import Sidebar from "../Sidebar";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   getMyRoadmaps,
   getProgress,
   roadmapStats,
   lessonKind,
+  unlockedStageIds,
+  LOCK_MESSAGE,
 } from "../../progress.js";
 
 const STATUS_FILTERS = [
@@ -64,7 +66,14 @@ const lessonState = (progress, currentIds, id) =>
     : currentIds.has(id)
       ? "in_progress"
       : "not_started";
-
+function LockIcon({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="5" y="11" width="14" height="9" rx="2" />
+      <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+    </svg>
+  );
+}
 function spot(e) {
   const el = e.currentTarget;
   const r = el.getBoundingClientRect();
@@ -83,6 +92,26 @@ function LessonsPage() {
   const tabsRef = useRef(null);
   const indRef = useRef(null);
   const [openLesson, setOpenLesson] = useState(null);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [toast, setToast] = useState(
+    location.state?.locked ? LOCK_MESSAGE : "",
+  );
+  const showLock = () => setToast(LOCK_MESSAGE);
+
+  // dərs səhifəsindən qıfıla görə qayıdanda bildirişi göstər, yenilənəndə təkrarlanmasın
+  useEffect(() => {
+    if (location.state?.locked) {
+      navigate(location.pathname, { replace: true, state: null });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(""), 3500);
+    return () => clearTimeout(t);
+  }, [toast]);
 
   useEffect(() => {
     Promise.all([getMyRoadmaps(), getProgress()]).then(([r, p]) => {
@@ -277,6 +306,7 @@ function LessonsPage() {
 
         {visible.map((r) => {
           const st = roadmapStats(r, progress);
+          const unlocked = unlockedStageIds(r, progress);
           return (
             <article className="lessons-roadmap" key={r.id}>
               <header className="lessons-hero" onMouseMove={spot}>
@@ -331,6 +361,7 @@ function LessonsPage() {
                     prev.lessons.length > 0 &&
                     prev.lessons.every((l) => progress[l.id] === "completed");
                   const open = filtering || (openStages[s.id] ?? isCurrent);
+                  const locked = !unlocked.has(s.id);
 
                   const cls =
                     "lessons-stage" +
@@ -339,6 +370,7 @@ function LessonsPage() {
                     (isCurrent ? " is-current" : "") +
                     (prevDone ? " prev-done" : "") +
                     (no === 0 ? " is-first" : "") +
+                    (locked ? " is-locked" : "") +
                     (no === r.stages.length - 1 ? " is-last" : "");
 
                   return (
@@ -362,6 +394,8 @@ function LessonsPage() {
                             <svg viewBox="0 0 24 24" aria-hidden="true">
                               <path d="M5 12l5 5 9-10" />
                             </svg>
+                          ) : locked ? (
+                            <LockIcon />
                           ) : (
                             no + 1
                           )}
@@ -393,11 +427,12 @@ function LessonsPage() {
                             const stt = stateOf(l.id);
                             const title = l.title || l.name;
                             const isLesson = lessonKind(l) === "lesson";
-                            const isOpen = openLesson === l.id;
+                            const isOpen = !locked && openLesson === l.id;
                             const cls =
                               "lessons-item" +
                               (stt === "completed" ? " is-completed" : "") +
                               (stt === "in_progress" ? " is-current" : "") +
+                              (locked ? " is-locked" : "") +
                               (isOpen ? " is-open" : "");
 
                             const pill = stt === "in_progress" && (
@@ -408,37 +443,61 @@ function LessonsPage() {
 
                             // Quiz / layihə / imtahan sətirləri: əvvəlki kimi birbaşa keçid
                             if (!isLesson) {
+                              const inner = (
+                                <>
+                                  <i className={"lessons-dot " + stt} />
+                                  <span className="lessons-item-title">
+                                    {title}
+                                  </span>
+                                  {l.kind && (
+                                    <em
+                                      className={
+                                        "lessons-tag tag-" + lessonKind(l)
+                                      }
+                                    >
+                                      {String(l.kind).replace(/_/g, " ")}
+                                    </em>
+                                  )}
+                                  {pill}
+                                  {locked ? (
+                                    <LockIcon className="lessons-drop" />
+                                  ) : (
+                                    <svg
+                                      className="lessons-drop"
+                                      viewBox="0 0 24 24"
+                                      aria-hidden="true"
+                                    >
+                                      <path d="M9 6l6 6-6 6" />
+                                    </svg>
+                                  )}
+                                </>
+                              );
                               return (
                                 <li
                                   key={l.id}
                                   style={{ "--i": Math.min(li, 14) }}
                                 >
-                                  <Link
-                                    to={`/lessons/lesson/${l.id}`}
-                                    className={cls}
-                                  >
-                                    <i className={"lessons-dot " + stt} />
-                                    <span className="lessons-item-title">
-                                      {title}
-                                    </span>
-                                    {l.kind && (
-                                      <em
-                                        className={
-                                          "lessons-tag tag-" + lessonKind(l)
-                                        }
-                                      >
-                                        {String(l.kind).replace(/_/g, " ")}
-                                      </em>
-                                    )}
-                                    {pill}
-                                    <svg
-                                      className="lessons-go"
-                                      viewBox="0 0 24 24"
-                                      aria-hidden="true"
+                                  {locked ? (
+                                    <button
+                                      type="button"
+                                      className={cls}
+                                      aria-disabled="true"
+                                      onClick={() =>
+                                        locked
+                                          ? showLock()
+                                          : setOpenLesson(isOpen ? null : l.id)
+                                      }
                                     >
-                                      <path d="M5 12h14M13 6l6 6-6 6" />
-                                    </svg>
-                                  </Link>
+                                      {inner}
+                                    </button>
+                                  ) : (
+                                    <Link
+                                      to={`/lessons/lesson/${l.id}`}
+                                      className={cls}
+                                    >
+                                      {inner}
+                                    </Link>
+                                  )}
                                 </li>
                               );
                             }
@@ -504,6 +563,11 @@ function LessonsPage() {
             </article>
           );
         })}
+        {toast && (
+          <div className="lessons-toast" role="status">
+            {toast}
+          </div>
+        )}
       </main>
     </Sidebar>
   );

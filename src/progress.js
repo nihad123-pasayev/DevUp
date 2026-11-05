@@ -180,3 +180,15 @@ export function lessonKind(l) {
   if (t.includes("quiz")) return "quiz";
   return "lesson";
 }
+// Açıq bölmələr: ilk bölmə həmişə açıqdır, növbəti yalnız əvvəlkinin bütün mövzuları bitəndə açılır
+export function unlockedStageIds(roadmap, progress) {
+  const open = new Set();
+  for (const s of roadmap.stages) {
+    open.add(s.id);
+    const allDone = s.lessons.every((l) => progress[l.id] === "completed");
+    if (!allDone) break;
+  }
+  return open;
+}
+
+export const LOCK_MESSAGE = "Finish the previous unit's lessons first.";
