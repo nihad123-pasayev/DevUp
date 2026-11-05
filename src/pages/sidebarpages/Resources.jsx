@@ -51,9 +51,7 @@ export default function Resources() {
   });
 
   return (
-    <div className="resources-layout">
-      <Sidebar />
-      <main className="resources-main">
+      <Sidebar >
         <div className="resources-page">
           <header className="resources-header">
             <h1>Resources</h1>
@@ -175,7 +173,6 @@ export default function Resources() {
             </div>
           )}
         </div>
-      </main>
-    </div>
+    </Sidebar>
   );
 }
