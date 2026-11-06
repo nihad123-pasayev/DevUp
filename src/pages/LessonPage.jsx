@@ -9,6 +9,7 @@ import {
   unlockedStageIds,
 } from "../progress.js";
 import LessonContent from "./LessonContent.jsx";
+import LessonQuiz from "./LessonQuiz.jsx";
 
 const PARTS = [
   { id: "theory", label: "Theory" },
@@ -205,6 +206,7 @@ export default function LessonPage() {
 
   // Hissənin mətni: theory və lab bazadan gəlir
   const partText = current === "theory" ? content?.theory : current === "lab" ? content?.lab : null;
+    const hasQuiz = Array.isArray(content?.quiz) && content.quiz.length > 0;
 
   return (
     <div className="lp-shell">
@@ -332,8 +334,12 @@ export default function LessonPage() {
               </>
             )}
 
-            {!loading && !missing && current !== "theory" && info && (
-              partText ? (
+                        {!loading && !missing && current !== "theory" && info && (
+              current === "quiz" && hasQuiz ? (
+                <article className="lp-card">
+                  <LessonQuiz key={id} bank={content.quiz} />
+                </article>
+              ) : partText ? (
                 <article className="lp-card">
                   <LessonContent key={id + "-" + current} text={partText} />
                 </article>
