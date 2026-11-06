@@ -288,3 +288,24 @@
   border-color: #f3d0cc;
   background: #fff6f5;
 }
+.lq-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.lq-timer {
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: #eef2f7;
+  font-variant-numeric: tabular-nums;
+  font-size: 15px;
+  font-weight: 800;
+  color: #162136;
+}
+
+.lq-timer.is-low {
+  background: #fdecea;
+  color: #7a1d14;
+}

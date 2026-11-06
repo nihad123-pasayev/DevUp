@@ -1,8 +1,9 @@
 import "./LessonQuiz.css";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const COUNT = 10; // hər cəhddə neçə sual
 const PASS = 70; // keçid faizi
+const LIMIT_MIN = 30; // vaxt limiti (dəqiqə)
 
 function shuffle(list) {
   const a = [...list];
@@ -13,31 +14,67 @@ function shuffle(list) {
   return a;
 }
 
-// Bankdan təsadüfi suallar seçir və variantların sırasını qarışdırır
-function makeRound(bank) {
+// Bankdan təsadüfi suallar seçir, {name} yerinə istifadəçinin adını yazır və variantları qarışdırır
+function makeRound(bank, name) {
+  const fill = (s) => String(s).replaceAll("{name}", name || "Alex");
   return shuffle(bank)
     .slice(0, COUNT)
     .map((item) => ({
-      q: item.q,
-      why: item.why,
-      options: shuffle(item.options.map((text, i) => ({ text, correct: i === item.answer }))),
+      q: fill(item.q),
+      why: fill(item.why),
+      options: shuffle(item.options.map((text, i) => ({ text: fill(text), correct: i === item.answer }))),
     }));
 }
 
-export default function LessonQuiz({ bank, passed, onPass }) {
+function formatTime(sec) {
+  const m = String(Math.floor(sec / 60)).padStart(2, "0");
+  const s = String(sec % 60).padStart(2, "0");
+  return m + ":" + s;
+}
+
+export default function LessonQuiz({ bank, passed, onPass, userName }) {
   const [round, setRound] = useState(null); // null = başlanğıc ekranı
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState([]); // hər sual üçün seçilmiş variantın nömrəsi
   const [done, setDone] = useState(false);
+  const [timedOut, setTimedOut] = useState(false);
+  const [endAt, setEndAt] = useState(0);
+  const [left, setLeft] = useState(LIMIT_MIN * 60);
+
+  // Hər saniyə qalan vaxtı yeniləyir
+  useEffect(() => {
+    if (!round || done) return undefined;
+    const tick = () => setLeft(Math.max(0, Math.ceil((endAt - Date.now()) / 1000)));
+    tick();
+    const timer = setInterval(tick, 1000);
+    return () => clearInterval(timer);
+  }, [round, done, endAt]);
+
+  // Vaxt bitəndə cavabları avtomatik yoxlayır
+  useEffect(() => {
+    if (round && !done && left <= 0) finish(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [left]);
 
   if (!Array.isArray(bank) || bank.length === 0) return null;
 
   function start() {
-    const r = makeRound(bank);
+    const r = makeRound(bank, userName);
     setRound(r);
     setAnswers(r.map(() => null));
     setIndex(0);
     setDone(false);
+    setTimedOut(false);
+    setEndAt(Date.now() + LIMIT_MIN * 60 * 1000);
+    setLeft(LIMIT_MIN * 60);
+  }
+
+  function finish(auto) {
+    const score = round.filter((it, i) => it.options[answers[i]]?.correct).length;
+    const percent = Math.round((score / round.length) * 100);
+    setTimedOut(auto === true);
+    setDone(true);
+    if (percent >= PASS && onPass) onPass();
   }
 
   // Başlanğıc ekranı
@@ -46,8 +83,9 @@ export default function LessonQuiz({ bank, passed, onPass }) {
       <div className="lq">
         <h2>Quiz</h2>
         <p>
-          You will get {Math.min(COUNT, bank.length)} random questions about this lesson. Answer all of them, then
-          press <strong>Check answers</strong> at the end. You need at least {PASS}% to continue.
+          You will get {Math.min(COUNT, bank.length)} random questions about this lesson. You have {LIMIT_MIN} minutes.
+          Answer all of them, then press <strong>Check answers</strong> at the end. You need at least {PASS}% to
+          continue.
         </p>
         {passed && <p className="lq-passed">You already passed this quiz. You can retake it any time.</p>}
         <div className="lq-actions">
@@ -79,6 +117,7 @@ export default function LessonQuiz({ bank, passed, onPass }) {
     return (
       <div className="lq">
         <h2>Your result</h2>
+        {timedOut && <p className="lq-note">Time is up! Your answers were checked automatically.</p>}
         <div className={"lq-score" + (pass ? " is-pass" : " is-low")}>
           <strong>
             {score} / {rows.length}
@@ -132,19 +171,17 @@ export default function LessonQuiz({ bank, passed, onPass }) {
     setAnswers((prev) => prev.map((a, k) => (k === index ? i : a)));
   }
 
-  function check() {
-    const score = round.filter((it, i) => it.options[answers[i]]?.correct).length;
-    const percent = Math.round((score / round.length) * 100);
-    setDone(true);
-    if (percent >= PASS && onPass) onPass();
-  }
-
   return (
     <div className="lq">
       <div className="lq-top">
-        <span>
-          Question {index + 1} of {round.length} · {answered} answered
-        </span>
+        <div className="lq-top-row">
+          <span>
+            Question {index + 1} of {round.length} · {answered} answered
+          </span>
+          <span className={"lq-timer" + (left <= 300 ? " is-low" : "")} role="timer">
+            {formatTime(left)}
+          </span>
+        </div>
         <div className="lq-bar" aria-hidden="true">
           <div className="lq-bar-fill" style={{ width: (answered / round.length) * 100 + "%" }} />
         </div>
@@ -171,7 +208,7 @@ export default function LessonQuiz({ bank, passed, onPass }) {
           </button>
         )}
         {last ? (
-          <button type="button" className="lq-btn is-primary" onClick={check} disabled={!allAnswered}>
+          <button type="button" className="lq-btn is-primary" onClick={() => finish(false)} disabled={!allAnswered}>
             Check answers
           </button>
         ) : (
