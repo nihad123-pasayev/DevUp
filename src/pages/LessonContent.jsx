@@ -104,8 +104,7 @@ function Playground({ lang, initial }) {
     }
   }
 
-  // Səhifədən çıxanda işləyən kodu dayandır
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  
   useEffect(() => () => stop(), []);
 
   function addLine(line) {
