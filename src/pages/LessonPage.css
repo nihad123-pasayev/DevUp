@@ -410,3 +410,17 @@
     font-size: 28px;
   }
 }
+.lp-btn.is-primary.is-disabled {
+  border-color: #cbd3df;
+  background: #e3e8ef;
+  color: #7a8599;
+  cursor: not-allowed;
+}
+
+.lp-hint {
+  margin: -12px 0 0;
+  text-align: right;
+  font-size: 14px;
+  font-weight: 600;
+  color: #5b6679;
+}

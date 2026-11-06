@@ -19,7 +19,10 @@ const PARTS = [
 
 const KIND_INFO = {
   quiz: { label: "Quiz", text: "Quiz questions will appear here." },
-  project: { label: "Project", text: "Project instructions and submission will appear here." },
+  project: {
+    label: "Project",
+    text: "Project instructions and submission will appear here.",
+  },
   exam: { label: "Exam", text: "The exam will appear here." },
   lab: { label: "Lab", text: "Lab instructions will appear here." },
 };
@@ -27,6 +30,16 @@ const KIND_INFO = {
 const nameOf = (row) => row?.title || row?.name || "Untitled";
 const lessonPath = (row) => `/lessons/lesson/${row.id}`;
 const isMobile = () => window.innerWidth < 900;
+// Keçilmiş quiz-lərin id-ləri bu cihazda saxlanır
+const PASS_KEY = "lp-quiz-passed";
+function readPassed() {
+  try {
+    const list = JSON.parse(localStorage.getItem(PASS_KEY));
+    return Array.isArray(list) ? list : [];
+  } catch {
+    return [];
+  }
+}
 
 // Tam YouTube linkindən və ya təkcə 11 simvolluq ID-dən video ID-ni çıxarır
 function youtubeId(value) {
@@ -39,7 +52,17 @@ function youtubeId(value) {
 
 function Arrow({ dir = "right" }) {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       {dir === "left" ? (
         <>
           <path d="M19 12H5" />
@@ -57,7 +80,17 @@ function Arrow({ dir = "right" }) {
 
 function PanelIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <rect x="3" y="4" width="18" height="16" rx="2" />
       <path d="M9 4v16" />
     </svg>
@@ -66,7 +99,17 @@ function PanelIcon() {
 
 function Check() {
   return (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="#fff"
+      strokeWidth="3.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <path d="M5 12l5 5 9-10" />
     </svg>
   );
@@ -74,7 +117,17 @@ function Check() {
 
 function Lock() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <rect x="5" y="11" width="14" height="9" rx="2" />
       <path d="M8 11V8a4 4 0 0 1 8 0v3" />
     </svg>
@@ -86,7 +139,11 @@ export default function LessonPage() {
   const navigate = useNavigate();
 
   // Roadmap-lar və irəliləyiş bir dəfə yüklənir (sol panel və kilid üçün)
-  const [course, setCourse] = useState({ roadmaps: [], progress: {}, ready: false });
+  const [course, setCourse] = useState({
+    roadmaps: [],
+    progress: {},
+    ready: false,
+  });
   // Dərsin özü və mətn/video məzmunu
   const [res, setRes] = useState({ id: null, lesson: null, content: null });
   const [open, setOpen] = useState(() => {
@@ -97,12 +154,29 @@ export default function LessonPage() {
       return true;
     }
   });
+  const [passedIds, setPassedIds] = useState(readPassed);
+
+  function markPassed(lessonId) {
+    const key = String(lessonId);
+    setPassedIds((prev) => {
+      if (prev.includes(key)) return prev;
+      const next = [...prev, key];
+      try {
+        localStorage.setItem(PASS_KEY, JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  }
 
   useEffect(() => {
     let off = false;
-    Promise.all([getMyRoadmaps(), getProgress()]).then(([roadmaps, progress]) => {
-      if (!off) setCourse({ roadmaps, progress, ready: true });
-    });
+    Promise.all([getMyRoadmaps(), getProgress()]).then(
+      ([roadmaps, progress]) => {
+        if (!off) setCourse({ roadmaps, progress, ready: true });
+      },
+    );
     return () => {
       off = true;
     };
@@ -112,11 +186,17 @@ export default function LessonPage() {
     let off = false;
     Promise.all([
       supabase.from("lessons").select("*").eq("id", id).maybeSingle(),
-      supabase.from("lesson_content").select("*").eq("lesson_id", id).maybeSingle(),
+      supabase
+        .from("lesson_content")
+        .select("*")
+        .eq("lesson_id", id)
+        .maybeSingle(),
     ]).then(([l, c]) => {
       if (off) return;
-      if (l.error) console.error("lesson error:", l.error.code, l.error.message);
-      if (c.error) console.error("content error:", c.error.code, c.error.message);
+      if (l.error)
+        console.error("lesson error:", l.error.code, l.error.message);
+      if (c.error)
+        console.error("content error:", c.error.code, c.error.message);
       setRes({ id, lesson: l.data, content: c.data });
     });
     return () => {
@@ -128,7 +208,9 @@ export default function LessonPage() {
   let roadmap = null;
   let stage = null;
   for (const r of course.roadmaps) {
-    const s = r.stages.find((x) => x.lessons.some((l) => String(l.id) === String(id)));
+    const s = r.stages.find((x) =>
+      x.lessons.some((l) => String(l.id) === String(id)),
+    );
     if (s) {
       roadmap = r;
       stage = s;
@@ -137,10 +219,12 @@ export default function LessonPage() {
   }
 
   // Əvvəlki bölmə bitməyibsə bu dərs bağlıdır
-  const locked = !!stage && !unlockedStageIds(roadmap, course.progress).has(stage.id);
+  const locked =
+    !!stage && !unlockedStageIds(roadmap, course.progress).has(stage.id);
 
   useEffect(() => {
-    if (locked) navigate("/lessons", { replace: true, state: { locked: true } });
+    if (locked)
+      navigate("/lessons", { replace: true, state: { locked: true } });
   }, [locked, navigate]);
 
   function togglePanel() {
@@ -170,10 +254,18 @@ export default function LessonPage() {
 
   const kind = lesson ? lessonKind(lesson) : "lesson";
   const direct = kind !== "lesson";
-  const current = direct ? kind : PARTS.some((p) => p.id === part) ? part : "theory";
+  const current = direct
+    ? kind
+    : PARTS.some((p) => p.id === part)
+      ? part
+      : "theory";
   const partIdx = PARTS.findIndex((p) => p.id === current);
   const info = KIND_INFO[current];
-  const title = loading ? "Loading..." : lesson ? nameOf(lesson) : "Lesson not found";
+  const title = loading
+    ? "Loading..."
+    : lesson
+      ? nameOf(lesson)
+      : "Lesson not found";
 
   const idx = list.findIndex((l) => String(l.id) === String(id));
   const prev = idx > 0 ? list[idx - 1] : null;
@@ -182,14 +274,20 @@ export default function LessonPage() {
   const done = new Set(Object.keys(course.progress).map(String));
 
   let prevLink = null;
-  let nextLink
+  let nextLink;
   if (!direct && partIdx > 0) {
-    prevLink = { to: `/lessons/lesson/${id}/${PARTS[partIdx - 1].id}`, label: `Previous: ${PARTS[partIdx - 1].label}` };
+    prevLink = {
+      to: `/lessons/lesson/${id}/${PARTS[partIdx - 1].id}`,
+      label: `Previous: ${PARTS[partIdx - 1].label}`,
+    };
   } else if (prev) {
     prevLink = { to: lessonPath(prev), label: "Previous lesson" };
   }
   if (!direct && partIdx < PARTS.length - 1) {
-    nextLink = { to: `/lessons/lesson/${id}/${PARTS[partIdx + 1].id}`, label: `Continue to ${PARTS[partIdx + 1].label}` };
+    nextLink = {
+      to: `/lessons/lesson/${id}/${PARTS[partIdx + 1].id}`,
+      label: `Continue to ${PARTS[partIdx + 1].label}`,
+    };
   } else if (next) {
     nextLink = { to: lessonPath(next), label: "Next lesson" };
   } else {
@@ -205,8 +303,16 @@ export default function LessonPage() {
     : null;
 
   // Hissənin mətni: theory və lab bazadan gəlir
-  const partText = current === "theory" ? content?.theory : current === "lab" ? content?.lab : null;
-    const hasQuiz = Array.isArray(content?.quiz) && content.quiz.length > 0;
+  const partText =
+    current === "theory"
+      ? content?.theory
+      : current === "lab"
+        ? content?.lab
+        : null;
+  const hasQuiz = Array.isArray(content?.quiz) && content.quiz.length > 0;
+  // Quiz-i keçməyibsə "davam et" bloklanır
+  const quizPassed = passedIds.includes(String(id));
+  const quizBlocked = current === "quiz" && hasQuiz && !quizPassed;
 
   return (
     <div className="lp-shell">
@@ -257,7 +363,9 @@ export default function LessonPage() {
                         {i + 1}. {nameOf(item)}
                       </span>
                       {itemKind !== "lesson" && (
-                        <span className="lpc-tag">{KIND_INFO[itemKind]?.label || itemKind}</span>
+                        <span className="lpc-tag">
+                          {KIND_INFO[itemKind]?.label || itemKind}
+                        </span>
                       )}
                     </Link>
 
@@ -268,7 +376,10 @@ export default function LessonPage() {
                             <Link
                               to={`/lessons/lesson/${item.id}/${p.id}`}
                               onClick={closeOnMobile}
-                              className={"lpc-part" + (current === p.id ? " is-current" : "")}
+                              className={
+                                "lpc-part" +
+                                (current === p.id ? " is-current" : "")
+                              }
                             >
                               {p.label}
                             </Link>
@@ -334,10 +445,18 @@ export default function LessonPage() {
               </>
             )}
 
-                        {!loading && !missing && current !== "theory" && info && (
-              current === "quiz" && hasQuiz ? (
+            {!loading &&
+              !missing &&
+              current !== "theory" &&
+              info &&
+              (current === "quiz" && hasQuiz ? (
                 <article className="lp-card">
-                  <LessonQuiz key={id} bank={content.quiz} />
+                  <LessonQuiz
+                    key={id}
+                    bank={content.quiz}
+                    passed={quizPassed}
+                    onPass={() => markPassed(id)}
+                  />
                 </article>
               ) : partText ? (
                 <article className="lp-card">
@@ -348,29 +467,38 @@ export default function LessonPage() {
                   <h2>{info.label}</h2>
                   <p>{info.text}</p>
                 </article>
-              )
-            )}
+              ))}
 
-            {!loading && !missing && (
-              <div className="lp-foot">
-                {prevLink ? (
-                  <Link className="lp-btn" to={prevLink.to}>
-                    <Arrow dir="left" />
-                    {prevLink.label}
-                  </Link>
-                ) : (
-                  <span />
-                )}
-                
-                <span className="lp-step">
-                  {!direct && `Part ${partIdx + 1} of ${PARTS.length} · ${PARTS[partIdx].label}`}
-                </span>
-
-                <Link className="lp-btn is-primary" to={nextLink.to}>
-                  {nextLink.label}
-                  <Arrow />
-                </Link>
-              </div>
+                        {!loading && !missing && (
+              <>
+                <div className="lp-foot">
+                  {prevLink ? (
+                    <Link className="lp-btn" to={prevLink.to}>
+                      <Arrow dir="left" />
+                      {prevLink.label}
+                    </Link>
+                  ) : (
+                    <span />
+                  )}
+                  {!direct && (
+                    <span className="lp-step">
+                      Part {partIdx + 1} of {PARTS.length} · {PARTS[partIdx].label}
+                    </span>
+                  )}
+                  {quizBlocked ? (
+                    <span className="lp-btn is-primary is-disabled" aria-disabled="true">
+                      {nextLink.label}
+                      <Arrow />
+                    </span>
+                  ) : (
+                    <Link className="lp-btn is-primary" to={nextLink.to}>
+                      {nextLink.label}
+                      <Arrow />
+                    </Link>
+                  )}
+                </div>
+                {quizBlocked && <p className="lp-hint">Score at least 70% on the quiz to continue.</p>}
+              </>
             )}
           </div>
         </main>

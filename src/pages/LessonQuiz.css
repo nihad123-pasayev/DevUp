@@ -250,3 +250,41 @@
     width: 100%;
   }
 }
+.lq-actions {
+  justify-content: space-between;
+}
+
+.lq-actions .lq-btn:only-child {
+  margin-left: auto;
+}
+
+.lq-btn.is-ghost {
+  border-color: #cbd3df;
+  background: #fff;
+  color: #162136;
+}
+
+.lq-btn.is-ghost:hover {
+  background: #f1f4f9;
+}
+
+.lq-note,
+.lq-passed {
+  font-size: 15px;
+  font-weight: 600;
+  color: #5b6679;
+}
+
+.lq-passed {
+  color: #14532d;
+}
+
+.lq-missed li.is-ok {
+  border-color: #cfe9da;
+  background: #f3faf6;
+}
+
+.lq-missed li.is-no {
+  border-color: #f3d0cc;
+  background: #fff6f5;
+}
