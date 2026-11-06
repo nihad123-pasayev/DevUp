@@ -22,7 +22,12 @@ function makeRound(bank, name) {
     .map((item) => ({
       q: fill(item.q),
       why: fill(item.why),
-      options: shuffle(item.options.map((text, i) => ({ text: fill(text), correct: i === item.answer }))),
+      options: shuffle(
+        item.options.map((text, i) => ({
+          text: fill(text),
+          correct: i === item.answer,
+        })),
+      ),
     }));
 }
 
@@ -32,7 +37,13 @@ function formatTime(sec) {
   return m + ":" + s;
 }
 
-export default function LessonQuiz({ bank, passed, onPass, userName }) {
+export default function LessonQuiz({
+  bank,
+  passed,
+  onPass,
+  userName,
+  onActive,
+}) {
   const [round, setRound] = useState(null); // null = başlanğıc ekranı
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState([]); // hər sual üçün seçilmiş variantın nömrəsi
@@ -44,7 +55,8 @@ export default function LessonQuiz({ bank, passed, onPass, userName }) {
   // Hər saniyə qalan vaxtı yeniləyir
   useEffect(() => {
     if (!round || done) return undefined;
-    const tick = () => setLeft(Math.max(0, Math.ceil((endAt - Date.now()) / 1000)));
+    const tick = () =>
+      setLeft(Math.max(0, Math.ceil((endAt - Date.now()) / 1000)));
     tick();
     const timer = setInterval(tick, 1000);
     return () => clearInterval(timer);
@@ -55,6 +67,16 @@ export default function LessonQuiz({ bank, passed, onPass, userName }) {
     if (round && !done && left <= 0) finish(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [left]);
+
+  // Quiz davam edərkən üst komponentə xəbər verir (səhifədən çıxarkən xəbərdarlıq üçün)
+  const active = !!round && !done;
+  useEffect(() => {
+    if (onActive) onActive(active);
+    return () => {
+      if (onActive) onActive(false);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active]);
 
   if (!Array.isArray(bank) || bank.length === 0) return null;
 
@@ -70,7 +92,9 @@ export default function LessonQuiz({ bank, passed, onPass, userName }) {
   }
 
   function finish(auto) {
-    const score = round.filter((it, i) => it.options[answers[i]]?.correct).length;
+    const score = round.filter(
+      (it, i) => it.options[answers[i]]?.correct,
+    ).length;
     const percent = Math.round((score / round.length) * 100);
     setTimedOut(auto === true);
     setDone(true);
@@ -83,11 +107,16 @@ export default function LessonQuiz({ bank, passed, onPass, userName }) {
       <div className="lq">
         <h2>Quiz</h2>
         <p>
-          You will get {Math.min(COUNT, bank.length)} random questions about this lesson. You have {LIMIT_MIN} minutes.
-          Answer all of them, then press <strong>Check answers</strong> at the end. You need at least {PASS}% to
-          continue.
+          You will get {Math.min(COUNT, bank.length)} random questions about
+          this lesson. You have {LIMIT_MIN} minutes. Answer all of them, then
+          press <strong>Check answers</strong> at the end. You need at least{" "}
+          {PASS}% to continue.
         </p>
-        {passed && <p className="lq-passed">You already passed this quiz. You can retake it any time.</p>}
+        {passed && (
+          <p className="lq-passed">
+            You already passed this quiz. You can retake it any time.
+          </p>
+        )}
         <div className="lq-actions">
           <button type="button" className="lq-btn is-primary" onClick={start}>
             Start quiz
@@ -117,7 +146,11 @@ export default function LessonQuiz({ bank, passed, onPass, userName }) {
     return (
       <div className="lq">
         <h2>Your result</h2>
-        {timedOut && <p className="lq-note">Time is up! Your answers were checked automatically.</p>}
+        {timedOut && (
+          <p className="lq-note">
+            Time is up! Your answers were checked automatically.
+          </p>
+        )}
         <div className={"lq-score" + (pass ? " is-pass" : " is-low")}>
           <strong>
             {score} / {rows.length}
@@ -140,11 +173,13 @@ export default function LessonQuiz({ bank, passed, onPass, userName }) {
                 </p>
                 {!r.ok && (
                   <p>
-                    <span className="lq-tag is-wrong">Your answer</span> {r.yours}
+                    <span className="lq-tag is-wrong">Your answer</span>{" "}
+                    {r.yours}
                   </p>
                 )}
                 <p>
-                  <span className="lq-tag is-right">Correct answer</span> {r.correct}
+                  <span className="lq-tag is-right">Correct answer</span>{" "}
+                  {r.correct}
                 </p>
                 <p className="lq-why">{r.why}</p>
               </li>
@@ -178,41 +213,70 @@ export default function LessonQuiz({ bank, passed, onPass, userName }) {
           <span>
             Question {index + 1} of {round.length} · {answered} answered
           </span>
-          <span className={"lq-timer" + (left <= 300 ? " is-low" : "")} role="timer">
+          <span
+            className={"lq-timer" + (left <= 300 ? " is-low" : "")}
+            role="timer"
+          >
             {formatTime(left)}
           </span>
         </div>
         <div className="lq-bar" aria-hidden="true">
-          <div className="lq-bar-fill" style={{ width: (answered / round.length) * 100 + "%" }} />
+          <div
+            className="lq-bar-fill"
+            style={{ width: (answered / round.length) * 100 + "%" }}
+          />
         </div>
       </div>
 
       <fieldset className="lq-field">
         <legend>{item.q}</legend>
         {item.options.map((o, i) => (
-          <label key={index + "-" + i} className={"lq-opt" + (answers[index] === i ? " is-picked" : "")}>
-            <input type="radio" name={"q" + index} checked={answers[index] === i} onChange={() => pick(i)} />
+          <label
+            key={index + "-" + i}
+            className={"lq-opt" + (answers[index] === i ? " is-picked" : "")}
+          >
+            <input
+              type="radio"
+              name={"q" + index}
+              checked={answers[index] === i}
+              onChange={() => pick(i)}
+            />
             <span>{o.text}</span>
           </label>
         ))}
       </fieldset>
 
       {last && !allAnswered && (
-        <p className="lq-note">Answer all questions to check your answers. Use Previous to go back.</p>
+        <p className="lq-note">
+          Answer all questions to check your answers. Use Previous to go back.
+        </p>
       )}
 
       <div className="lq-actions">
         {index > 0 && (
-          <button type="button" className="lq-btn is-ghost" onClick={() => setIndex(index - 1)}>
+          <button
+            type="button"
+            className="lq-btn is-ghost"
+            onClick={() => setIndex(index - 1)}
+          >
             Previous
           </button>
         )}
         {last ? (
-          <button type="button" className="lq-btn is-primary" onClick={() => finish(false)} disabled={!allAnswered}>
+          <button
+            type="button"
+            className="lq-btn is-primary"
+            onClick={() => finish(false)}
+            disabled={!allAnswered}
+          >
             Check answers
           </button>
         ) : (
-          <button type="button" className="lq-btn is-primary" onClick={() => setIndex(index + 1)}>
+          <button
+            type="button"
+            className="lq-btn is-primary"
+            onClick={() => setIndex(index + 1)}
+          >
             Next
           </button>
         )}

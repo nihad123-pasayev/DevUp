@@ -424,3 +424,30 @@
   font-weight: 600;
   color: #5b6679;
 }
+
+.lpc-item.is-locked,
+.lpc-part.is-locked {
+  color: #8a95a8;
+  cursor: not-allowed;
+}
+
+.lpc-item.is-locked:hover,
+.lpc-part.is-locked:hover {
+  background: transparent;
+}
+
+.lpc-part.is-locked {
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.lpc-lock {
+  flex: none;
+  margin-left: auto;
+  display: inline-flex;
+}
+
+.lpc-lock svg {
+  width: 14px;
+  height: 14px;
+}

@@ -30,6 +30,8 @@ const KIND_INFO = {
 const nameOf = (row) => row?.title || row?.name || "Untitled";
 const lessonPath = (row) => `/lessons/lesson/${row.id}`;
 const isMobile = () => window.innerWidth < 900;
+const LEAVE_MSG =
+  "You have not finished the quiz. If you leave now, your answers will be lost. Leave anyway?";
 // Keçilmiş quiz-lərin id-ləri bu cihazda saxlanır
 const PASS_KEY = "lp-quiz-passed";
 function readPassed() {
@@ -155,6 +157,33 @@ export default function LessonPage() {
     }
   });
   const [passedIds, setPassedIds] = useState(readPassed);
+  const [quizActive, setQuizActive] = useState(false);
+    const [userName, setUserName] = useState("");
+
+  // İstifadəçinin adı (quiz suallarında {name} yerinə yazılır)
+  useEffect(() => {
+    let off = false;
+    (async () => {
+      const { data } = await supabase.auth.getUser();
+      const user = data?.user;
+      if (!user) return;
+
+      const { data: p } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .maybeSingle();
+      let name = p?.full_name || p?.name || p?.username || p?.display_name || "";
+      if (!name)
+        name = user.user_metadata?.full_name || user.user_metadata?.name || "";
+      if (!name && user.email) name = user.email.split("@")[0];
+
+      if (!off) setUserName(String(name).trim().split(" ")[0]);
+    })();
+    return () => {
+      off = true;
+    };
+  }, []);
 
   function markPassed(lessonId) {
     const key = String(lessonId);
@@ -312,10 +341,56 @@ export default function LessonPage() {
   const hasQuiz = Array.isArray(content?.quiz) && content.quiz.length > 0;
   // Quiz-i keçməyibsə "davam et" bloklanır
   const quizPassed = passedIds.includes(String(id));
-  const quizBlocked = current === "quiz" && hasQuiz && !quizPassed;
+  const needsQuiz = hasQuiz && !quizPassed;
+  const quizBlocked = current === "quiz" && needsQuiz;
+
+  // Quiz keçilməyibsə Lab-a ünvanla da girmək olmasın
+  useEffect(() => {
+    if (!loading && current === "lab" && needsQuiz) {
+      navigate(`/lessons/lesson/${id}/quiz`, { replace: true });
+    }
+  }, [loading, current, needsQuiz, id, navigate]);
+
+  // Quiz davam edərkən: səhifəni bağlama/yeniləmə və brauzerin "geri" düyməsi üçün xəbərdarlıq
+  useEffect(() => {
+    if (!quizActive) return undefined;
+
+    const onUnload = (e) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onUnload);
+
+    window.history.pushState({ quizGuard: true }, "");
+    const onPop = () => {
+      if (window.confirm(LEAVE_MSG)) {
+        window.removeEventListener("popstate", onPop);
+        navigate(-1);
+      } else {
+        window.history.pushState({ quizGuard: true }, "");
+      }
+    };
+    window.addEventListener("popstate", onPop);
+
+    return () => {
+      window.removeEventListener("beforeunload", onUnload);
+      window.removeEventListener("popstate", onPop);
+    };
+  }, [quizActive, navigate]);
+
+  // Quiz davam edərkən səhifə daxilindəki hər hansı linkə basanda soruş
+  function guardLeave(e) {
+    if (!quizActive) return;
+    const link = e.target.closest ? e.target.closest("a") : null;
+    if (!link) return;
+    if (!window.confirm(LEAVE_MSG)) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }
 
   return (
-    <div className="lp-shell">
+    <div className="lp-shell" onClickCapture={guardLeave}>
       <header className="lp-top">
         <button
           type="button"
@@ -348,43 +423,80 @@ export default function LessonPage() {
                 const itemKind = lessonKind(item);
                 const isCurrent = String(item.id) === String(id);
                 const isDone = done.has(String(item.id));
+                // Cari mövzunun quiz-i keçilməyibsə, sonrakı mövzular kilidlidir
+                const lockedItem = needsQuiz && idx >= 0 && i > idx;
                 return (
                   <li key={item.id}>
-                    <Link
-                      to={lessonPath(item)}
-                      onClick={closeOnMobile}
-                      className={"lpc-item" + (isCurrent ? " is-current" : "")}
-                      aria-current={isCurrent ? "page" : undefined}
-                    >
-                      <span className={"lpc-mark" + (isDone ? " is-done" : "")}>
-                        {isDone && <Check />}
-                      </span>
-                      <span className="lpc-name">
-                        {i + 1}. {nameOf(item)}
-                      </span>
-                      {itemKind !== "lesson" && (
-                        <span className="lpc-tag">
-                          {KIND_INFO[itemKind]?.label || itemKind}
+                    {lockedItem ? (
+                      <span
+                        className="lpc-item is-locked"
+                        aria-disabled="true"
+                        title="Pass this lesson's quiz first"
+                      >
+                        <span className="lpc-mark" />
+                        <span className="lpc-name">
+                          {i + 1}. {nameOf(item)}
                         </span>
-                      )}
-                    </Link>
+                        <span className="lpc-lock">
+                          <Lock />
+                        </span>
+                      </span>
+                    ) : (
+                      <Link
+                        to={lessonPath(item)}
+                        onClick={closeOnMobile}
+                        className={
+                          "lpc-item" + (isCurrent ? " is-current" : "")
+                        }
+                        aria-current={isCurrent ? "page" : undefined}
+                      >
+                        <span
+                          className={"lpc-mark" + (isDone ? " is-done" : "")}
+                        >
+                          {isDone && <Check />}
+                        </span>
+                        <span className="lpc-name">
+                          {i + 1}. {nameOf(item)}
+                        </span>
+                        {itemKind !== "lesson" && (
+                          <span className="lpc-tag">
+                            {KIND_INFO[itemKind]?.label || itemKind}
+                          </span>
+                        )}
+                      </Link>
+                    )}
 
                     {isCurrent && itemKind === "lesson" && (
                       <ul className="lpc-parts">
-                        {PARTS.map((p) => (
-                          <li key={p.id}>
-                            <Link
-                              to={`/lessons/lesson/${item.id}/${p.id}`}
-                              onClick={closeOnMobile}
-                              className={
-                                "lpc-part" +
-                                (current === p.id ? " is-current" : "")
-                              }
-                            >
-                              {p.label}
-                            </Link>
-                          </li>
-                        ))}
+                        {PARTS.map((p) =>
+                          p.id === "lab" && needsQuiz ? (
+                            <li key={p.id}>
+                              <span
+                                className="lpc-part is-locked"
+                                aria-disabled="true"
+                                title="Pass the quiz first"
+                              >
+                                {p.label}
+                                <span className="lpc-lock">
+                                  <Lock />
+                                </span>
+                              </span>
+                            </li>
+                          ) : (
+                            <li key={p.id}>
+                              <Link
+                                to={`/lessons/lesson/${item.id}/${p.id}`}
+                                onClick={closeOnMobile}
+                                className={
+                                  "lpc-part" +
+                                  (current === p.id ? " is-current" : "")
+                                }
+                              >
+                                {p.label}
+                              </Link>
+                            </li>
+                          ),
+                        )}
                       </ul>
                     )}
                   </li>
@@ -456,6 +568,8 @@ export default function LessonPage() {
                     bank={content.quiz}
                     passed={quizPassed}
                     onPass={() => markPassed(id)}
+                    userName={userName}
+                    onActive={setQuizActive}
                   />
                 </article>
               ) : partText ? (
@@ -469,7 +583,7 @@ export default function LessonPage() {
                 </article>
               ))}
 
-                        {!loading && !missing && (
+            {!loading && !missing && (
               <>
                 <div className="lp-foot">
                   {prevLink ? (
@@ -482,11 +596,15 @@ export default function LessonPage() {
                   )}
                   {!direct && (
                     <span className="lp-step">
-                      Part {partIdx + 1} of {PARTS.length} · {PARTS[partIdx].label}
+                      Part {partIdx + 1} of {PARTS.length} ·{" "}
+                      {PARTS[partIdx].label}
                     </span>
                   )}
                   {quizBlocked ? (
-                    <span className="lp-btn is-primary is-disabled" aria-disabled="true">
+                    <span
+                      className="lp-btn is-primary is-disabled"
+                      aria-disabled="true"
+                    >
                       {nextLink.label}
                       <Arrow />
                     </span>
@@ -497,7 +615,11 @@ export default function LessonPage() {
                     </Link>
                   )}
                 </div>
-                {quizBlocked && <p className="lp-hint">Score at least 70% on the quiz to continue.</p>}
+                {quizBlocked && (
+                  <p className="lp-hint">
+                    Score at least 70% on the quiz to continue.
+                  </p>
+                )}
               </>
             )}
           </div>
