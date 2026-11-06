@@ -1,8 +1,14 @@
 import "./LessonPage.css";
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../supabaseclient.js";
-import { lessonKind } from "../progress.js";
+import {
+  getMyRoadmaps,
+  getProgress,
+  lessonKind,
+  unlockedStageIds,
+} from "../progress.js";
+import LessonContent from "./LessonContent.jsx";
 
 const PARTS = [
   { id: "theory", label: "Theory" },
@@ -18,9 +24,17 @@ const KIND_INFO = {
 };
 
 const nameOf = (row) => row?.title || row?.name || "Untitled";
-const orderOf = (row) => row?.position ?? row?.sort_order ?? row?.order_index ?? 0;
 const lessonPath = (row) => `/lessons/lesson/${row.id}`;
 const isMobile = () => window.innerWidth < 900;
+
+// Tam YouTube linkindən və ya təkcə 11 simvolluq ID-dən video ID-ni çıxarır
+function youtubeId(value) {
+  if (!value) return null;
+  const text = String(value).trim();
+  const m = text.match(/(?:youtu\.be\/|v=|embed\/|shorts\/)([\w-]{11})/);
+  if (m) return m[1];
+  return /^[\w-]{11}$/.test(text) ? text : null;
+}
 
 function Arrow({ dir = "right" }) {
   return (
@@ -68,7 +82,12 @@ function Lock() {
 
 export default function LessonPage() {
   const { id, part = "theory" } = useParams();
-  const [res, setRes] = useState({ id: null, lesson: null, stage: null, siblings: [] });
+  const navigate = useNavigate();
+
+  // Roadmap-lar və irəliləyiş bir dəfə yüklənir (sol panel və kilid üçün)
+  const [course, setCourse] = useState({ roadmaps: [], progress: {}, ready: false });
+  // Dərsin özü və mətn/video məzmunu
+  const [res, setRes] = useState({ id: null, lesson: null, content: null });
   const [open, setOpen] = useState(() => {
     if (isMobile()) return false;
     try {
@@ -80,33 +99,48 @@ export default function LessonPage() {
 
   useEffect(() => {
     let off = false;
-    async function load() {
-      const { data: lesson, error } = await supabase
-        .from("lessons")
-        .select("*")
-        .eq("id", id)
-        .maybeSingle();
-      if (error) console.error("lesson error:", error.code, error.message);
+    Promise.all([getMyRoadmaps(), getProgress()]).then(([roadmaps, progress]) => {
+      if (!off) setCourse({ roadmaps, progress, ready: true });
+    });
+    return () => {
+      off = true;
+    };
+  }, []);
 
-      let stage = null;
-      let siblings = [];
-      if (lesson?.stage_id) {
-        const [s, l] = await Promise.all([
-          supabase.from("stages").select("*").eq("id", lesson.stage_id).maybeSingle(),
-          supabase.from("lessons").select("*").eq("stage_id", lesson.stage_id),
-        ]);
-        if (s.error) console.error("stage error:", s.error.code, s.error.message);
-        if (l.error) console.error("siblings error:", l.error.code, l.error.message);
-        stage = s.data;
-        siblings = (l.data || []).slice().sort((a, b) => orderOf(a) - orderOf(b));
-      }
-      if (!off) setRes({ id, lesson, stage, siblings });
-    }
-    load();
+  useEffect(() => {
+    let off = false;
+    Promise.all([
+      supabase.from("lessons").select("*").eq("id", id).maybeSingle(),
+      supabase.from("lesson_content").select("*").eq("lesson_id", id).maybeSingle(),
+    ]).then(([l, c]) => {
+      if (off) return;
+      if (l.error) console.error("lesson error:", l.error.code, l.error.message);
+      if (c.error) console.error("content error:", c.error.code, c.error.message);
+      setRes({ id, lesson: l.data, content: c.data });
+    });
     return () => {
       off = true;
     };
   }, [id]);
+
+  // Bu dərs hansı roadmap-da və hansı bölmədədir
+  let roadmap = null;
+  let stage = null;
+  for (const r of course.roadmaps) {
+    const s = r.stages.find((x) => x.lessons.some((l) => String(l.id) === String(id)));
+    if (s) {
+      roadmap = r;
+      stage = s;
+      break;
+    }
+  }
+
+  // Əvvəlki bölmə bitməyibsə bu dərs bağlıdır
+  const locked = !!stage && !unlockedStageIds(roadmap, course.progress).has(stage.id);
+
+  useEffect(() => {
+    if (locked) navigate("/lessons", { replace: true, state: { locked: true } });
+  }, [locked, navigate]);
 
   function togglePanel() {
     const next = !open;
@@ -124,11 +158,14 @@ export default function LessonPage() {
     if (isMobile()) setOpen(false);
   }
 
-  const loading = res.id !== id;
-  const lesson = loading ? null : res.lesson;
+  const loading = res.id !== id || !course.ready || locked;
+  const list = stage ? stage.lessons : [];
+  const stageName = stage ? nameOf(stage) : "";
+  const lesson = loading
+    ? null
+    : res.lesson || list.find((l) => String(l.id) === String(id)) || null;
+  const content = loading ? null : res.content;
   const missing = !loading && !lesson;
-  const list = res.siblings;
-  const stageName = res.stage ? nameOf(res.stage) : "";
 
   const kind = lesson ? lessonKind(lesson) : "lesson";
   const direct = kind !== "lesson";
@@ -141,28 +178,33 @@ export default function LessonPage() {
   const prev = idx > 0 ? list[idx - 1] : null;
   const next = idx >= 0 && idx < list.length - 1 ? list[idx + 1] : null;
 
-  const done = new Set();
+  const done = new Set(Object.keys(course.progress).map(String));
 
   let prevLink = null;
-  let nextLink = { to: "/lessons", label: "Finish unit" };
-
+  let nextLink
   if (!direct && partIdx > 0) {
-    prevLink = {
-      to: `/lessons/lesson/${id}/${PARTS[partIdx - 1].id}`,
-      label: `Previous: ${PARTS[partIdx - 1].label}`,
-    };
+    prevLink = { to: `/lessons/lesson/${id}/${PARTS[partIdx - 1].id}`, label: `Previous: ${PARTS[partIdx - 1].label}` };
   } else if (prev) {
     prevLink = { to: lessonPath(prev), label: "Previous lesson" };
   }
-
   if (!direct && partIdx < PARTS.length - 1) {
-    nextLink = {
-      to: `/lessons/lesson/${id}/${PARTS[partIdx + 1].id}`,
-      label: `Continue to ${PARTS[partIdx + 1].label}`,
-    };
+    nextLink = { to: `/lessons/lesson/${id}/${PARTS[partIdx + 1].id}`, label: `Continue to ${PARTS[partIdx + 1].label}` };
   } else if (next) {
     nextLink = { to: lessonPath(next), label: "Next lesson" };
+  } else {
+    nextLink = { to: "/lessons", label: "Finish unit" };
   }
+
+  // Video: yalnız YouTube linki/ID-si yazılıbsa göstərilir
+  const videoId = youtubeId(content?.video_url);
+  const videoSrc = videoId
+    ? `https://www.youtube-nocookie.com/embed/${videoId}?rel=0` +
+      (content?.video_start ? `&start=${content.video_start}` : "") +
+      (content?.video_end ? `&end=${content.video_end}` : "")
+    : null;
+
+  // Hissənin mətni: theory və lab bazadan gəlir
+  const partText = current === "theory" ? content?.theory : current === "lab" ? content?.lab : null;
 
   return (
     <div className="lp-shell">
@@ -197,7 +239,7 @@ export default function LessonPage() {
               {list.map((item, i) => {
                 const itemKind = lessonKind(item);
                 const isCurrent = String(item.id) === String(id);
-                const isDone = done.has(item.id);
+                const isDone = done.has(String(item.id));
                 return (
                   <li key={item.id}>
                     <Link
@@ -267,21 +309,40 @@ export default function LessonPage() {
 
             {!loading && !missing && current === "theory" && (
               <>
-                <div className="lp-video">
-                  <span>Video will be added here</span>
-                </div>
+                {videoSrc && (
+                  <div className="lp-video">
+                    <iframe
+                      src={videoSrc}
+                      title={title}
+                      allow="accelerometer; encrypted-media; picture-in-picture; fullscreen"
+                      allowFullScreen
+                    />
+                  </div>
+                )}
                 <article className="lp-card">
-                  <h2>{title}</h2>
-                  <p>Lesson text will be added here.</p>
+                  {partText ? (
+                    <LessonContent key={id + "-theory"} text={partText} />
+                  ) : (
+                    <>
+                      <h2>{title}</h2>
+                      <p>Lesson text will be added here.</p>
+                    </>
+                  )}
                 </article>
               </>
             )}
 
             {!loading && !missing && current !== "theory" && info && (
-              <article className="lp-card lp-soon">
-                <h2>{info.label}</h2>
-                <p>{info.text}</p>
-              </article>
+              partText ? (
+                <article className="lp-card">
+                  <LessonContent key={id + "-" + current} text={partText} />
+                </article>
+              ) : (
+                <article className="lp-card lp-soon">
+                  <h2>{info.label}</h2>
+                  <p>{info.text}</p>
+                </article>
+              )
             )}
 
             {!loading && !missing && (
@@ -294,17 +355,15 @@ export default function LessonPage() {
                 ) : (
                   <span />
                 )}
-                {!direct && partIdx >= 0 && (
-                  <span className="lp-step">
-                    Part {partIdx + 1} of {PARTS.length} · {PARTS[partIdx]?.label}
-                  </span>
-                )}
-                {nextLink && (
-                  <Link className="lp-btn is-primary" to={nextLink.to}>
-                    {nextLink.label}
-                    <Arrow />
-                  </Link>
-                )}
+                
+                <span className="lp-step">
+                  {!direct && `Part ${partIdx + 1} of ${PARTS.length} · ${PARTS[partIdx].label}`}
+                </span>
+
+                <Link className="lp-btn is-primary" to={nextLink.to}>
+                  {nextLink.label}
+                  <Arrow />
+                </Link>
               </div>
             )}
           </div>
