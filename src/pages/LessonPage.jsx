@@ -160,6 +160,7 @@ export default function LessonPage() {
   const [passedIds, setPassedIds] = useState(readPassed);
   const [quizActive, setQuizActive] = useState(false);
   const [userName, setUserName] = useState("");
+  const [celebrate, setCelebrate] = useState("");
 
   // İstifadəçinin adı (quiz suallarında {name} yerinə yazılır)
   useEffect(() => {
@@ -212,6 +213,12 @@ export default function LessonPage() {
       off = true;
     };
   }, []);
+  // "Mövzu bitdi" pəncərəsi 5 saniyəyə bağlanır
+  useEffect(() => {
+    if (!celebrate) return undefined;
+    const t = setTimeout(() => setCelebrate(""), 5000);
+    return () => clearTimeout(t);
+  }, [celebrate]);
 
   useEffect(() => {
     let off = false;
@@ -537,7 +544,7 @@ export default function LessonPage() {
               <h1>{title}</h1>
             </div>
 
-                        {missing && (
+            {missing && (
               <article className="lp-card lp-soon">
                 <h2>Lesson not found</h2>
                 <p>This lesson does not exist or is not available.</p>
@@ -574,7 +581,10 @@ export default function LessonPage() {
                 key={id}
                 data={content.lab_data}
                 done={labPassed}
-                onComplete={() => markPassed("lab:" + id)}
+                onComplete={() => {
+                  if (!labPassed) setCelebrate(String(id));
+                  markPassed("lab:" + id);
+                }}
               />
             )}
 
@@ -649,6 +659,43 @@ export default function LessonPage() {
           </div>
         </main>
       </div>
+      {celebrate === String(id) && (
+        <div
+          className="lp-done"
+          role="status"
+          aria-live="polite"
+          onClick={() => setCelebrate("")}
+        >
+          <div className="lp-done-card" onClick={(e) => e.stopPropagation()}>
+            <span className="lp-done-icon">
+              <svg
+                width="32"
+                height="32"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M5 12l5 5 9-10" />
+              </svg>
+            </span>
+            <h2>Success!</h2>
+            <p>You finished the lesson “{title}”.</p>
+            <Link
+              className="lp-btn is-primary"
+              to={nextLink.to}
+              onClick={() => setCelebrate("")}
+            >
+              {nextLink.label}
+              <Arrow />
+            </Link>
+            <span className="lp-done-bar" aria-hidden="true" />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
