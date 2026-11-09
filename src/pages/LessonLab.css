@@ -1,0 +1,433 @@
+.ll {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: 24px;
+  align-items: start;
+  min-width: 0;
+  color: #2b364a;
+}
+
+.ll-left {
+  min-width: 0;
+}
+
+/* Kod hissəsi */
+.ll-code {
+  border-radius: 12px;
+  overflow: hidden;
+  background: #0f1a2e;
+  border: 1px solid #0f1a2e;
+}
+
+.ll-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px 8px 16px;
+  background: #162136;
+}
+
+.ll-lang {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #b8c4d9;
+}
+
+.ll-bar-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.ll-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid #3a4a66;
+  border-radius: 8px;
+  background: transparent;
+  color: #e6edf7;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ll-tool:hover {
+  background: #22314d;
+}
+
+.ll-tool.is-run {
+  border-color: #0b6be8;
+  background: #0b6be8;
+  color: #fff;
+}
+
+.ll-tool.is-run:hover {
+  background: #0a5fcc;
+  border-color: #0a5fcc;
+}
+
+.ll-editor {
+  min-height: 260px;
+  max-height: 440px;
+  overflow: auto;
+  background: #0f1a2e;
+  color: #e6edf7;
+  font-family: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.ll-textarea:focus {
+  outline: none;
+}
+
+.ll-editor:focus-within {
+  box-shadow: inset 0 0 0 2px #7fb4ff;
+}
+
+.ll-out {
+  padding: 12px 16px 16px;
+  border-top: 1px solid #22314d;
+  background: #0b1424;
+  min-height: 90px;
+  max-height: 260px;
+  overflow: auto;
+}
+
+.ll-out:focus-visible,
+.ll-tool:focus-visible {
+  outline: 2px solid #7fb4ff;
+  outline-offset: 2px;
+}
+
+.ll-out-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #9fb0cb;
+}
+
+.ll-out-empty {
+  margin: 0;
+  font-size: 14px;
+  color: #9fb0cb;
+}
+
+.ll-line {
+  margin: 0;
+  font-family: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+  font-size: 14px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: #d7e2f4;
+}
+
+.ll-line.is-warn {
+  color: #f2c98a;
+}
+
+.ll-line.is-error {
+  color: #ff9a8f;
+}
+
+.ll-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Cavab formu (kodsuz addım) */
+.ll-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: clamp(18px, 3vw, 28px);
+  background: #fff;
+  border: 1px solid #e3e8ef;
+  border-radius: 12px;
+}
+
+.ll-form h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  color: #162136;
+}
+
+.ll-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 15.5px;
+  font-weight: 700;
+  color: #162136;
+}
+
+.ll-field input,
+.ll-field select {
+  min-height: 44px;
+  padding: 0 12px;
+  box-sizing: border-box;
+  border: 1px solid #cbd3df;
+  border-radius: 8px;
+  background: #fff;
+  color: #162136;
+  font: inherit;
+  font-weight: 600;
+}
+
+.ll-field input:focus-visible,
+.ll-field select:focus-visible {
+  outline: 2px solid #0b72f5;
+  outline-offset: 2px;
+}
+
+/* Təlimat hissəsi */
+.ll-right {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  padding: clamp(18px, 3vw, 28px);
+  background: #fff;
+  border: 1px solid #e3e8ef;
+  border-radius: 12px;
+}
+
+.ll-right h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.3;
+  color: #162136;
+}
+
+.ll-right .lc {
+  font-size: 16px;
+}
+
+.ll-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ll-dot {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #cbd3df;
+  border-radius: 50%;
+  background: #fff;
+  color: #5b6679;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.ll-dot.is-current {
+  border-color: #0b6be8;
+  color: #0b6be8;
+}
+
+.ll-dot.is-done {
+  border-color: #0b6be8;
+  background: #0b6be8;
+  color: #fff;
+}
+
+.ll-dot:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ll-dot:focus-visible,
+.ll-act:focus-visible {
+  outline: 2px solid #0b72f5;
+  outline-offset: 2px;
+}
+
+.ll-count {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #0a5fcc;
+}
+
+.ll-hint {
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #fff8e6;
+  color: #6b4a00;
+  font-size: 15.5px;
+  line-height: 1.55;
+}
+
+.ll-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.ll-act {
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid #cbd3df;
+  border-radius: 8px;
+  background: #fff;
+  color: #162136;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ll-act:hover {
+  background: #f1f4f9;
+}
+
+.ll-act.is-primary {
+  border-color: #0b6be8;
+  background: #0b6be8;
+  color: #fff;
+}
+
+.ll-act.is-primary:hover {
+  background: #0a5fcc;
+  border-color: #0a5fcc;
+}
+
+.ll-act:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+/* Yoxlama mesajı */
+.ll-msg {
+  padding: 14px 16px;
+  border-radius: 10px;
+  font-size: 15.5px;
+  line-height: 1.55;
+  animation: ll-pop 0.2s ease-out;
+}
+
+.ll-msg ul {
+  display: inline;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ll-msg.is-error ul {
+  display: block;
+  margin-top: 6px;
+  padding-left: 20px;
+  list-style: disc;
+}
+
+.ll-msg.is-ok {
+  background: #e8f6ee;
+  color: #14532d;
+}
+
+.ll-msg.is-error {
+  background: #fdecea;
+  color: #7a1d14;
+}
+
+.ll-msg.is-info {
+  background: #eef4fd;
+  color: #1c3f73;
+}
+
+@keyframes ll-pop {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Sintaksis rəngləri */
+.ll .token.comment {
+  color: #7f95b3;
+  font-style: italic;
+}
+
+.ll .token.punctuation,
+.ll .token.operator {
+  color: #c5d0e2;
+}
+
+.ll .token.keyword,
+.ll .token.boolean {
+  color: #6cb2ff;
+}
+
+.ll .token.string,
+.ll .token.template-string {
+  color: #f0a77e;
+}
+
+.ll .token.number {
+  color: #b5e0a0;
+}
+
+.ll .token.function {
+  color: #e8dc9b;
+}
+
+.ll .token.property,
+.ll .token.variable {
+  color: #9ddcff;
+}
+
+.ll .token.class-name,
+.ll .token.builtin {
+  color: #5fe0cf;
+}
+
+@media (max-width: 900px) {
+  .ll {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Telefonda əvvəl təlimat, sonra kod */
+  .ll-right {
+    order: -1;
+  }
+}
+
+@media (max-width: 600px) {
+  .ll-actions .ll-act {
+    flex: 1 1 100%;
+  }
+}

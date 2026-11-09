@@ -10,6 +10,7 @@ import {
 } from "../progress.js";
 import LessonContent from "./LessonContent.jsx";
 import LessonQuiz from "./LessonQuiz.jsx";
+import LessonLab from "./LessonLab.jsx";
 
 const PARTS = [
   { id: "theory", label: "Theory" },
@@ -158,7 +159,7 @@ export default function LessonPage() {
   });
   const [passedIds, setPassedIds] = useState(readPassed);
   const [quizActive, setQuizActive] = useState(false);
-    const [userName, setUserName] = useState("");
+  const [userName, setUserName] = useState("");
 
   // İstifadəçinin adı (quiz suallarında {name} yerinə yazılır)
   useEffect(() => {
@@ -173,7 +174,8 @@ export default function LessonPage() {
         .select("*")
         .eq("id", user.id)
         .maybeSingle();
-      let name = p?.full_name || p?.name || p?.username || p?.display_name || "";
+      let name =
+        p?.full_name || p?.name || p?.username || p?.display_name || "";
       if (!name)
         name = user.user_metadata?.full_name || user.user_metadata?.name || "";
       if (!name && user.email) name = user.email.split("@")[0];
@@ -343,6 +345,12 @@ export default function LessonPage() {
   const quizPassed = passedIds.includes(String(id));
   const needsQuiz = hasQuiz && !quizPassed;
   const quizBlocked = current === "quiz" && needsQuiz;
+  const hasLab =
+    Array.isArray(content?.lab_data?.steps) &&
+    content.lab_data.steps.length > 0;
+  const labPassed = passedIds.includes("lab:" + id);
+  const labBlocked = current === "lab" && hasLab && !labPassed;
+  const blocked = quizBlocked || labBlocked;
 
   // Quiz keçilməyibsə Lab-a ünvanla da girmək olmasın
   useEffect(() => {
@@ -512,7 +520,11 @@ export default function LessonPage() {
         )}
 
         <main className="lp-main">
-          <div className="lp-page">
+          <div
+            className={
+              "lp-page" + (current === "lab" && hasLab ? " is-wide" : "")
+            }
+          >
             <div className="lp-head">
               <div className="lp-meta">
                 <span className="lp-kind">{info ? info.label : "Theory"}</span>
@@ -525,7 +537,7 @@ export default function LessonPage() {
               <h1>{title}</h1>
             </div>
 
-            {missing && (
+                        {missing && (
               <article className="lp-card lp-soon">
                 <h2>Lesson not found</h2>
                 <p>This lesson does not exist or is not available.</p>
@@ -557,10 +569,20 @@ export default function LessonPage() {
               </>
             )}
 
+            {!loading && !missing && current === "lab" && hasLab && (
+              <LessonLab
+                key={id}
+                data={content.lab_data}
+                done={labPassed}
+                onComplete={() => markPassed("lab:" + id)}
+              />
+            )}
+
             {!loading &&
               !missing &&
               current !== "theory" &&
               info &&
+              !(current === "lab" && hasLab) &&
               (current === "quiz" && hasQuiz ? (
                 <article className="lp-card">
                   <LessonQuiz
@@ -600,7 +622,7 @@ export default function LessonPage() {
                       {PARTS[partIdx].label}
                     </span>
                   )}
-                  {quizBlocked ? (
+                  {blocked ? (
                     <span
                       className="lp-btn is-primary is-disabled"
                       aria-disabled="true"
@@ -615,9 +637,11 @@ export default function LessonPage() {
                     </Link>
                   )}
                 </div>
-                {quizBlocked && (
+                {blocked && (
                   <p className="lp-hint">
-                    Score at least 70% on the quiz to continue.
+                    {quizBlocked
+                      ? "Score at least 70% on the quiz to continue."
+                      : "Complete all lab steps to continue."}
                   </p>
                 )}
               </>

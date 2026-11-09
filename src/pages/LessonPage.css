@@ -451,3 +451,6 @@
   width: 14px;
   height: 14px;
 }
+.lp-page.is-wide {
+  max-width: 1240px;
+}
