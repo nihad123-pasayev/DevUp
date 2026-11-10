@@ -306,21 +306,12 @@ export default function LessonPage() {
       : "Lesson not found";
 
   const idx = list.findIndex((l) => String(l.id) === String(id));
-  const prev = idx > 0 ? list[idx - 1] : null;
+
   const next = idx >= 0 && idx < list.length - 1 ? list[idx + 1] : null;
 
   const done = new Set(Object.keys(course.progress).map(String));
 
-  let prevLink = null;
   let nextLink;
-  if (!direct && partIdx > 0) {
-    prevLink = {
-      to: `/lessons/lesson/${id}/${PARTS[partIdx - 1].id}`,
-      label: `Previous: ${PARTS[partIdx - 1].label}`,
-    };
-  } else if (prev) {
-    prevLink = { to: lessonPath(prev), label: "Previous lesson" };
-  }
   if (!direct && partIdx < PARTS.length - 1) {
     nextLink = {
       to: `/lessons/lesson/${id}/${PARTS[partIdx + 1].id}`,
@@ -352,13 +343,16 @@ export default function LessonPage() {
   const quizPassed = passedIds.includes(String(id));
   const needsQuiz = hasQuiz && !quizPassed;
   const quizBlocked = current === "quiz" && needsQuiz;
+
   const hasLab =
     Array.isArray(content?.lab_data?.steps) &&
     content.lab_data.steps.length > 0;
   const labPassed = passedIds.includes("lab:" + id);
   const labBlocked = current === "lab" && hasLab && !labPassed;
-  const blocked = quizBlocked || labBlocked;
 
+  const theoryDone = passedIds.includes("theory:" + id);
+  const theoryBlocked = current === "theory" && !direct && !theoryDone;
+  const blocked = quizBlocked || labBlocked || theoryBlocked;
   // Quiz keçilməyibsə Lab-a ünvanla da girmək olmasın
   useEffect(() => {
     if (!loading && current === "lab" && needsQuiz) {
@@ -618,11 +612,38 @@ export default function LessonPage() {
             {!loading && !missing && (
               <>
                 <div className="lp-foot">
-                  {prevLink ? (
-                    <Link className="lp-btn" to={prevLink.to}>
-                      <Arrow dir="left" />
-                      {prevLink.label}
-                    </Link>
+                  {current === "theory" && !direct ? (
+                    <div className="lp-mark">
+                      <button
+                        type="button"
+                        className="lp-btn"
+                        onClick={() => markPassed("theory:" + id)}
+                        disabled={theoryDone}
+                      >
+                        Mark as completed
+                      </button>
+                      {theoryDone && (
+                        <span
+                          className="lp-mark-ok"
+                          role="img"
+                          aria-label="Completed"
+                        >
+                          <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            aria-hidden="true"
+                          >
+                            <path d="M5 12l5 5 9-10" />
+                          </svg>
+                        </span>
+                      )}
+                    </div>
                   ) : (
                     <span />
                   )}
@@ -651,7 +672,9 @@ export default function LessonPage() {
                   <p className="lp-hint">
                     {quizBlocked
                       ? "Score at least 70% on the quiz to continue."
-                      : "Complete all lab steps to continue."}
+                      : labBlocked
+                        ? "Complete all lab steps to continue."
+                        : "Mark the lesson as completed to continue."}
                   </p>
                 )}
               </>

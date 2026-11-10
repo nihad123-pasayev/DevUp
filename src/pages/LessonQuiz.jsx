@@ -113,10 +113,15 @@ export default function LessonQuiz({
           {PASS}% to continue.
         </p>
         {passed && (
-          <p className="lq-passed">
+          <p className="lq-box is-pass">
             You already passed this quiz. You can retake it any time.
           </p>
         )}
+        <div className="lq-actions">
+          <button type="button" className="lq-btn is-primary" onClick={start}>
+            {passed ? "Retry quiz" : "Try again"}
+          </button>
+        </div>
         <div className="lq-actions">
           <button type="button" className="lq-btn is-primary" onClick={start}>
             Start quiz
@@ -157,10 +162,10 @@ export default function LessonQuiz({
           </strong>
           <span>{percent}%</span>
         </div>
-        <p>
+        <p className={"lq-box " + (pass ? "is-pass" : "is-fail")}>
           {pass
             ? "Great work! You passed, so you can continue to the next part."
-            : `You need at least ${PASS}% to continue. Review the lesson and try again. A different set of questions is waiting for you.`}
+            : `You did not pass this time. You need at least ${PASS}% to continue. Review the lesson and try again. A different set of questions is waiting for you.`}
         </p>
 
         <div className="lq-missed">

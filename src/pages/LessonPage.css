@@ -539,3 +539,29 @@
     animation: none;
   }
 }
+.lp-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.lp-mark .lp-btn {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.lp-mark .lp-btn:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.lp-mark-ok {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #1a7f4b;
+  color: #fff;
+}
