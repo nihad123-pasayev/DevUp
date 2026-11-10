@@ -192,3 +192,21 @@ export function unlockedStageIds(roadmap, progress) {
 }
 
 export const LOCK_MESSAGE = "Finish the previous unit's lessons first.";
+// Bu cihazda tamamlanmış mövzular (lab bitəndə "lab:<id>" kimi yazılır)
+export function localDoneIds() {
+  try {
+    const list = JSON.parse(localStorage.getItem("lp-quiz-passed"));
+    if (!Array.isArray(list)) return [];
+    return list.filter((k) => String(k).startsWith("lab:")).map((k) => String(k).slice(4));
+  } catch {
+    return [];
+  }
+}
+
+// Bazadakı irəliləyiş + bu cihazda tamamlananlar
+export async function getFullProgress() {
+  const progress = await getProgress();
+  const merged = { ...(progress || {}) };
+  for (const id of localDoneIds()) merged[id] = "completed";
+  return merged;
+}

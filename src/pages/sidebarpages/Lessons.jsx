@@ -4,7 +4,7 @@ import Sidebar from "../Sidebar";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   getMyRoadmaps,
-  getProgress,
+  getFullProgress,
   roadmapStats,
   lessonKind,
   unlockedStageIds,
@@ -114,7 +114,7 @@ function LessonsPage() {
   }, [toast]);
 
   useEffect(() => {
-    Promise.all([getMyRoadmaps(), getProgress()]).then(([r, p]) => {
+    Promise.all([getMyRoadmaps(), getFullProgress()]).then(([r, p]) => {
       setRoadmaps(r);
       setProgress(p);
       setLoading(false);

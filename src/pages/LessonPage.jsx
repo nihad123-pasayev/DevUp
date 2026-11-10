@@ -4,7 +4,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../supabaseclient.js";
 import {
   getMyRoadmaps,
-  getProgress,
+  getFullProgress,
   lessonKind,
   unlockedStageIds,
 } from "../progress.js";
@@ -204,7 +204,7 @@ export default function LessonPage() {
 
   useEffect(() => {
     let off = false;
-    Promise.all([getMyRoadmaps(), getProgress()]).then(
+    Promise.all([getMyRoadmaps(), getFullProgress()]).then(
       ([roadmaps, progress]) => {
         if (!off) setCourse({ roadmaps, progress, ready: true });
       },
@@ -309,8 +309,10 @@ export default function LessonPage() {
 
   const next = idx >= 0 && idx < list.length - 1 ? list[idx + 1] : null;
 
-  const done = new Set(Object.keys(course.progress).map(String));
-
+  const done = new Set([
+    ...Object.keys(course.progress).map(String),
+    ...passedIds.filter((k) => k.startsWith("lab:")).map((k) => k.slice(4)),
+  ]);
   let nextLink;
   if (!direct && partIdx < PARTS.length - 1) {
     nextLink = {
