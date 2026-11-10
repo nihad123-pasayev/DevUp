@@ -5,7 +5,7 @@ import { supabase } from "../supabaseclient.js";
 import "./Dashboard.css";
 import {
   getMyRoadmaps,
-  getProgress,
+  getFullProgress,
   getStreak,
   fieldStats,
   nextLesson,
@@ -328,7 +328,7 @@ export default function DashboardPage() {
   }, [toDelete, saving]);
   useEffect(() => {
     if (!user) return;
-    Promise.all([getMyRoadmaps(), getProgress(), getStreak()]).then(
+    Promise.all([getMyRoadmaps(), getFullProgress(), getStreak()]).then(
       ([r, p, s]) => {
         setRoadmaps(r);
         setProgress(p);
