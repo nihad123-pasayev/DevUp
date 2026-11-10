@@ -253,20 +253,6 @@ const components = {
       <table>{children}</table>
     </div>
   ),
-  // Video iframe-lərini tam çərçivəyə oturdan yeni render qaydası:
-  // Video iframe-lərini tam çərçivəyə oturdan yenilənmiş render qaydası:
-  iframe: ({ className, ...props }) => {
-    // Playground içindəki preview iframe-lərinə toxunmuruq
-    if (className === "lc-preview") {
-      return <iframe className={className} {...props} />;
-    }
-
-    return (
-      <div className="lc-video-container">
-        <iframe className={className} {...props} />
-      </div>
-    );
-  },
 };
 
 // "[CODE_PLAYGROUND]" + kod bloku -> interaktiv blok

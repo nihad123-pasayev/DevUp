@@ -381,24 +381,3 @@
   text-align: center;
   flex: 1;
 }
-/* Responsive Video Container (16:9 nisbətində tam çərçivə) */
-.lc-video-container {
-  position: relative;
-  width: 100%;
-  padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
-  height: 0;
-  overflow: hidden;
-  border-radius: 12px;
-  background: #0f1a2e;
-  margin: 12px 0;
-}
-
-.lc-video-container iframe {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100% !important;
-  height: 100% !important;
-  border: 0;
-  border-radius: 12px;
-}
