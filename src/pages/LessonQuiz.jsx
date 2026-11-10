@@ -119,12 +119,7 @@ export default function LessonQuiz({
         )}
         <div className="lq-actions">
           <button type="button" className="lq-btn is-primary" onClick={start}>
-            {passed ? "Retry quiz" : "Try again"}
-          </button>
-        </div>
-        <div className="lq-actions">
-          <button type="button" className="lq-btn is-primary" onClick={start}>
-            Start quiz
+            {passed ? "Retry quiz" : "Start quiz"}
           </button>
         </div>
       </div>
@@ -194,7 +189,7 @@ export default function LessonQuiz({
 
         <div className="lq-actions">
           <button type="button" className="lq-btn is-primary" onClick={start}>
-            Try again
+            {pass ? "Retry quiz" : "Try again"}
           </button>
         </div>
       </div>
