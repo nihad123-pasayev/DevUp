@@ -487,6 +487,8 @@ function EntryPage() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    localStorage.removeItem("lp-quiz-passed");
+    localStorage.removeItem("lp-owner");
     setConfirmLogout(false);
   };
 

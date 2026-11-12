@@ -204,9 +204,31 @@ export function localDoneIds() {
 }
 
 // Bazadakı irəliləyiş + bu cihazda tamamlananlar
+const OWNER_KEY = "lp-owner";
+
+// localStorage-dakı işarələr başqa hesaba aiddirsə təmizlə
+function claimLocalProgress(uid) {
+  try {
+    const owner = localStorage.getItem(OWNER_KEY);
+    if (owner && owner !== uid) localStorage.removeItem("lp-quiz-passed");
+    localStorage.setItem(OWNER_KEY, uid);
+  } catch {
+    /* localStorage əlçatmazdır */
+  }
+}
+
+// Bazadakı irəliləyiş + bu cihazda bu hesabın tamamladıqları (bazaya da yazılır)
 export async function getFullProgress() {
-  const progress = await getProgress();
-  const merged = { ...(progress || {}) };
-  for (const id of localDoneIds()) merged[id] = "completed";
+  const uid = await getUserId();
+  if (!uid) return {};
+
+  claimLocalProgress(uid);
+
+  const merged = { ...(await getProgress()) };
+  const pending = localDoneIds().filter((id) => !merged[id]);
+
+  pending.forEach((id) => (merged[id] = "completed"));
+  await Promise.all(pending.map((id) => markLessonComplete(id)));
+
   return merged;
 }
