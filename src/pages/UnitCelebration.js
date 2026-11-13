@@ -5,7 +5,7 @@ const COLORS = ["#0B72F5", "#162136", "#5AA9FF", "#FFFFFF", "#1B7F4B"];
 export function playCelebration() {
   // səs
   try {
-    const sound = new Audio("/public/sounds/success.mp3");
+    const sound = new Audio("/sounds/success.mp3");
     sound.volume = 0.7;
     sound.play().catch((err) => console.warn("Sound failed:", err.name, err.message));
   } catch {
