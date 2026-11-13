@@ -12,6 +12,7 @@ import LessonContent from "./LessonContent.jsx";
 import LessonQuiz from "./LessonQuiz.jsx";
 import LessonLab from "./LessonLab.jsx";
 import UnitQuiz from "./UnitQuiz.jsx";
+import { playCelebration } from "./UnitCelebration.js";
 
 const PARTS = [
   { id: "theory", label: "Theory" },
@@ -162,6 +163,7 @@ export default function LessonPage() {
   const [quizActive, setQuizActive] = useState(false);
   const [userName, setUserName] = useState("");
   const [celebrate, setCelebrate] = useState("");
+  const [unitDone, setUnitDone] = useState(false);
 
   // İstifadəçinin adı (quiz suallarında {name} yerinə yazılır)
   useEffect(() => {
@@ -220,6 +222,12 @@ export default function LessonPage() {
     const t = setTimeout(() => setCelebrate(""), 5000);
     return () => clearTimeout(t);
   }, [celebrate]);
+  // "Unit bitdi" pəncərəsi 5 saniyəyə bağlanır
+  useEffect(() => {
+    if (!unitDone) return undefined;
+    const t = setTimeout(() => setUnitDone(false), 5000);
+    return () => clearTimeout(t);
+  }, [unitDone]);
 
   useEffect(() => {
     let off = false;
@@ -590,13 +598,19 @@ export default function LessonPage() {
               current !== "theory" &&
               info &&
               !(current === "lab" && hasLab) &&
-                            (current === "quiz" && hasQuiz ? (
+              (current === "quiz" && hasQuiz ? (
                 direct ? (
                   <UnitQuiz
                     key={id}
                     questions={content.quiz}
                     passed={quizPassed}
-                    onPassed={() => markPassed(id)}
+                    onPassed={() => {
+                      if (!quizPassed) {
+                        setUnitDone(true);
+                        playCelebration();
+                      }
+                      markPassed(id);
+                    }}
                     onContinue={() => navigate(nextLink.to)}
                     onActive={setQuizActive}
                   />
@@ -725,6 +739,47 @@ export default function LessonPage() {
               className="lp-btn is-primary"
               to={nextLink.to}
               onClick={() => setCelebrate("")}
+            >
+              {nextLink.label}
+              <Arrow />
+            </Link>
+            <span className="lp-done-bar" aria-hidden="true" />
+          </div>
+        </div>
+      )}
+            {unitDone && (
+        <div
+          className="lp-done"
+          role="status"
+          aria-live="polite"
+          onClick={() => setUnitDone(false)}
+        >
+          <div className="lp-done-card" onClick={(e) => e.stopPropagation()}>
+            <span className="lp-done-icon">
+              <svg
+                width="32"
+                height="32"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M5 12l5 5 9-10" />
+              </svg>
+            </span>
+            <h2>{next ? "Quiz passed!" : "Unit completed!"}</h2>
+            <p>
+              {next
+                ? "You passed the unit quiz."
+                : `You completed ${stageName ? `“${stageName}”` : "this unit"}. Great work!`}
+            </p>
+            <Link
+              className="lp-btn is-primary"
+              to={nextLink.to}
+              onClick={() => setUnitDone(false)}
             >
               {nextLink.label}
               <Arrow />
