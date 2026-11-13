@@ -1,12 +1,19 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./UnitQuiz.css";
 
 const LETTERS = ["A", "B", "C", "D", "E", "F"];
+
+function formatTime(totalSeconds) {
+  const m = Math.floor(totalSeconds / 60);
+  const s = totalSeconds % 60;
+  return String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+}
 
 export default function UnitQuiz({
   questions = [],
   partSize = 10,
   passPercent = 70,
+  timeLimitMinutes = 60,
   passed = false,
   onPassed,
   onContinue,
@@ -14,19 +21,96 @@ export default function UnitQuiz({
 }) {
   const total = questions.length;
   const partCount = Math.ceil(total / partSize);
+  const limitSeconds = timeLimitMinutes * 60;
 
   const [answers, setAnswers] = useState({});
   const [partIndex, setPartIndex] = useState(0);
   const [result, setResult] = useState(null);
   const [showReview, setShowReview] = useState(false);
   const [retaking, setRetaking] = useState(false);
+  const [started, setStarted] = useState(false);
+  const [endAt, setEndAt] = useState(0);
+  const [secondsLeft, setSecondsLeft] = useState(limitSeconds);
+
+  const answersRef = useRef({});
+  const finishRef = useRef(null);
+  const doneRef = useRef(false);
 
   const answeredTotal = Object.keys(answers).length;
+  const needed = Math.ceil((passPercent * total) / 100);
+  const timeLabel = timeLimitMinutes === 60 ? "1 hour" : `${timeLimitMinutes} minutes`;
+
+  function scrollTop() {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function startQuiz() {
+    setAnswers({});
+    setPartIndex(0);
+    setResult(null);
+    setShowReview(false);
+    setSecondsLeft(limitSeconds);
+    setEndAt(Date.now() + limitSeconds * 1000);
+    doneRef.current = false;
+    setStarted(true);
+    scrollTop();
+  }
+
+  function finish(timeUp) {
+    if (doneRef.current) return;
+    doneRef.current = true;
+    const current = answersRef.current;
+    let score = 0;
+    questions.forEach((item, i) => {
+      if (current[i] === item.answer) score += 1;
+    });
+    const percent = Math.round((score / total) * 100);
+    const didPass = score * 100 >= passPercent * total;
+    setResult({ score, percent, passed: didPass, timeUp });
+    setShowReview(false);
+    scrollTop();
+    if (didPass && onPassed) onPassed({ score, total, percent });
+  }
+
+  function retry() {
+    setAnswers({});
+    setResult(null);
+    setShowReview(false);
+    setPartIndex(0);
+    setStarted(false);
+    scrollTop();
+  }
+
+  function choose(qIndex, optionIndex) {
+    setAnswers((prev) => ({ ...prev, [qIndex]: optionIndex }));
+  }
+
+  function goToPart(index) {
+    setPartIndex(index);
+    scrollTop();
+  }
+
+  // ən son cavabları və finish funksiyasını taymer üçün saxla
+  useEffect(() => {
+    answersRef.current = answers;
+    finishRef.current = finish;
+  });
+
+  // geri sayım: vaxt bitəndə avtomatik yoxlanır
+  useEffect(() => {
+    if (!started || result) return undefined;
+    const timer = setInterval(() => {
+      const left = Math.max(0, Math.ceil((endAt - Date.now()) / 1000));
+      setSecondsLeft(left);
+      if (left === 0 && finishRef.current) finishRef.current(true);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [started, result, endAt]);
 
   // LessonPage: quiz davam edərkən səhifədən çıxışda xəbərdarlıq üçün
   useEffect(() => {
-    if (onActive) onActive(answeredTotal > 0 && !result);
-  }, [answeredTotal, result, onActive]);
+    if (onActive) onActive(started && !result);
+  }, [started, result, onActive]);
 
   useEffect(() => {
     return () => {
@@ -39,7 +123,7 @@ export default function UnitQuiz({
   }
 
   /* ---------- ARTIQ KEÇİLİB ---------- */
-  if (passed && !retaking && !result) {
+  if (passed && !retaking && !started && !result) {
     return (
       <div className="uq">
         <div className="uq-result uq-result--pass">
@@ -61,46 +145,32 @@ export default function UnitQuiz({
     );
   }
 
-  const start = partIndex * partSize;
-  const end = Math.min(start + partSize, total);
-  const partQuestions = questions.slice(start, end);
-  const isLastPart = partIndex === partCount - 1;
-  const partDone = partQuestions.every((_, i) => answers[start + i] !== undefined);
-  const allDone = answeredTotal === total;
-  const needed = Math.ceil((passPercent * total) / 100);
-
-  function scrollTop() {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
-  function choose(qIndex, optionIndex) {
-    setAnswers((prev) => ({ ...prev, [qIndex]: optionIndex }));
-  }
-
-  function goToPart(index) {
-    setPartIndex(index);
-    scrollTop();
-  }
-
-  function checkAnswers() {
-    let score = 0;
-    questions.forEach((item, i) => {
-      if (answers[i] === item.answer) score += 1;
-    });
-    const percent = Math.round((score / total) * 100);
-    const didPass = score * 100 >= passPercent * total;
-    setResult({ score, percent, passed: didPass });
-    setShowReview(false);
-    scrollTop();
-    if (didPass && onPassed) onPassed({ score, total, percent });
-  }
-
-  function retry() {
-    setAnswers({});
-    setResult(null);
-    setShowReview(false);
-    setPartIndex(0);
-    scrollTop();
+  /* ---------- BAŞLANĞIC EKRANI ---------- */
+  if (!started && !result) {
+    return (
+      <div className="uq">
+        <div className="uq-start">
+          <h2 className="uq-start-title">Unit quiz</h2>
+          <ul className="uq-rules">
+            <li>
+              <strong>{total} questions</strong> in {partCount} parts
+            </li>
+            <li>
+              <strong>{timeLabel}</strong> in total. The timer starts when you press the button, and
+              your answers are checked automatically when time runs out
+            </li>
+            <li>
+              Pass mark: <strong>{passPercent}%</strong> ({needed} of {total} correct answers)
+            </li>
+            <li>Unanswered questions count as incorrect</li>
+            <li>If you leave this page during the quiz, your answers will be lost</li>
+          </ul>
+          <button type="button" className="uq-btn uq-btn--primary" onClick={startQuiz}>
+            Start quiz
+          </button>
+        </div>
+      </div>
+    );
   }
 
   /* ---------- NƏTİCƏ ---------- */
@@ -112,6 +182,9 @@ export default function UnitQuiz({
             {result.score} / {total}
           </p>
           <h2 className="uq-result-title">{result.passed ? "You passed" : "Not passed yet"}</h2>
+          {result.timeUp && (
+            <p className="uq-result-text">Time is up. Your answers were checked automatically.</p>
+          )}
           <p className="uq-result-text">
             {result.passed
               ? `You scored ${result.percent}%. The pass mark is ${passPercent}%, so the next unit is unlocked.`
@@ -173,6 +246,13 @@ export default function UnitQuiz({
   }
 
   /* ---------- SUALLAR ---------- */
+  const start = partIndex * partSize;
+  const end = Math.min(start + partSize, total);
+  const partQuestions = questions.slice(start, end);
+  const isLastPart = partIndex === partCount - 1;
+  const partDone = partQuestions.every((_, i) => answers[start + i] !== undefined);
+  const allDone = answeredTotal === total;
+
   return (
     <div className="uq">
       <div className="uq-head">
@@ -180,9 +260,18 @@ export default function UnitQuiz({
           <h2 className="uq-part">
             Part {partIndex + 1} of {partCount}
           </h2>
-          <span className="uq-count">
-            {answeredTotal} / {total} answered
-          </span>
+          <div className="uq-head-right">
+            <span className="uq-count">
+              {answeredTotal} / {total} answered
+            </span>
+            <span
+              className={"uq-timer" + (secondsLeft <= 300 ? " uq-timer--low" : "")}
+              role="timer"
+              aria-label="Time left"
+            >
+              {formatTime(secondsLeft)}
+            </span>
+          </div>
         </div>
         <div className="uq-bar">
           <div className="uq-bar-fill" style={{ width: `${(answeredTotal / total) * 100}%` }} />
@@ -235,7 +324,11 @@ export default function UnitQuiz({
         </p>
         <div className="uq-actions">
           {partIndex > 0 && (
-            <button type="button" className="uq-btn uq-btn--ghost" onClick={() => goToPart(partIndex - 1)}>
+            <button
+              type="button"
+              className="uq-btn uq-btn--ghost"
+              onClick={() => goToPart(partIndex - 1)}
+            >
               Previous part
             </button>
           )}
@@ -254,7 +347,7 @@ export default function UnitQuiz({
               type="button"
               className="uq-btn uq-btn--primary"
               disabled={!allDone}
-              onClick={checkAnswers}
+              onClick={() => finish(false)}
             >
               Check answers
             </button>
