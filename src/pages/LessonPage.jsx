@@ -372,6 +372,20 @@ export default function LessonPage() {
       navigate(`/lessons/lesson/${id}/quiz`, { replace: true });
     }
   }, [loading, current, needsQuiz, id, navigate]);
+    // Unit quiz bu cihazda keçilib, amma bazaya yazılmayıbsa, bazaya yaz
+  useEffect(() => {
+    if (loading || !direct || kind !== "quiz") return;
+    if (!passedIds.includes(String(id))) return;
+    if (course.progress[id] === "completed") return;
+    markLessonComplete(id).then((ok) => {
+      if (ok) {
+        setCourse((c) => ({
+          ...c,
+          progress: { ...c.progress, [id]: "completed" },
+        }));
+      }
+    });
+  }, [loading, direct, kind, passedIds, id, course.progress]);
 
   // Quiz davam edərkən: səhifəni bağlama/yeniləmə və brauzerin "geri" düyməsi üçün xəbərdarlıq
   useEffect(() => {
