@@ -7,6 +7,7 @@ import {
   getFullProgress,
   lessonKind,
   unlockedStageIds,
+  markLessonComplete,
 } from "../progress.js";
 import LessonContent from "./LessonContent.jsx";
 import LessonQuiz from "./LessonQuiz.jsx";
@@ -351,7 +352,8 @@ export default function LessonPage() {
         : null;
   const hasQuiz = Array.isArray(content?.quiz) && content.quiz.length > 0;
   // Quiz-i keçməyibsə "davam et" bloklanır
-  const quizPassed = passedIds.includes(String(id));
+  const quizPassed =
+    passedIds.includes(String(id)) || course.progress[id] === "completed";
   const needsQuiz = hasQuiz && !quizPassed;
   const quizBlocked = current === "quiz" && needsQuiz;
 
@@ -604,12 +606,19 @@ export default function LessonPage() {
                     key={id}
                     questions={content.quiz}
                     passed={quizPassed}
-                    onPassed={() => {
+                    onPassed={async () => {
                       if (!quizPassed) {
                         setUnitDone(true);
                         playCelebration();
                       }
                       markPassed(id);
+                      const ok = await markLessonComplete(id);
+                      if (ok) {
+                        setCourse((c) => ({
+                          ...c,
+                          progress: { ...c.progress, [id]: "completed" },
+                        }));
+                      }
                     }}
                     onContinue={() => navigate(nextLink.to)}
                     onActive={setQuizActive}
@@ -747,7 +756,7 @@ export default function LessonPage() {
           </div>
         </div>
       )}
-            {unitDone && (
+      {unitDone && (
         <div
           className="lp-done"
           role="status"
