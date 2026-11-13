@@ -11,6 +11,7 @@ import {
 import LessonContent from "./LessonContent.jsx";
 import LessonQuiz from "./LessonQuiz.jsx";
 import LessonLab from "./LessonLab.jsx";
+import UnitQuiz from "./UnitQuiz.jsx";
 
 const PARTS = [
   { id: "theory", label: "Theory" },
@@ -589,17 +590,28 @@ export default function LessonPage() {
               current !== "theory" &&
               info &&
               !(current === "lab" && hasLab) &&
-              (current === "quiz" && hasQuiz ? (
-                <article className="lp-card">
-                  <LessonQuiz
+                            (current === "quiz" && hasQuiz ? (
+                direct ? (
+                  <UnitQuiz
                     key={id}
-                    bank={content.quiz}
+                    questions={content.quiz}
                     passed={quizPassed}
-                    onPass={() => markPassed(id)}
-                    userName={userName}
+                    onPassed={() => markPassed(id)}
+                    onContinue={() => navigate(nextLink.to)}
                     onActive={setQuizActive}
                   />
-                </article>
+                ) : (
+                  <article className="lp-card">
+                    <LessonQuiz
+                      key={id}
+                      bank={content.quiz}
+                      passed={quizPassed}
+                      onPass={() => markPassed(id)}
+                      userName={userName}
+                      onActive={setQuizActive}
+                    />
+                  </article>
+                )
               ) : partText ? (
                 <article className="lp-card">
                   <LessonContent key={id + "-" + current} text={partText} />
