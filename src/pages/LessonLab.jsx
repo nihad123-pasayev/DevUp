@@ -150,7 +150,8 @@ export default function LessonLab({ data, done, onComplete }) {
     const problems = [];
 
     if (isForm) {
-      for (const f of step.fields) {
+      // DƏYİŞİKLİK BURADADIR: step.fields undefined ola bilər deyə (step.fields || []) etdik
+      for (const f of (step.fields || [])) {
         const v = String(answers[index + ":" + f.id] ?? "").trim();
         let ok;
         if (f.kind === "select") {
@@ -162,13 +163,15 @@ export default function LessonLab({ data, done, onComplete }) {
         if (!ok) problems.push(f.fail);
       }
     } else {
-      const r = await runInWorker(codes[index], step.checks.map((c) => c.test));
+      // DƏYİŞİKLİK BURADADIR: step.checks undefined ola bilər deyə (step.checks || []) etdik
+      const checks = step.checks || []; 
+      const r = await runInWorker(codes[index], checks.map((c) => c.test));
       if (!aliveRef.current) return;
       setOut({ lines: r.lines, error: r.error || "" });
       if (r.error) {
         problems.push("There is a problem in your code: " + r.error);
       } else {
-        step.checks.forEach((c, i) => {
+        checks.forEach((c, i) => {
           if (!r.results[i]) problems.push(c.fail);
         });
       }
@@ -207,7 +210,8 @@ export default function LessonLab({ data, done, onComplete }) {
         {isForm ? (
           <div className="ll-form">
             <h3>Your answers</h3>
-            {step.fields.map((f) => {
+            {/* DƏYİŞİKLİK BURADADIR: map funksiyasını təhlükəsiz etdik */}
+            {(step.fields || []).map((f) => {
               const key = index + ":" + f.id;
               return (
                 <label key={key} className="ll-field">
