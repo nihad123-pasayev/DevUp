@@ -219,14 +219,25 @@ export default function LessonLab({ data, done, onComplete }) {
         return;
       }
 
+     // ... əvvəlki kodlar ...
       if (currentTask && currentTask.expected_commands && currentTask.expected_commands.includes(cmd)) {
-        // Düzgün komanda
         finishTerminalTask(currentTask, cmd);
       } else {
-        // Səhv komanda
-        setTermHistory(prev => [...prev, { in: cmd, out: `bash: ${cmd}: command not found or incorrect for this task`, err: true }]);
+        // YENİLİK: Siyahını JSON-dan (data.known_commands) oxuyuruq
+        const baseCmd = cmd.split(/\s+/)[0]; 
+        const knownCommands = data?.known_commands || {};
+        let errorOutput = "";
+
+        if (knownCommands[baseCmd]) {
+          errorOutput = `Incorrect command for this task.\nInfo: '${baseCmd}' is a real command used to ${knownCommands[baseCmd]}. Check the instructions and try again.`;
+        } else {
+          errorOutput = `bash: ${baseCmd}: command not found`;
+        }
+
+        setTermHistory(prev => [...prev, { in: cmd, out: errorOutput, err: true }]);
         setTermInput("");
       }
+// ...
     }
   }
   // ==========================
