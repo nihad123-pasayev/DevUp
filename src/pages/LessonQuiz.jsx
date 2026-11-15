@@ -37,6 +37,19 @@ function formatTime(sec) {
   return m + ":" + s;
 }
 
+function renderQuestion(text) {
+  const parts = String(text).split(/```(?:\w+)?\n?([\s\S]*?)```/g);
+  return parts.map((part, idx) =>
+    idx % 2 === 1 ? (
+      <pre key={idx} className="lq-code">
+        <code>{part.trim()}</code>
+      </pre>
+    ) : (
+      part && <span key={idx}>{part.trim()}</span>
+    ),
+  );
+}
+
 export default function LessonQuiz({
   bank,
   passed,
@@ -168,9 +181,9 @@ export default function LessonQuiz({
           <ul>
             {rows.map((r, i) => (
               <li key={i} className={r.ok ? "is-ok" : "is-no"}>
-                <p className="lq-missed-q">
-                  {i + 1}. {r.q}
-                </p>
+                <div className="lq-missed-q">
+                  {i + 1}. {renderQuestion(r.q)}
+                </div>
                 {!r.ok && (
                   <p>
                     <span className="lq-tag is-wrong">Your answer</span>{" "}
@@ -229,7 +242,7 @@ export default function LessonQuiz({
       </div>
 
       <fieldset className="lq-field">
-        <legend>{item.q}</legend>
+        <legend>{renderQuestion(item.q)}</legend>
         {item.options.map((o, i) => (
           <label
             key={index + "-" + i}

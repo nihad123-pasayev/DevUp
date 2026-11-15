@@ -9,6 +9,19 @@ function formatTime(totalSeconds) {
   return String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
 }
 
+function renderQuestion(text) {
+  const parts = String(text).split(/```(?:\w+)?\n?([\s\S]*?)```/g);
+  return parts.map((part, idx) =>
+    idx % 2 === 1 ? (
+      <pre key={idx} className="lq-code">
+        <code>{part.trim()}</code>
+      </pre>
+    ) : (
+      part && <span key={idx}>{part.trim()}</span>
+    ),
+  );
+}
+
 export default function UnitQuiz({
   questions = [],
   partSize = 10,
@@ -216,10 +229,10 @@ export default function UnitQuiz({
           <div className="uq-review">
             {questions.map((item, qIndex) => (
               <div key={qIndex} className="uq-question">
-                <p className="uq-q-text">
+                <div className="uq-q-text">
                   <span className="uq-q-num">{qIndex + 1}</span>
-                  {item.q}
-                </p>
+                  {renderQuestion(item.q)}
+                </div>
                 <div className="uq-options">
                   {item.options.map((option, o) => {
                     let state = "";
@@ -287,10 +300,10 @@ export default function UnitQuiz({
             role="radiogroup"
             aria-labelledby={`uq-q-${qIndex}`}
           >
-            <p className="uq-q-text" id={`uq-q-${qIndex}`}>
+            <div className="uq-q-text" id={`uq-q-${qIndex}`}>
               <span className="uq-q-num">{qIndex + 1}</span>
-              {item.q}
-            </p>
+              {renderQuestion(item.q)}
+            </div>
             <div className="uq-options">
               {item.options.map((option, o) => (
                 <label
