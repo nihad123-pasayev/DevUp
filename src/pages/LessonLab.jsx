@@ -36,8 +36,27 @@ const BOOT = `(function () {
 })();
 `;
 
-function highlight(code) {
-  return Prism.highlight(code, Prism.languages.javascript, "javascript");
+function highlightCode(code, lang) {
+  const isHtml = lang === "html";
+  const grammar = isHtml
+    ? (Prism.languages.markup || Prism.languages.html || Prism.languages.javascript)
+    : Prism.languages.javascript;
+  const name = isHtml ? "markup" : "javascript";
+  return Prism.highlight(code, grammar, name);
+}
+
+function runHtmlChecks(code, tests) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(code, "text/html");
+  const results = tests.map((t) => {
+    try {
+      const fn = new Function("doc", "code", "return !!(" + t + ");");
+      return fn(doc, code);
+    } catch {
+      return false;
+    }
+  });
+  return { lines: [], results };
 }
 
 function runInWorker(code, tests) {
@@ -104,6 +123,7 @@ export default function LessonLab({ data, done, onComplete }) {
   const [passed, setPassed] = useState(() => steps.map(() => !!done));
   const [fails, setFails] = useState(() => steps.map(() => 0));
   const [out, setOut] = useState({ lines: [], error: "" });
+  const [htmlPreview, setHtmlPreview] = useState("");
   const [msg, setMsg] = useState(null);
   const [hint, setHint] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -129,7 +149,10 @@ export default function LessonLab({ data, done, onComplete }) {
 
   const step = steps[index];
   const isForm = step.type === "form";
-  const isTerminal = step.type === "terminal"; // Yeni lab növünü tanıyırıq
+  const isTerminal = step.type === "terminal";
+  const stepLang = (step.language || "javascript").toLowerCase();
+  const isHtml = stepLang === "html";
+  const langLabel = stepLang === "html" ? "HTML" : stepLang === "css" ? "CSS" : "JavaScript";
 
   function go(i) {
     clearTimeout(timerRef.current);
@@ -137,8 +160,8 @@ export default function LessonLab({ data, done, onComplete }) {
     setMsg(null);
     setHint(false);
     setOut({ lines: [], error: "" });
-    
-    // Səhifə (step) dəyişəndə terminalı sıfırlayırıq
+    setHtmlPreview("");
+
     setTermHistory([]);
     setTermInput("");
     setTermTaskIdx(0);
@@ -149,6 +172,10 @@ export default function LessonLab({ data, done, onComplete }) {
   }
 
   async function run() {
+    if (isHtml) {
+      setHtmlPreview(codes[index]);
+      return;
+    }
     const r = await runInWorker(codes[index], []);
     if (aliveRef.current) setOut({ lines: r.lines, error: r.error || "" });
   }
@@ -163,7 +190,6 @@ export default function LessonLab({ data, done, onComplete }) {
     setTermTaskIdx(nextTaskIdx);
 
     if (nextTaskIdx >= step.tasks.length) {
-      // Bütün terminal tapşırıqları bitdi
       const nextPassed = passed.map((p, i) => (i === index ? true : p));
       setPassed(nextPassed);
       const finished = nextPassed.every(Boolean);
@@ -179,19 +205,17 @@ export default function LessonLab({ data, done, onComplete }) {
   function handleTermKey(e) {
     const currentTask = step.tasks[termTaskIdx];
 
-    // Tab qısayolu yoxlaması
-    if (e.key === 'Tab') {
+    if (e.key === "Tab") {
       e.preventDefault();
-      if (currentTask && currentTask.action === 'tab_completion') {
+      if (currentTask && currentTask.action === "tab_completion") {
         finishTerminalTask(currentTask, termInput + " [Tab]");
       }
       return;
     }
 
-    // Yuxarı ox qısayolu yoxlaması
-    if (e.key === 'ArrowUp') {
+    if (e.key === "ArrowUp") {
       e.preventDefault();
-      if (currentTask && currentTask.action === 'command_history') {
+      if (currentTask && currentTask.action === "command_history") {
         finishTerminalTask(currentTask, "[Arrow Up]");
       } else if (termHistory.length > 0) {
         setTermInput(termHistory[termHistory.length - 1].in);
@@ -199,16 +223,14 @@ export default function LessonLab({ data, done, onComplete }) {
       return;
     }
 
-    // Ctrl+C yoxlaması
-    if (e.key === 'c' && e.ctrlKey) {
-      if (currentTask && currentTask.action === 'interrupt_command') {
+    if (e.key === "c" && e.ctrlKey) {
+      if (currentTask && currentTask.action === "interrupt_command") {
         e.preventDefault();
         finishTerminalTask(currentTask, "[Ctrl+C]");
       }
       return;
     }
 
-    // Komanda daxil ediləndə
     if (e.key === "Enter") {
       const cmd = termInput.trim();
       if (!cmd) return;
@@ -219,12 +241,10 @@ export default function LessonLab({ data, done, onComplete }) {
         return;
       }
 
-     // ... əvvəlki kodlar ...
       if (currentTask && currentTask.expected_commands && currentTask.expected_commands.includes(cmd)) {
         finishTerminalTask(currentTask, cmd);
       } else {
-        // YENİLİK: Siyahını JSON-dan (data.known_commands) oxuyuruq
-        const baseCmd = cmd.split(/\s+/)[0]; 
+        const baseCmd = cmd.split(/\s+/)[0];
         const knownCommands = data?.known_commands || {};
         let errorOutput = "";
 
@@ -234,16 +254,15 @@ export default function LessonLab({ data, done, onComplete }) {
           errorOutput = `bash: ${baseCmd}: command not found`;
         }
 
-        setTermHistory(prev => [...prev, { in: cmd, out: errorOutput, err: true }]);
+        setTermHistory((prev) => [...prev, { in: cmd, out: errorOutput, err: true }]);
         setTermInput("");
       }
-// ...
     }
   }
   // ==========================
 
   async function check() {
-    if (busy || isTerminal) return; // Terminalda "Check" düyməsinə ehtiyac yoxdur, Enter basanda yoxlayır.
+    if (busy || isTerminal) return;
     setBusy(true);
     clearTimeout(timerRef.current);
     const problems = [];
@@ -260,8 +279,15 @@ export default function LessonLab({ data, done, onComplete }) {
         }
         if (!ok) problems.push(f.fail);
       }
+    } else if (isHtml) {
+      const checks = step.checks || [];
+      setHtmlPreview(codes[index]);
+      const r = runHtmlChecks(codes[index], checks.map((c) => c.test));
+      checks.forEach((c, i) => {
+        if (!r.results[i]) problems.push(c.fail);
+      });
     } else {
-      const checks = step.checks || []; 
+      const checks = step.checks || [];
       const r = await runInWorker(codes[index], checks.map((c) => c.test));
       if (!aliveRef.current) return;
       setOut({ lines: r.lines, error: r.error || "" });
@@ -314,9 +340,10 @@ export default function LessonLab({ data, done, onComplete }) {
                   <span>{f.label}</span>
                   {f.kind === "select" ? (
                     <select value={answers[key] ?? ""} onChange={(e) => setAnswer(key, e.target.value)}>
+                      <option value="">Choose...</option>
                       {f.options.map((o) => (
                         <option key={o} value={o}>
-                          {o || "Choose..."}
+                          {o}
                         </option>
                       ))}
                     </select>
@@ -333,7 +360,6 @@ export default function LessonLab({ data, done, onComplete }) {
             })}
           </div>
         ) : isTerminal ? (
-          // YENİ: Qara Terminal Ekranı UI
           <div className="ll-terminal" style={{
             backgroundColor: "#1e1e1e", color: "#d4d4d4",
             padding: "16px", borderRadius: "8px",
@@ -382,7 +408,7 @@ export default function LessonLab({ data, done, onComplete }) {
         ) : (
           <div className="ll-code">
             <div className="ll-bar">
-              <span className="ll-lang">JavaScript</span>
+              <span className="ll-lang">{langLabel}</span>
               <div className="ll-bar-actions">
                 <button type="button" className="ll-tool" onClick={() => setCode(step.starter || "")}>
                   Reset
@@ -404,7 +430,7 @@ export default function LessonLab({ data, done, onComplete }) {
                 textareaId={editorId}
                 value={codes[index]}
                 onValueChange={setCode}
-                highlight={highlight}
+                highlight={(code) => highlightCode(code, stepLang)}
                 padding={16}
                 tabSize={2}
                 textareaClassName="ll-textarea"
@@ -417,17 +443,32 @@ export default function LessonLab({ data, done, onComplete }) {
             </div>
 
             <div className="ll-out" tabIndex={0} role="log" aria-label="Output">
-              <span className="ll-out-label">Output</span>
-              {out.lines.length === 0 && !out.error ? (
-                <p className="ll-out-empty">Press Run to see the result here.</p>
+              <span className="ll-out-label">{isHtml ? "Preview" : "Output"}</span>
+              {isHtml ? (
+                htmlPreview ? (
+                  <iframe
+                    title="HTML Preview"
+                    srcDoc={htmlPreview}
+                    sandbox="allow-scripts"
+                    style={{ width: "100%", minHeight: "150px", border: "none", background: "#fff", borderRadius: "4px" }}
+                  />
+                ) : (
+                  <p className="ll-out-empty">Press Run to preview your HTML here.</p>
+                )
               ) : (
-                out.lines.map((l, i) => (
-                  <pre key={i} className={"ll-line is-" + l.kind}>
-                    {l.text}
-                  </pre>
-                ))
+                <>
+                  {out.lines.length === 0 && !out.error ? (
+                    <p className="ll-out-empty">Press Run to see the result here.</p>
+                  ) : (
+                    out.lines.map((l, i) => (
+                      <pre key={i} className={"ll-line is-" + l.kind}>
+                        {l.text}
+                      </pre>
+                    ))
+                  )}
+                  {out.error && <pre className="ll-line is-error">{out.error}</pre>}
+                </>
               )}
-              {out.error && <pre className="ll-line is-error">{out.error}</pre>}
             </div>
           </div>
         )}
@@ -460,7 +501,6 @@ export default function LessonLab({ data, done, onComplete }) {
         <h2>{step.title}</h2>
         <LessonContent key={"ll-text-" + index} text={step.text} />
 
-        {/* YENİ: Terminal tasklarının siyahısı sağ tərəfdə göstərilir */}
         {isTerminal && step.tasks && (
           <div style={{ marginTop: "24px", padding: "16px", backgroundColor: "rgba(0,0,0,0.03)", border: "1px solid rgba(0,0,0,0.1)", borderRadius: "8px" }}>
             <h3 style={{ margin: "0 0 12px 0", fontSize: "16px" }}>Tasks:</h3>
@@ -501,8 +541,7 @@ export default function LessonLab({ data, done, onComplete }) {
               Show solution
             </button>
           )}
-          
-          {/* Terminalda check düyməsi işləməz, çünki Enter basıldıqda dərhal yoxlanılır */}
+
           {!isTerminal && (
             <button type="button" className="ll-act is-primary" onClick={check} disabled={busy}>
               Check my answer
