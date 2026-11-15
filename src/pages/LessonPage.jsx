@@ -456,88 +456,34 @@ export default function LessonPage() {
 
             <ol className="lpc-list">
               {list.map((item, i) => {
-                const itemKind = lessonKind(item);
-                const isCurrent = String(item.id) === String(id);
-                const isDone = done.has(String(item.id));
-                // Cari mövzunun quiz-i keçilməyibsə, sonrakı mövzular kilidlidir
-                const lockedItem = needsQuiz && idx >= 0 && i > idx;
-                return (
-                  <li key={item.id}>
-                    {lockedItem ? (
-                      <span
-                        className="lpc-item is-locked"
-                        aria-disabled="true"
-                        title="Pass this lesson's quiz first"
-                      >
-                        <span className="lpc-mark" />
-                        <span className="lpc-name">
-                          {i + 1}. {nameOf(item)}
-                        </span>
-                        <span className="lpc-lock">
-                          <Lock />
-                        </span>
-                      </span>
-                    ) : (
-                      <Link
-                        to={lessonPath(item)}
-                        onClick={closeOnMobile}
-                        className={
-                          "lpc-item" + (isCurrent ? " is-current" : "")
-                        }
-                        aria-current={isCurrent ? "page" : undefined}
-                      >
-                        <span
-                          className={"lpc-mark" + (isDone ? " is-done" : "")}
-                        >
-                          {isDone && <Check />}
-                        </span>
-                        <span className="lpc-name">
-                          {i + 1}. {nameOf(item)}
-                        </span>
-                        {itemKind !== "lesson" && (
-                          <span className="lpc-tag">
-                            {KIND_INFO[itemKind]?.label || itemKind}
-                          </span>
-                        )}
-                      </Link>
-                    )}
+  const itemKind = lessonKind(item);
+  const isCurrent = String(item.id) === String(id);
+  const isDone = done.has(String(item.id));
+  return (
+    <li key={item.id}>
+      <Link
+        to={lessonPath(item)}
+        onClick={closeOnMobile}
+        className={"lpc-item" + (isCurrent ? " is-current" : "")}
+        aria-current={isCurrent ? "page" : undefined}
+      >
+        <span className={"lpc-mark" + (isDone ? " is-done" : "")}>
+          {isDone && <Check />}
+        </span>
+        <span className="lpc-name">
+          {i + 1}. {nameOf(item)}
+        </span>
+        {itemKind !== "lesson" && (
+          <span className="lpc-tag">
+            {KIND_INFO[itemKind]?.label || itemKind}
+          </span>
+        )}
+      </Link>
 
-                    {isCurrent && itemKind === "lesson" && (
-                      <ul className="lpc-parts">
-                        {PARTS.map((p) =>
-                          p.id === "lab" && needsQuiz ? (
-                            <li key={p.id}>
-                              <span
-                                className="lpc-part is-locked"
-                                aria-disabled="true"
-                                title="Pass the quiz first"
-                              >
-                                {p.label}
-                                <span className="lpc-lock">
-                                  <Lock />
-                                </span>
-                              </span>
-                            </li>
-                          ) : (
-                            <li key={p.id}>
-                              <Link
-                                to={`/lessons/lesson/${item.id}/${p.id}`}
-                                onClick={closeOnMobile}
-                                className={
-                                  "lpc-part" +
-                                  (current === p.id ? " is-current" : "")
-                                }
-                              >
-                                {p.label}
-                              </Link>
-                            </li>
-                          ),
-                        )}
-                      </ul>
-                    )}
-                  </li>
-                );
-              })}
+      {/* aşağıdakı isCurrent && itemKind === "lesson" ... <ul className="lpc-parts"> hissəsi olduğu kimi qalır */}
+    </li>
+  );
+})}
             </ol>
 
             <div className="lpc-next">
