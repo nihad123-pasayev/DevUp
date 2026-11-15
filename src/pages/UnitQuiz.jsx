@@ -2,6 +2,35 @@ import { useEffect, useRef, useState } from "react";
 import "./UnitQuiz.css";
 
 const LETTERS = ["A", "B", "C", "D", "E", "F"];
+const ROUND_COUNT = 25; // Bankdan hər cəhddə seçiləcək sual sayı (10 + 10 + 5)
+
+function shuffle(list) {
+  const a = [...list];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function makeRound(bank, count) {
+  return shuffle(bank)
+    .slice(0, count)
+    .map((item) => {
+      const opts = shuffle(
+        item.options.map((text, idx) => ({
+          text,
+          correct: idx === item.answer,
+        })),
+      );
+      return {
+        q: item.q,
+        why: item.why,
+        options: opts.map((o) => o.text),
+        answer: opts.findIndex((o) => o.correct),
+      };
+    });
+}
 
 function formatTime(totalSeconds) {
   const m = Math.floor(totalSeconds / 60);
@@ -25,6 +54,7 @@ function renderQuestion(text) {
 
 export default function UnitQuiz({
   questions = [],
+  roundSize = ROUND_COUNT,
   partSize = 10,
   passPercent = 70,
   timeLimitMinutes = 60,
@@ -33,10 +63,12 @@ export default function UnitQuiz({
   onContinue,
   onActive,
 }) {
-  const total = questions.length;
-  const partCount = Math.ceil(total / partSize);
+  const bankTotal = questions.length;
+  const activeCount = Math.min(bankTotal, roundSize);
+  const partCount = Math.ceil(activeCount / partSize);
   const limitSeconds = timeLimitMinutes * 60;
 
+  const [roundQuestions, setRoundQuestions] = useState([]);
   const [answers, setAnswers] = useState({});
   const [partIndex, setPartIndex] = useState(0);
   const [result, setResult] = useState(null);
@@ -47,9 +79,11 @@ export default function UnitQuiz({
   const [secondsLeft, setSecondsLeft] = useState(limitSeconds);
 
   const answersRef = useRef({});
+  const roundRef = useRef([]);
   const finishRef = useRef(null);
   const doneRef = useRef(false);
 
+  const total = roundQuestions.length || activeCount;
   const answeredTotal = Object.keys(answers).length;
   const needed = Math.ceil((passPercent * total) / 100);
   const timeLabel = timeLimitMinutes === 60 ? "1 hour" : `${timeLimitMinutes} minutes`;
@@ -59,6 +93,9 @@ export default function UnitQuiz({
   }
 
   function startQuiz() {
+    const picked = makeRound(questions, activeCount);
+    setRoundQuestions(picked);
+    roundRef.current = picked;
     setAnswers({});
     setPartIndex(0);
     setResult(null);
@@ -74,19 +111,23 @@ export default function UnitQuiz({
     if (doneRef.current) return;
     doneRef.current = true;
     const current = answersRef.current;
+    const activeList = roundRef.current;
     let score = 0;
-    questions.forEach((item, i) => {
+    activeList.forEach((item, i) => {
       if (current[i] === item.answer) score += 1;
     });
-    const percent = Math.round((score / total) * 100);
-    const didPass = score * 100 >= passPercent * total;
+    const count = activeList.length;
+    const percent = Math.round((score / count) * 100);
+    const didPass = score * 100 >= passPercent * count;
     setResult({ score, percent, passed: didPass, timeUp });
     setShowReview(false);
     scrollTop();
-    if (didPass && onPassed) onPassed({ score, total, percent });
+    if (didPass && onPassed) onPassed({ score, total: count, percent });
   }
 
   function retry() {
+    setRoundQuestions([]);
+    roundRef.current = [];
     setAnswers({});
     setResult(null);
     setShowReview(false);
@@ -132,7 +173,7 @@ export default function UnitQuiz({
     };
   }, [onActive]);
 
-  if (total === 0) {
+  if (bankTotal === 0) {
     return <p className="uq-empty">This quiz has no questions yet.</p>;
   }
 
@@ -167,14 +208,14 @@ export default function UnitQuiz({
           <h2 className="uq-start-title">Unit quiz</h2>
           <ul className="uq-rules">
             <li>
-              <strong>{total} questions</strong> in {partCount} parts
+              <strong>{activeCount} questions</strong> in {partCount} parts
             </li>
             <li>
               <strong>{timeLabel}</strong> in total. The timer starts when you press the button, and
               your answers are checked automatically when time runs out
             </li>
             <li>
-              Pass mark: <strong>{passPercent}%</strong> ({needed} of {total} correct answers)
+              Pass mark: <strong>{passPercent}%</strong> ({needed} of {activeCount} correct answers)
             </li>
             <li>Unanswered questions count as incorrect</li>
             <li>If you leave this page during the quiz, your answers will be lost</li>
@@ -228,7 +269,7 @@ export default function UnitQuiz({
 
         {showReview && (
           <div className="uq-review">
-            {questions.map((item, qIndex) => (
+            {roundQuestions.map((item, qIndex) => (
               <div key={qIndex} className="uq-question">
                 <div className="uq-q-text">
                   <span className="uq-q-num">{qIndex + 1}</span>
@@ -262,7 +303,7 @@ export default function UnitQuiz({
   /* ---------- SUALLAR ---------- */
   const start = partIndex * partSize;
   const end = Math.min(start + partSize, total);
-  const partQuestions = questions.slice(start, end);
+  const partQuestions = roundQuestions.slice(start, end);
   const isLastPart = partIndex === partCount - 1;
   const partDone = partQuestions.every((_, i) => answers[start + i] !== undefined);
   const allDone = answeredTotal === total;
