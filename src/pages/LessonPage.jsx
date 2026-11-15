@@ -459,48 +459,30 @@ export default function LessonPage() {
                 const itemKind = lessonKind(item);
                 const isCurrent = String(item.id) === String(id);
                 const isDone = done.has(String(item.id));
-                // Cari mövzunun quiz-i keçilməyibsə, sonrakı mövzular kilidlidir
-                const lockedItem = needsQuiz && idx >= 0 && i > idx;
                 return (
                   <li key={item.id}>
-                    {lockedItem ? (
+                    <Link
+                      to={lessonPath(item)}
+                      onClick={closeOnMobile}
+                      className={
+                        "lpc-item" + (isCurrent ? " is-current" : "")
+                      }
+                      aria-current={isCurrent ? "page" : undefined}
+                    >
                       <span
-                        className="lpc-item is-locked"
-                        aria-disabled="true"
-                        title="Pass this lesson's quiz first"
+                        className={"lpc-mark" + (isDone ? " is-done" : "")}
                       >
-                        <span className="lpc-mark" />
-                        <span className="lpc-name">
-                          {i + 1}. {nameOf(item)}
-                        </span>
-                        <span className="lpc-lock">
-                          <Lock />
-                        </span>
+                        {isDone && <Check />}
                       </span>
-                    ) : (
-                      <Link
-                        to={lessonPath(item)}
-                        onClick={closeOnMobile}
-                        className={
-                          "lpc-item" + (isCurrent ? " is-current" : "")
-                        }
-                        aria-current={isCurrent ? "page" : undefined}
-                      >
-                        <span
-                          className={"lpc-mark" + (isDone ? " is-done" : "")}
-                        >
-                          {isDone && <Check />}
+                      <span className="lpc-name">
+                        {i + 1}. {nameOf(item)}
+                      </span>
+                      {itemKind !== "lesson" && (
+                        <span className="lpc-tag">
+                          {KIND_INFO[itemKind]?.label || itemKind}
                         </span>
-                        <span className="lpc-name">
-                          {i + 1}. {nameOf(item)}
-                        </span>
-                        {itemKind !== "lesson" && (
-                          <span className="lpc-tag">
-                            {KIND_INFO[itemKind]?.label || itemKind}
-                          </span>
-                        )}
-                      </Link>
-                    )}
+                      )}
+                    </Link>
 
                     {isCurrent && itemKind === "lesson" && (
                       <ul className="lpc-parts">
