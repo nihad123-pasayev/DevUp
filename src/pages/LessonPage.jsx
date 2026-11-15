@@ -365,13 +365,8 @@ export default function LessonPage() {
 
   const theoryDone = passedIds.includes("theory:" + id);
   const theoryBlocked = current === "theory" && !direct && !theoryDone;
-  const blocked = quizBlocked || labBlocked || theoryBlocked;
-  // Quiz keçilməyibsə Lab-a ünvanla da girmək olmasın
-  useEffect(() => {
-    if (!loading && current === "lab" && needsQuiz) {
-      navigate(`/lessons/lesson/${id}/quiz`, { replace: true });
-    }
-  }, [loading, current, needsQuiz, id, navigate]);
+  const blocked = labBlocked || theoryBlocked;
+  
     // Unit quiz bu cihazda keçilib, amma bazaya yazılmayıbsa, bazaya yaz
   useEffect(() => {
     if (loading || !direct || kind !== "quiz") return;
@@ -482,38 +477,22 @@ export default function LessonPage() {
       </Link>
 
                     {isCurrent && itemKind === "lesson" && (
-                      <ul className="lpc-parts">
-                        {PARTS.map((p) =>
-                          p.id === "lab" && needsQuiz ? (
-                            <li key={p.id}>
-                              <span
-                                className="lpc-part is-locked"
-                                aria-disabled="true"
-                                title="Pass the quiz first"
-                              >
-                                {p.label}
-                                <span className="lpc-lock">
-                                  <Lock />
-                                </span>
-                              </span>
-                            </li>
-                          ) : (
-                            <li key={p.id}>
-                              <Link
-                                to={`/lessons/lesson/${item.id}/${p.id}`}
-                                onClick={closeOnMobile}
-                                className={
-                                  "lpc-part" +
-                                  (current === p.id ? " is-current" : "")
-                                }
-                              >
-                                {p.label}
-                              </Link>
-                            </li>
-                          ),
-                        )}
-                      </ul>
-                    )}
+        <ul className="lpc-parts">
+          {PARTS.map((p) => (
+            <li key={p.id}>
+              <Link
+                to={`/lessons/lesson/${item.id}/${p.id}`}
+                onClick={closeOnMobile}
+                className={
+                  "lpc-part" + (current === p.id ? " is-current" : "")
+                }
+              >
+                {p.label}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
                   </li>
                 );
               })}
