@@ -10,14 +10,15 @@ function formatTime(totalSeconds) {
 }
 
 function renderQuestion(text) {
-  const parts = String(text).split(/```(?:\w+)?\n?([\s\S]*?)```/g);
+  const normalized = String(text).replace(/\\n/g, "\n");
+  const parts = normalized.split(/```[a-zA-Z]*\s*([\s\S]*?)```/g);
   return parts.map((part, idx) =>
     idx % 2 === 1 ? (
       <pre key={idx} className="lq-code">
         <code>{part.trim()}</code>
       </pre>
     ) : (
-      part && <span key={idx}>{part.trim()}</span>
+      part.trim() && <span key={idx}>{part.trim()}</span>
     ),
   );
 }

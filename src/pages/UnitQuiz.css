@@ -297,10 +297,18 @@
   color: #c23b3b;
   border-color: #c23b3b;
 }
+
+.uq-q-text {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
 .lq-code {
-  display: block;
+  flex-basis: 100%;
   width: 100%;
-  margin: 12px 0 4px;
+  margin: 8px 0 4px;
   padding: 12px 14px;
   background: #0f172a;
   color: #e2e8f0;
