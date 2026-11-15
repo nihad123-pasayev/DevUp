@@ -456,12 +456,13 @@ export default function LessonPage() {
 
             <ol className="lpc-list">
               {list.map((item, i) => {
-  const itemKind = lessonKind(item);
-  const isCurrent = String(item.id) === String(id);
-  const isDone = done.has(String(item.id));
-  return (
-    <li key={item.id}>
-      <Link
+                const itemKind = lessonKind(item);
+                const isCurrent = String(item.id) === String(id);
+                const isDone = done.has(String(item.id));
+                // Cari mövzunun quiz-i keçilməyibsə, sonrakı mövzular kilidlidir
+                return (
+                  <li key={item.id}>
+                    <Link
         to={lessonPath(item)}
         onClick={closeOnMobile}
         className={"lpc-item" + (isCurrent ? " is-current" : "")}
@@ -480,10 +481,42 @@ export default function LessonPage() {
         )}
       </Link>
 
-      {/* aşağıdakı isCurrent && itemKind === "lesson" ... <ul className="lpc-parts"> hissəsi olduğu kimi qalır */}
-    </li>
-  );
-})}
+                    {isCurrent && itemKind === "lesson" && (
+                      <ul className="lpc-parts">
+                        {PARTS.map((p) =>
+                          p.id === "lab" && needsQuiz ? (
+                            <li key={p.id}>
+                              <span
+                                className="lpc-part is-locked"
+                                aria-disabled="true"
+                                title="Pass the quiz first"
+                              >
+                                {p.label}
+                                <span className="lpc-lock">
+                                  <Lock />
+                                </span>
+                              </span>
+                            </li>
+                          ) : (
+                            <li key={p.id}>
+                              <Link
+                                to={`/lessons/lesson/${item.id}/${p.id}`}
+                                onClick={closeOnMobile}
+                                className={
+                                  "lpc-part" +
+                                  (current === p.id ? " is-current" : "")
+                                }
+                              >
+                                {p.label}
+                              </Link>
+                            </li>
+                          ),
+                        )}
+                      </ul>
+                    )}
+                  </li>
+                );
+              })}
             </ol>
 
             <div className="lpc-next">
