@@ -16,6 +16,7 @@ import Certificates from "./pages/sidebarpages/Certificates.jsx";
 import Settings from "./pages/sidebarpages/Settings.jsx";
 import Help from "./pages/sidebarpages/Help.jsx";
 import LessonPage from "./pages/LessonPage.jsx";
+import ProjectPage from "./pages/ProjectPage.jsx";
 export default function App() {
   return (
     <BrowserRouter>
@@ -38,6 +39,7 @@ export default function App() {
         <Route path="/help" element={<Help />} />
         <Route path="/lessons/lesson/:id" element={<LessonPage />} />
         <Route path="/lessons/lesson/:id/:part" element={<LessonPage />} />
+        <Route path="/project/:lessonId" element={<ProjectPage />} />
       </Routes>
     </BrowserRouter>
   );

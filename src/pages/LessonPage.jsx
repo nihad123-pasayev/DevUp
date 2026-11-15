@@ -301,6 +301,9 @@ export default function LessonPage() {
   const missing = !loading && !lesson;
 
   const kind = lesson ? lessonKind(lesson) : "lesson";
+  useEffect(() => {
+  if (kind === "project") navigate(`/project/${id}`, { replace: true });
+}, [kind, id]);
   const direct = kind !== "lesson";
   const current = direct
     ? kind
