@@ -165,7 +165,7 @@ function Playground({ lang, initial }) {
   function reset() {
     stop();
     setCode(initial);
-    setPreview(initial);
+    setPreview("");
     setLines([]);
   }
 
