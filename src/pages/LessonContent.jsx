@@ -260,11 +260,13 @@ function prepare(text) {
   return text.replace(/\[CODE_PLAYGROUND\]\s*\n```(\w+)/g, "```$1 playground");
 }
 
-export default function LessonContent({ text }) {
+
+export default function LessonContent({ text, content }) {
+  const raw = text ?? content ?? "";
   return (
     <div className="lc">
       <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
-        {prepare(text || "")}
+        {prepare(raw)}
       </ReactMarkdown>
     </div>
   );
