@@ -565,3 +565,14 @@
   background: #1a7f4b;
   color: #fff;
 }
+.lpc-next.is-done {
+  border: 1px solid rgba(31, 157, 85, 0.45);
+  border-style: solid;
+  background: rgba(31, 157, 85, 0.12);
+  color: #14683a;
+}
+
+.lpc-next.is-done svg {
+  color: #1f9d55;
+  flex-shrink: 0;
+}

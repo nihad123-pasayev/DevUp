@@ -140,6 +140,24 @@ function Lock() {
     </svg>
   );
 }
+function DoneIcon() {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="9" />
+      <path d="M8 12.5l3 3 5-6" />
+    </svg>
+  );
+}
 
 export default function LessonPage() {
   const { id, part = "theory" } = useParams();
@@ -333,6 +351,9 @@ export default function LessonPage() {
   ]);
 
   // YENİ: resurs dərsini "tamamlandı" kimi bazaya yazır
+  // Bu unit-in bütün dərsləri tamamlanıbsa
+  const unitComplete =
+    list.length > 0 && list.every((l) => course.progress[l.id] === "completed");
   const resDone = course.progress[id] === "completed";
   async function completeResource() {
     const ok = await markLessonComplete(id);
@@ -487,9 +508,7 @@ export default function LessonPage() {
                       className={"lpc-item" + (isCurrent ? " is-current" : "")}
                       aria-current={isCurrent ? "page" : undefined}
                     >
-                      <span
-                        className={"lpc-mark" + (isDone ? " is-done" : "")}
-                      >
+                      <span className={"lpc-mark" + (isDone ? " is-done" : "")}>
                         {isDone && <Check />}
                       </span>
                       <span className="lpc-name">
@@ -526,10 +545,17 @@ export default function LessonPage() {
               })}
             </ol>
 
-            <div className="lpc-next">
-              <Lock />
-              <span>Next unit opens after you finish this one.</span>
-            </div>
+            {unitComplete ? (
+              <div className="lpc-next is-done">
+                <DoneIcon />
+                <span>You completed all lessons in this unit.</span>
+              </div>
+            ) : (
+              <div className="lpc-next">
+                <Lock />
+                <span>Next unit opens after you finish this one.</span>
+              </div>
+            )}
           </aside>
         )}
 
