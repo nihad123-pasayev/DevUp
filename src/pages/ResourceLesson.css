@@ -1,0 +1,126 @@
+.rl {
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+  min-width: 0;
+}
+
+.rl-sec {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.rl-sec > h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 800;
+  color: #162136;
+  letter-spacing: -0.01em;
+}
+
+/* Link kartları */
+.rl-links {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.rl-link {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px;
+  border: 1px solid #e3e8ef;
+  border-radius: 10px;
+  background: #fff;
+  color: #2b364a;
+  text-decoration: none;
+}
+
+.rl-link:hover {
+  border-color: #0b6be8;
+}
+
+.rl-link b {
+  color: #162136;
+  font-size: 16px;
+}
+
+.rl-link span {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #4b5a73;
+}
+
+.rl-link em {
+  margin-top: 4px;
+  font-size: 13px;
+  font-style: normal;
+  color: #0a5fcc;
+}
+
+.rl-link:focus-visible {
+  outline: 2px solid #7fb4ff;
+  outline-offset: 2px;
+}
+
+/* Addımlar: nömrəli siyahı kartlara çevrilir */
+.rl-steps .lc ol {
+  list-style: none;
+  padding: 0;
+  gap: 12px;
+}
+
+.rl-steps .lc ol > li {
+  position: relative;
+  min-height: 48px;
+  padding: 14px 18px 14px 62px;
+  border: 1px solid #e3e8ef;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.rl-steps .lc ol > li::before {
+  content: counter(list-item);
+  position: absolute;
+  left: 16px;
+  top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #0b6be8;
+  color: #fff;
+  font-weight: 800;
+}
+
+/* Səhvlər və xülasə qutuları */
+.rl-warn .lc,
+.rl-recap .lc {
+  padding: 16px 20px;
+  border-radius: 10px;
+}
+
+.rl-warn .lc {
+  background: #fff8ec;
+  border: 1px solid #f3dcae;
+}
+
+.rl-recap .lc {
+  background: #eef4fd;
+  border: 1px solid #c9dcfb;
+}
+
+@media (max-width: 600px) {
+  .rl-sec > h2 {
+    font-size: 21px;
+  }
+
+  .rl-steps .lc ol > li {
+    padding-left: 56px;
+  }
+}

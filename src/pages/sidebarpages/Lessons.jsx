@@ -426,7 +426,9 @@ function LessonsPage() {
                           {s.lessons.map((l, li) => {
                             const stt = stateOf(l.id);
                             const title = l.title || l.name;
-                            const isLesson = lessonKind(l) === "lesson";
+                            const isRes = l.kind === "resource";
+                            const isLesson =
+                              lessonKind(l) === "lesson" && !isRes;
                             const isOpen = !locked && openLesson === l.id;
                             const cls =
                               "lessons-item" +
@@ -449,7 +451,7 @@ function LessonsPage() {
                                   <span className="lessons-item-title">
                                     {title}
                                   </span>
-                                  {l.kind && (
+                                  {l.kind && !isRes && (
                                     <em
                                       className={
                                         "lessons-tag tag-" + lessonKind(l)

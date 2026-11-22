@@ -13,6 +13,7 @@ import LessonContent from "./LessonContent.jsx";
 import LessonQuiz from "./LessonQuiz.jsx";
 import LessonLab from "./LessonLab.jsx";
 import UnitQuiz from "./UnitQuiz.jsx";
+import ResourceLesson from "./ResourceLesson.jsx"; // YENİ
 import { playCelebration } from "./UnitCelebration.js";
 
 const PARTS = [
@@ -300,16 +301,20 @@ export default function LessonPage() {
   const content = loading ? null : res.content;
   const missing = !loading && !lesson;
 
-  const kind = lesson ? lessonKind(lesson) : "lesson";
+  // YENİ: resurs dərsi (quiz və lab yoxdur, yalnız mətn + video + linklər)
+  const isRes = !!lesson && lesson.kind === "resource";
+  const kind = lesson ? (isRes ? "lesson" : lessonKind(lesson)) : "lesson";
   useEffect(() => {
-  if (kind === "project") navigate(`/project/${id}`, { replace: true });
-}, [kind, id]);
+    if (kind === "project") navigate(`/project/${id}`, { replace: true });
+  }, [kind, id]);
   const direct = kind !== "lesson";
-  const current = direct
-    ? kind
-    : PARTS.some((p) => p.id === part)
-      ? part
-      : "theory";
+  const current = isRes
+    ? "theory"
+    : direct
+      ? kind
+      : PARTS.some((p) => p.id === part)
+        ? part
+        : "theory";
   const partIdx = PARTS.findIndex((p) => p.id === current);
   const info = KIND_INFO[current];
   const title = loading
@@ -326,8 +331,22 @@ export default function LessonPage() {
     ...Object.keys(course.progress).map(String),
     ...passedIds.filter((k) => k.startsWith("lab:")).map((k) => k.slice(4)),
   ]);
+
+  // YENİ: resurs dərsini "tamamlandı" kimi bazaya yazır
+  const resDone = course.progress[id] === "completed";
+  async function completeResource() {
+    const ok = await markLessonComplete(id);
+    if (ok) {
+      setCourse((c) => ({
+        ...c,
+        progress: { ...c.progress, [id]: "completed" },
+      }));
+      setCelebrate(String(id));
+    }
+  }
+
   let nextLink;
-  if (!direct && partIdx < PARTS.length - 1) {
+  if (!direct && !isRes && partIdx < PARTS.length - 1) {
     nextLink = {
       to: `/lessons/lesson/${id}/${PARTS[partIdx + 1].id}`,
       label: `Continue to ${PARTS[partIdx + 1].label}`,
@@ -367,10 +386,11 @@ export default function LessonPage() {
   const labBlocked = current === "lab" && hasLab && !labPassed;
 
   const theoryDone = passedIds.includes("theory:" + id);
-  const theoryBlocked = current === "theory" && !direct && !theoryDone;
+  const theoryBlocked =
+    current === "theory" && !direct && !theoryDone && !isRes;
   const blocked = labBlocked || theoryBlocked;
-  
-    // Unit quiz bu cihazda keçilib, amma bazaya yazılmayıbsa, bazaya yaz
+
+  // Unit quiz bu cihazda keçilib, amma bazaya yazılmayıbsa, bazaya yaz
   useEffect(() => {
     if (loading || !direct || kind !== "quiz") return;
     if (!passedIds.includes(String(id))) return;
@@ -455,47 +475,52 @@ export default function LessonPage() {
             <ol className="lpc-list">
               {list.map((item, i) => {
                 const itemKind = lessonKind(item);
+                const itemRes = item.kind === "resource"; // YENİ
                 const isCurrent = String(item.id) === String(id);
                 const isDone = done.has(String(item.id));
                 // Cari mövzunun quiz-i keçilməyibsə, sonrakı mövzular kilidlidir
                 return (
                   <li key={item.id}>
                     <Link
-        to={lessonPath(item)}
-        onClick={closeOnMobile}
-        className={"lpc-item" + (isCurrent ? " is-current" : "")}
-        aria-current={isCurrent ? "page" : undefined}
-      >
-        <span className={"lpc-mark" + (isDone ? " is-done" : "")}>
-          {isDone && <Check />}
-        </span>
-        <span className="lpc-name">
-          {i + 1}. {nameOf(item)}
-        </span>
-        {itemKind !== "lesson" && (
-          <span className="lpc-tag">
-            {KIND_INFO[itemKind]?.label || itemKind}
-          </span>
-        )}
-      </Link>
+                      to={lessonPath(item)}
+                      onClick={closeOnMobile}
+                      className={"lpc-item" + (isCurrent ? " is-current" : "")}
+                      aria-current={isCurrent ? "page" : undefined}
+                    >
+                      <span
+                        className={"lpc-mark" + (isDone ? " is-done" : "")}
+                      >
+                        {isDone && <Check />}
+                      </span>
+                      <span className="lpc-name">
+                        {i + 1}. {nameOf(item)}
+                      </span>
+                      {itemKind !== "lesson" && !itemRes && (
+                        <span className="lpc-tag">
+                          {KIND_INFO[itemKind]?.label || itemKind}
+                        </span>
+                      )}
+                    </Link>
 
-                    {isCurrent && itemKind === "lesson" && (
-        <ul className="lpc-parts">
-          {PARTS.map((p) => (
-            <li key={p.id}>
-              <Link
-                to={`/lessons/lesson/${item.id}/${p.id}`}
-                onClick={closeOnMobile}
-                className={
-                  "lpc-part" + (current === p.id ? " is-current" : "")
-                }
-              >
-                {p.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
+                    {/* Theory / Quiz / Lab alt siyahısı resurs dərsində çıxmır */}
+                    {isCurrent && itemKind === "lesson" && !itemRes && (
+                      <ul className="lpc-parts">
+                        {PARTS.map((p) => (
+                          <li key={p.id}>
+                            <Link
+                              to={`/lessons/lesson/${item.id}/${p.id}`}
+                              onClick={closeOnMobile}
+                              className={
+                                "lpc-part" +
+                                (current === p.id ? " is-current" : "")
+                              }
+                            >
+                              {p.label}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </li>
                 );
               })}
@@ -516,7 +541,9 @@ export default function LessonPage() {
           >
             <div className="lp-head">
               <div className="lp-meta">
-                <span className="lp-kind">{info ? info.label : "Theory"}</span>
+                <span className="lp-kind">
+                  {isRes ? "Resource" : info ? info.label : "Theory"}
+                </span>
                 {stageName && idx >= 0 && (
                   <span className="lp-count">
                     {stageName} · {idx + 1} of {list.length}
@@ -533,30 +560,40 @@ export default function LessonPage() {
               </article>
             )}
 
-            {!loading && !missing && current === "theory" && (
-              <>
-                {videoSrc && (
-                  <div className="lp-video">
-                    <iframe
-                      src={videoSrc}
-                      title={title}
-                      allow="accelerometer; encrypted-media; picture-in-picture; fullscreen"
-                      allowFullScreen
-                    />
-                  </div>
-                )}
-                <article className="lp-card">
-                  {partText ? (
-                    <LessonContent key={id + "-theory"} text={partText} />
-                  ) : (
-                    <>
-                      <h2>{title}</h2>
-                      <p>Lesson text will be added here.</p>
-                    </>
+            {!loading &&
+              !missing &&
+              current === "theory" &&
+              (isRes ? (
+                <ResourceLesson
+                  key={id + "-resource"}
+                  text={partText}
+                  videoSrc={videoSrc}
+                  title={title}
+                />
+              ) : (
+                <>
+                  {videoSrc && (
+                    <div className="lp-video">
+                      <iframe
+                        src={videoSrc}
+                        title={title}
+                        allow="accelerometer; encrypted-media; picture-in-picture; fullscreen"
+                        allowFullScreen
+                      />
+                    </div>
                   )}
-                </article>
-              </>
-            )}
+                  <article className="lp-card">
+                    {partText ? (
+                      <LessonContent key={id + "-theory"} text={partText} />
+                    ) : (
+                      <>
+                        <h2>{title}</h2>
+                        <p>Lesson text will be added here.</p>
+                      </>
+                    )}
+                  </article>
+                </>
+              ))}
 
             {!loading && !missing && current === "lab" && hasLab && (
               <LessonLab
@@ -624,7 +661,39 @@ export default function LessonPage() {
             {!loading && !missing && (
               <>
                 <div className="lp-foot">
-                  {current === "theory" && !direct ? (
+                  {isRes ? (
+                    <div className="lp-mark">
+                      <button
+                        type="button"
+                        className="lp-btn"
+                        onClick={completeResource}
+                        disabled={resDone}
+                      >
+                        Mark as completed
+                      </button>
+                      {resDone && (
+                        <span
+                          className="lp-mark-ok"
+                          role="img"
+                          aria-label="Completed"
+                        >
+                          <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            aria-hidden="true"
+                          >
+                            <path d="M5 12l5 5 9-10" />
+                          </svg>
+                        </span>
+                      )}
+                    </div>
+                  ) : current === "theory" && !direct ? (
                     <div className="lp-mark">
                       <button
                         type="button"
@@ -659,7 +728,7 @@ export default function LessonPage() {
                   ) : (
                     <span />
                   )}
-                  {!direct && (
+                  {!direct && !isRes && (
                     <span className="lp-step">
                       Part {partIdx + 1} of {PARTS.length} ·{" "}
                       {PARTS[partIdx].label}
