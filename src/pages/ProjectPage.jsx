@@ -28,6 +28,37 @@ function readJson(key, fallback) {
   }
 }
 
+const CLOSE = "</" + "script>";
+
+function hashOf(text) {
+  let h = 5381;
+  for (let i = 0; i < text.length; i++) h = ((h << 5) + h + text.charCodeAt(i)) | 0;
+  return String(h);
+}
+
+function buildRunner(code, runId) {
+  const safe = code.split("</script").join("<\\/script");
+  const bridge =
+    "(function(){" +
+    "function send(type,args){" +
+    "var t=args.map(function(a){" +
+    "if(typeof a==='string')return a;" +
+    "try{return JSON.stringify(a,null,2)}catch(e){return String(a)}" +
+    "}).join(' ');" +
+    "parent.postMessage({__pp:1,run:'" + runId + "',type:type,text:t},'*');}" +
+    "['log','info','warn','error'].forEach(function(k){" +
+    "console[k]=function(){send(k,[].slice.call(arguments))};});" +
+    "window.addEventListener('error',function(e){send('error',[e.message])});" +
+    "window.addEventListener('unhandledrejection',function(e){" +
+    "send('error',['Unhandled: '+(e.reason&&e.reason.message||e.reason)])});" +
+    "})();";
+  return (
+    "<!doctype html><html><body><script>" + bridge + CLOSE +
+    '<script type="module">\n' + safe + "\n" + CLOSE +
+    "</body></html>"
+  );
+}
+
 function Guide({ text }) {
   return (
     <div className="pp-md">
@@ -57,6 +88,8 @@ export default function ProjectPage() {
   const [finishing, setFinishing] = useState(false);
   const [finished, setFinished] = useState(false);
   const guideRef = useRef(null);
+  const frameRef = useRef(null);
+  const [logState, setLogState] = useState({ key: "", items: [] });
 
   /* load project */
   useEffect(() => {
@@ -92,7 +125,38 @@ export default function ProjectPage() {
     return () => clearTimeout(t);
   }, [code, data]); // eslint-disable-line
 
+  /* console messages coming from the sandboxed runner */
+  useEffect(() => {
+    function onMsg(e) {
+      if (!frameRef.current || e.source !== frameRef.current.contentWindow) return;
+      const d = e.data;
+      if (d && d.__pp) {
+        const key = String(d.run);
+        setLogState((st) => {
+          const prev = st.key === key ? st.items : [];
+          return { key, items: [...prev, { type: d.type, text: d.text }].slice(-200) };
+        });
+      }
+    }
+    window.addEventListener("message", onMsg);
+    return () => window.removeEventListener("message", onMsg);
+  }, []);
+
+  const runId = hashOf(preview);
+  const runner = useMemo(
+    () =>
+      data?.run === true && data?.language && data.language !== "html"
+        ? buildRunner(preview, runId)
+        : "",
+    [preview, runId, data]
+  );
+  const logs = logState.key === runId ? logState.items : [];
+
   const milestones = data?.milestones ?? [];
+  const language = data?.language || "html";
+  const isHtml = language === "html";
+  const canRun = !isHtml && data?.run === true;
+  const fileName = data?.filename || "index.html";
   const passedCount = useMemo(
     () => milestones.filter((m) => passed[m.id]).length,
     [milestones, passed]
@@ -228,7 +292,7 @@ export default function ProjectPage() {
         <section className="pp-left">
           <div className="pp-pane pp-editor">
             <div className="pp-bar-top">
-              <span>index.html</span>
+              <span>{fileName}</span>
               <div className="pp-actions">
                 <button type="button" onClick={resetCode}>Reset</button>
                 <button type="button" onClick={showSolution}>Show solution</button>
@@ -241,18 +305,47 @@ export default function ProjectPage() {
               spellCheck={false}
               autoCapitalize="off"
               autoCorrect="off"
-              aria-label="HTML code editor"
+              aria-label="Code editor"
             />
           </div>
           <div className="pp-pane pp-preview">
             <div className="pp-bar-top">
-              <span>Preview</span>
+              <span>{isHtml ? "Preview" : canRun ? "Console" : "Output"}</span>
             </div>
-            <iframe
-              title="Page preview"
-              srcDoc={preview}
-              sandbox="allow-scripts allow-forms allow-modals"
-            />
+            {isHtml && (
+              <iframe
+                title="Page preview"
+                srcDoc={preview}
+                sandbox="allow-scripts allow-forms allow-modals"
+              />
+            )}
+            {canRun && (
+              <>
+                <iframe
+                  ref={frameRef}
+                  title="Code runner"
+                  srcDoc={runner}
+                  sandbox="allow-scripts"
+                  style={{ display: "none" }}
+                />
+                <pre className="pp-console">
+                  {logs.length === 0
+                    ? "Your console.log output appears here."
+                    : logs.map((l, i) => (
+                        <div key={i} className={`pp-log ${l.type}`}>
+                          {l.text}
+                        </div>
+                      ))}
+                </pre>
+              </>
+            )}
+            {!isHtml && !canRun && (
+              <div className="pp-console pp-note">
+                This project is server-side code, so there is no live preview.
+                Write your code in the editor and press <strong>Check milestone</strong> to
+                verify it.
+              </div>
+            )}
           </div>
         </section>
 
@@ -336,7 +429,7 @@ export default function ProjectPage() {
               <div className="pp-results good">
                 <strong>Project complete</strong>
                 <p>
-                  Great work. You built a full web page with HTML. This lesson is marked as completed.
+                  Great work. {data.done_text || "You built a full web page with HTML."} This lesson is marked as completed.
                 </p>
               </div>
             )}

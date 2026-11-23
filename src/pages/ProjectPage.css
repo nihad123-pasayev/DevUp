@@ -264,3 +264,9 @@
   .view-code .pp-right, .view-code .pp-preview { display: none; }
   .view-preview .pp-right, .view-preview .pp-editor { display: none; }
 }
+
+.pp-console{margin:0;padding:12px 14px;flex:1;overflow:auto;background:#0b1424;color:#d6e2f5;font:13px/1.55 ui-monospace,Consolas,monospace;white-space:pre-wrap;word-break:break-word}
+.pp-console .pp-log{padding:2px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.pp-console .pp-log.error{color:#ff8a8a}
+.pp-console .pp-log.warn{color:#ffd37a}
+.pp-note{font-family:inherit;color:#9db0cc;white-space:normal}
