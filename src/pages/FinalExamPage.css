@@ -1,0 +1,71 @@
+.fx-page{min-height:100vh;background:#f3f6fb;display:flex;flex-direction:column;align-items:center;padding:32px 16px;font-family:Inter,system-ui,sans-serif;color:#162136}
+.fx-page.is-exam{padding:0 0 32px;align-items:stretch}
+.fx-card{width:100%;max-width:640px;background:#fff;border:1px solid #e1e7f0;border-radius:16px;padding:28px}
+.fx-muted{color:#5b6b85;font-size:14px;line-height:1.5;margin:6px 0}
+.fx-card h1{margin:10px 0 6px;font-size:26px}
+.fx-badge{display:inline-block;padding:4px 12px;border-radius:999px;background:#e6f0ff;color:#0b6be8;font:600 12px Inter,system-ui,sans-serif}
+.fx-badge.is-fail{background:#fdecec;color:#c0262b}
+.fx-facts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0}
+.fx-facts div,.fx-stats div{background:#f3f6fb;border-radius:10px;padding:12px;text-align:center}
+.fx-facts b,.fx-stats b{display:block;font-size:20px}
+.fx-facts span,.fx-stats span{font-size:12px;color:#5b6b85}
+.fx-rules{margin:0 0 20px;padding-left:20px;font-size:14px;line-height:1.7;color:#33425c}
+.fx-actions{display:flex;gap:10px;justify-content:space-between;margin-top:20px}
+.fx-actions.is-center{justify-content:center}
+.fx-btn{height:42px;padding:0 18px;border-radius:8px;font:600 14px Inter,system-ui,sans-serif;border:1px solid #d3dbe8;background:#fff;color:#162136;cursor:pointer}
+.fx-btn:hover:not(:disabled){border-color:#0b6be8}
+.fx-btn.is-primary{background:#0b6be8;border-color:#0b6be8;color:#fff}
+.fx-btn.is-primary:hover:not(:disabled){background:#0957bf}
+.fx-btn:disabled{opacity:.5;cursor:not-allowed}
+.fx-btn:focus-visible,.fx-opt:focus-visible,.fx-n:focus-visible{outline:3px solid #6cb2ff;outline-offset:2px}
+
+.fx-top{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 20px;background:#fff;border-bottom:1px solid #e1e7f0}
+.fx-top-l{display:flex;flex-direction:column;gap:2px}
+.fx-timer{font:700 22px/1 ui-monospace,Menlo,Consolas,monospace;padding:8px 14px;border-radius:8px;background:#f3f6fb}
+.fx-timer.is-low{background:#fdecec;color:#c0262b}
+.fx-bar{height:4px;background:#e1e7f0}
+.fx-bar i{display:block;height:100%;background:#0b6be8;transition:width .2s}
+.fx-main{display:flex;gap:16px;align-items:flex-start;justify-content:center;padding:20px 16px;flex-wrap:wrap}
+.fx-q{max-width:720px;flex:1 1 460px}
+.fx-qmeta{font-size:13px;color:#5b6b85;margin-bottom:8px}
+.fx-qtext{font-size:19px;line-height:1.5;margin:0 0 18px;white-space:pre-wrap}
+.fx-opts{display:flex;flex-direction:column;gap:10px}
+.fx-opt{display:flex;gap:12px;align-items:flex-start;text-align:left;padding:12px 14px;border:1.5px solid #d3dbe8;border-radius:10px;background:#fff;font:500 15px/1.45 Inter,system-ui,sans-serif;color:#162136;cursor:pointer}
+.fx-opt:hover{border-color:#0b6be8}
+.fx-opt.is-sel{border-color:#0b6be8;background:#eaf2ff}
+.fx-letter{flex:none;width:26px;height:26px;border-radius:50%;background:#f3f6fb;display:grid;place-items:center;font:700 13px Inter,sans-serif}
+.fx-opt.is-sel .fx-letter{background:#0b6be8;color:#fff}
+.fx-nav{flex:0 0 240px;max-width:240px;padding:16px}
+.fx-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.fx-n{height:34px;border-radius:6px;border:1px solid #d3dbe8;background:#fff;font:600 13px Inter,sans-serif;cursor:pointer;color:#33425c}
+.fx-n.is-done{background:#e6f6ee;border-color:#2e9e6b;color:#1d6f49}
+.fx-n.is-cur{border-color:#0b6be8;box-shadow:0 0 0 2px #0b6be8}
+
+.fx-modal{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:20px;background:rgba(11,18,32,.55)}
+.fx-modal-card{max-width:380px;width:100%;background:#fff;border-radius:14px;padding:24px}
+.fx-modal-card h3{margin:0 0 6px}
+
+.fx-units{display:flex;flex-direction:column;gap:8px;margin:16px 0}
+.fx-unit{display:grid;grid-template-columns:1fr 120px 44px;gap:10px;align-items:center;font-size:13px}
+.fx-unit i{height:8px;border-radius:4px;background:#e1e7f0;overflow:hidden;display:block}
+.fx-unit u{display:block;height:100%;background:#0b6be8}
+.fx-unit b{text-align:right}
+
+.fx-done{text-align:center;position:relative;z-index:2;animation:fx-pop .4s ease}
+.fx-trophy{width:110px;height:110px;animation:fx-trophy .7s cubic-bezier(.2,1.4,.4,1)}
+.fx-lead{font-size:16px;color:#33425c;margin:4px 0 18px}
+.fx-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.fx-note{margin:18px 0 0;padding:12px 14px;border-radius:10px;background:#e6f6ee;color:#1d6f49;font-size:14px;font-weight:600}
+@keyframes fx-pop{from{transform:scale(.94);opacity:0}to{transform:none;opacity:1}}
+@keyframes fx-trophy{from{transform:scale(.3) rotate(-12deg);opacity:0}to{transform:none;opacity:1}}
+
+/* Konfeti: yuxarıdan düşür, ekranın altında yox olur (yığılmır) */
+.fx-confetti{position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden}
+.fx-piece{position:absolute;top:-24px;border-radius:2px;opacity:0;animation-name:fx-fall;animation-timing-function:linear;animation-fill-mode:forwards}
+@keyframes fx-fall{
+  0%{transform:translate3d(0,0,0) rotate(0);opacity:1}
+  85%{opacity:1}
+  100%{transform:translate3d(var(--drift),108vh,0) rotate(var(--rot));opacity:0}
+}
+@media (prefers-reduced-motion:reduce){.fx-confetti{display:none}.fx-done,.fx-trophy{animation:none}}
+@media (max-width:640px){.fx-nav{flex:1 1 100%;max-width:none}.fx-unit{grid-template-columns:1fr 80px 40px}.fx-facts,.fx-stats{grid-template-columns:1fr}}

@@ -18,6 +18,7 @@ import Help from "./pages/sidebarpages/Help.jsx";
 import LessonPage from "./pages/LessonPage.jsx";
 import ProjectPage from "./pages/ProjectPage.jsx";
 import CapstonePage from "./pages/CapstonePage.jsx";
+import FinalExamPage from "./pages/FinalExamPage.jsx";
 export default function App() {
   return (
     <BrowserRouter>
@@ -42,6 +43,7 @@ export default function App() {
         <Route path="/lessons/lesson/:id/:part" element={<LessonPage />} />
         <Route path="/project/:lessonId" element={<ProjectPage />} />
         <Route path="/capstone/:id" element={<CapstonePage />} />
+        <Route path="/exam/:id" element={<FinalExamPage />} />
       </Routes>
     </BrowserRouter>
   );
