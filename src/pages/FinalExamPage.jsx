@@ -9,6 +9,14 @@ const CERT_PATH = "/certificates"; // Certificates bölməsinin yolu
 const LESSONS_PATH = "/lessons";
 const CONFETTI_COLORS = ["#f5b82e", "#0b6be8", "#2e9e6b", "#e5484d", "#8b5cf6", "#14b8c4"];
 
+const hasAnswer = (a) => (Array.isArray(a) ? a.length > 0 : a !== undefined);
+const isRight = (q, a) => {
+  if (q.multi) {
+    const want = [...q.answers].sort().join(",");
+    return Array.isArray(a) && [...a].sort().join(",") === want;
+  }
+  return a === q.answer;
+};
 const key = (id) => `finalexam:${id}`;
 const loadSaved = (id) => {
   try {
@@ -148,7 +156,7 @@ export default function FinalExamPage() {
         const u = q.unit || "General";
         units[u] = units[u] || { right: 0, total: 0 };
         units[u].total += 1;
-        if (answers[i] === q.answer) {
+        if (isRight(q, answers[i])) {
           correct += 1;
           units[u].right += 1;
         }
@@ -163,7 +171,13 @@ export default function FinalExamPage() {
         setConfetti(true);
         playCelebration();
         setTimeout(() => setConfetti(false), 7000);
-        await markLessonComplete(id);
+        const ok = await markLessonComplete(id);
+        // Sertifikat yaradılır və təbrik emaili göndərilir (xəta olsa imtahan nəticəsinə təsir etmir)
+        if (ok) {
+          supabase.functions
+            .invoke("send-certificate-email", { body: { lessonId: id } })
+            .catch(() => {});
+        }
       }
     },
     [answers, id, limitSec, passMark, questions, start],
@@ -256,7 +270,7 @@ export default function FinalExamPage() {
   /* ---------- EXAM ---------- */
   if (phase === "exam") {
     const q = questions[cur];
-    const answered = Object.keys(answers).length;
+    const answered = questions.filter((_, i) => hasAnswer(answers[i])).length;
     const low = left <= 900; // 15 dəqiqədən az qalanda qırmızı
     return (
       <div className="fx-page is-exam">
@@ -285,20 +299,35 @@ export default function FinalExamPage() {
                 ),
               )}
             </div>
-            <div className="fx-opts" role="radiogroup">
-              {q.options.map((o, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  role="radio"
-                  aria-checked={answers[cur] === i}
-                  className={"fx-opt" + (answers[cur] === i ? " is-sel" : "")}
-                  onClick={() => setAnswers((a) => ({ ...a, [cur]: i }))}
-                >
-                  <span className="fx-letter">{"ABCD"[i]}</span>
-                  <span>{o}</span>
-                </button>
-              ))}
+            {q.multi && (
+              <div className="fx-hint">Select all that apply ({q.answers.length} correct)</div>
+            )}
+            <div className="fx-opts" role={q.multi ? "group" : "radiogroup"}>
+              {q.options.map((o, i) => {
+                const sel = q.multi
+                  ? Array.isArray(answers[cur]) && answers[cur].includes(i)
+                  : answers[cur] === i;
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    role={q.multi ? "checkbox" : "radio"}
+                    aria-checked={sel}
+                    className={"fx-opt" + (sel ? " is-sel" : "") + (q.multi ? " is-multi" : "")}
+                    onClick={() =>
+                      setAnswers((a) => {
+                        if (!q.multi) return { ...a, [cur]: i };
+                        const prev = Array.isArray(a[cur]) ? a[cur] : [];
+                        const next = prev.includes(i) ? prev.filter((x) => x !== i) : [...prev, i];
+                        return { ...a, [cur]: next };
+                      })
+                    }
+                  >
+                    <span className="fx-letter">{q.multi ? (sel ? "\u2713" : "") : "ABCDE"[i]}</span>
+                    <span>{o}</span>
+                  </button>
+                );
+              })}
             </div>
             <div className="fx-actions">
               <button className="fx-btn" disabled={cur === 0} onClick={() => setCur(cur - 1)}>Previous</button>
@@ -318,9 +347,9 @@ export default function FinalExamPage() {
                 <button
                   key={i}
                   type="button"
-                  className={"fx-n" + (i === cur ? " is-cur" : "") + (answers[i] !== undefined ? " is-done" : "")}
+                  className={"fx-n" + (i === cur ? " is-cur" : "") + (hasAnswer(answers[i]) ? " is-done" : "")}
                   onClick={() => setCur(i)}
-                  aria-label={`Question ${i + 1}${answers[i] !== undefined ? ", answered" : ""}`}
+                  aria-label={`Question ${i + 1}${hasAnswer(answers[i]) ? ", answered" : ""}`}
                 >
                   {i + 1}
                 </button>

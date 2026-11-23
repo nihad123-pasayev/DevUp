@@ -22,13 +22,16 @@
 .fx-top{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 20px;background:#fff;border-bottom:1px solid #e1e7f0}
 .fx-top-l{display:flex;flex-direction:column;gap:2px}
 .fx-timer{font:700 22px/1 ui-monospace,Menlo,Consolas,monospace;padding:8px 14px;border-radius:8px;background:#f3f6fb}
-.fx-timer.is-low{background:#fdecec;color:#c0262b}
+.fx-timer.is-low{background:#fdecec;color:#c0262b;box-shadow:inset 0 0 0 1.5px #e5484d}
 .fx-bar{height:4px;background:#e1e7f0}
 .fx-bar i{display:block;height:100%;background:#0b6be8;transition:width .2s}
 .fx-main{display:flex;gap:16px;align-items:flex-start;justify-content:center;padding:20px 16px;flex-wrap:wrap}
 .fx-q{max-width:720px;flex:1 1 460px}
 .fx-qmeta{font-size:13px;color:#5b6b85;margin-bottom:8px}
-.fx-qtext{font-size:19px;line-height:1.5;margin:0 0 18px;white-space:pre-wrap}
+.fx-qtext{font-size:18px;line-height:1.5;margin:0 0 18px}
+.fx-qtext p{margin:0 0 12px;white-space:pre-wrap}
+.fx-code{margin:0 0 12px;padding:14px 16px;background:#0f1a2e;color:#e6edf7;border-radius:10px;overflow-x:auto;font:13.5px/1.6 ui-monospace,Menlo,Consolas,monospace}
+.fx-code code{font:inherit;white-space:pre}
 .fx-opts{display:flex;flex-direction:column;gap:10px}
 .fx-opt{display:flex;gap:12px;align-items:flex-start;text-align:left;padding:12px 14px;border:1.5px solid #d3dbe8;border-radius:10px;background:#fff;font:500 15px/1.45 Inter,system-ui,sans-serif;color:#162136;cursor:pointer}
 .fx-opt:hover{border-color:#0b6be8}
@@ -69,3 +72,7 @@
 }
 @media (prefers-reduced-motion:reduce){.fx-confetti{display:none}.fx-done,.fx-trophy{animation:none}}
 @media (max-width:640px){.fx-nav{flex:1 1 100%;max-width:none}.fx-unit{grid-template-columns:1fr 80px 40px}.fx-facts,.fx-stats{grid-template-columns:1fr}}
+
+.fx-hint{margin:-6px 0 12px;font-size:13px;font-weight:600;color:#0b6be8}
+.fx-opt.is-multi .fx-letter{border-radius:6px;border:1.5px solid #b9c4d6;background:#fff;color:#fff}
+.fx-opt.is-multi.is-sel .fx-letter{background:#0b6be8;border-color:#0b6be8;color:#fff}
