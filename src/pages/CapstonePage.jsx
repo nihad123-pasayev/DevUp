@@ -1,5 +1,5 @@
 import "./CapstonePage.css";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   SandpackProvider,
@@ -253,16 +253,42 @@ function Workspace({ lessonId, title, data, store, setStore, onReset }) {
               <p>{rich(part.intro)}</p>
             </div>
 
+            {part.review && (
+              <div className="cp-review">
+                <strong>Need a refresher?</strong> {rich(part.review)}
+              </div>
+            )}
+
             <div>
               <div className="cp-label">YOUR TASKS</div>
               <ul className="cp-tasks">
-                {part.tasks.map((t) => {
-                  const ok = results ? results[t.id]?.ok : partDone;
+                {part.tasks.map((t, i) => {
+                  const r = results ? results[t.id] : null;
+                  const ok = results ? r?.ok : partDone;
+                  const bad = !!r && !r.ok;
                   return (
-                    <li key={t.id} className="cp-task">
-                      <span className={"cp-box" + (ok ? " is-ok" : "")}>{ok && <Tick />}</span>
-                      <span>{rich(t.text)}</span>
-                    </li>
+                    <Fragment key={t.id}>
+                      {t.group && t.group !== part.tasks[i - 1]?.group && (
+                        <li className="cp-group">{t.group}</li>
+                      )}
+                      <li className={"cp-task" + (bad ? " is-bad" : "")}>
+                        <span className={"cp-box" + (ok ? " is-ok" : "") + (bad ? " is-bad" : "")}>{ok && <Tick />}</span>
+                        <div className="cp-task-body">
+                          <span>{rich(t.text)}</span>
+                          {bad && <span className="cp-task-err" role="alert">{rich(r.fail)}</span>}
+                          {(t.hint || t.example) && (
+                            <details className="cp-th">
+                              <summary>Hint</summary>
+                              <div>
+                                {t.hint && <p>{rich(t.hint)}</p>}
+                                {t.example && <pre><code>{t.example}</code></pre>}
+                                {t.ref && <p className="cp-ref">Lesson: {t.ref}</p>}
+                              </div>
+                            </details>
+                          )}
+                        </div>
+                      </li>
+                    </Fragment>
                   );
                 })}
               </ul>
@@ -277,8 +303,9 @@ function Workspace({ lessonId, title, data, store, setStore, onReset }) {
 
             {results && (
               <div className={"cp-result" + (firstFail ? " is-bad" : " is-good")} role="status">
-                <strong>{passedCount} of {part.tasks.length} checks passed.</strong>
-                {firstFail ? <><br />{rich(firstFail.fail)}</> : <><br />Great work. You can move to the next part.</>}
+                <strong>{passedCount} of {part.tasks.length} tasks done.</strong>
+                <br />
+                {firstFail ? "Fix the tasks marked in red. Each one tells you what is missing." : "Great work. You can move to the next part."}
               </div>
             )}
 
@@ -333,7 +360,14 @@ function CapstoneInner({ id }) {
 
   const files = useMemo(() => {
     if (!part) return null;
-    return store.code[partIdx] || part.files;
+    if (store.code[partIdx]) return store.code[partIdx];
+    // Əvvəlki hissədəki öz faylların (məs. index.html) davam edir
+    const base = { ...part.files };
+    (part.inherit || []).forEach((p) => {
+      const prev = store.code[partIdx - 1]?.[p];
+      if (prev) base[p] = typeof prev === "string" ? prev : prev.code;
+    });
+    return base;
     // faylları yalnız hissə dəyişəndə götür (yazarkən təkrar başlatma olmasın)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [part, partIdx, resetKey]);
