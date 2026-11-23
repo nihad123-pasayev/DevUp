@@ -122,6 +122,15 @@ function EarnedCard({ cert, name }) {
   const rm = cert.roadmap;
   const program = displayName(rm);
   const issued = dateText(cert.issued_at);
+  const supportLink =
+    "https://mail.google.com/mail/?" +
+    new URLSearchParams({
+      view: "cm",
+      fs: "1",
+      to: "devup.team.az@gmail.com",
+      su: `Certificate name correction - ${program}`,
+      body: `Hello DevUp team,\n\nThe name on my "${program}" certificate is wrong.\n\nCurrent name: ${shownName}\nCorrect name: \n\nThank you.`,
+    }).toString();
   const paper = (
     <Paper
       name={shownName}
@@ -221,7 +230,7 @@ function EarnedCard({ cert, name }) {
             </div>
             <p className="cf-hint">
               Name is wrong?{" "}
-              <a href={`mailto:devup.team.az@gmail.com?subject=${encodeURIComponent("Certificate name correction")}&body=${encodeURIComponent(`Certificate: ${program}\nCorrect name: `)}`}>
+              <a href={supportLink} target="_blank" rel="noopener noreferrer">
                 Contact support
               </a>
               .
