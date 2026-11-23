@@ -48,11 +48,12 @@ const storeKey = (id) => "capstone:" + id;
 function readStore(id) {
   try {
     const v = JSON.parse(localStorage.getItem(storeKey(id)));
-    if (v && typeof v === "object") return v;
+    if (v && typeof v === "object")
+      return { part: 0, done: [], code: {}, manual: {}, fields: {}, ...v };
   } catch {
     /* ignore */
   }
-  return { part: 0, done: [], code: {} };
+  return { part: 0, done: [], code: {}, manual: {}, fields: {} };
 }
 function writeStore(id, data) {
   try {
@@ -92,16 +93,27 @@ function matches(pattern, text) {
 }
 
 // Yoxlama: test = regex mənbəsi (böyük/kiçik hərf fərqi yoxdur), "!" ilə başlasa olmamalıdır
-function runChecks(part, files) {
+function runChecks(part, files, extra = {}) {
   // Şərhlərdəki (TODO) mətn yoxlamaya düşməsin
-  const strip = (t) =>
-    String(t).replace(/<!--[\s\S]*?-->/g, "").replace(/\/\*[\s\S]*?\*\//g, "");
-  const entries = Object.entries(files).map(([p, f]) => [p, { code: strip(f.code) }]);
+  const strip = (t, path) => {
+    let out = String(t).replace(/<!--[\s\S]*?-->/g, "").replace(/\/\*[\s\S]*?\*\//g, "");
+    if (/\.(js|jsx|ts|tsx)$/.test(path)) out = out.replace(/(^|\s)\/\/.*$/gm, "$1");
+    return out;
+  };
+  const entries = Object.entries(files).map(([p, f]) => [p, { code: strip(f.code, p) }]);
   const result = {};
   for (const task of part.tasks) {
     let fail = null;
+    if (task.manual) {
+      result[task.id] = extra.manual?.[task.id]
+        ? { ok: true }
+        : { ok: false, fail: task.manualFail || "Tick the box when you have done this." };
+      continue;
+    }
     for (const c of task.checks || []) {
-      const src = c.file
+      const src = c.field
+        ? String(extra.fields?.[c.field] || "")
+        : c.file
         ? entries.filter(([p]) => p.endsWith(c.file)).map(([, f]) => f.code).join("\n")
         : entries.map(([, f]) => f.code).join("\n");
       const neg = c.test.startsWith("!");
@@ -153,7 +165,7 @@ function Workspace({ lessonId, title, data, store, setStore, onReset }) {
   }, [sandpack.files]);
 
   function check() {
-    const r = runChecks(part, sandpack.files);
+    const r = runChecks(part, sandpack.files, { manual: store.manual, fields: store.fields });
     setResults(r);
     if (part.tasks.every((t) => r[t.id].ok) && !store.done.includes(partIdx)) {
       setStore((s) => {
@@ -170,6 +182,51 @@ function Workspace({ lessonId, title, data, store, setStore, onReset }) {
       writeStore(lessonId, next);
       return next;
     });
+  }
+
+  function toggleManual(taskId) {
+    setStore((s) => {
+      const next = { ...s, manual: { ...s.manual, [taskId]: !s.manual?.[taskId] } };
+      writeStore(lessonId, next);
+      return next;
+    });
+  }
+
+  function setField(key, value) {
+    setStore((s) => {
+      const next = { ...s, fields: { ...s.fields, [key]: value } };
+      writeStore(lessonId, next);
+      return next;
+    });
+  }
+
+  // Kodu Vite layihəsi kimi zip-ə yığıb endirir
+  async function download() {
+    const { default: JSZip } = await import("jszip");
+    const zip = new JSZip();
+    const skip = /^\/(package\.json|tsconfig\.json|public\/index\.html)$/;
+    Object.entries(sandpack.files).forEach(([path, f]) => {
+      if (skip.test(path)) return;
+      const code = typeof f === "string" ? f : f.code;
+      if (path === "/README.md") zip.file("README.md", code);
+      else if (path === "/.gitignore") zip.file(".gitignore", code);
+      else if (path === "/index.tsx") zip.file("src/main.tsx", code);
+      else zip.file("src" + path, code);
+    });
+    const pub = sandpack.files["/public/index.html"];
+    const pubCode = pub ? (typeof pub === "string" ? pub : pub.code) : '<!doctype html>\n<html lang="en">\n<head>\n<meta charset="UTF-8" />\n<meta name="viewport" content="width=device-width, initial-scale=1.0" />\n<title>DevFolio</title>\n</head>\n<body>\n<div id="root"></div>\n</body>\n</html>\n';
+    zip.file("index.html", pubCode.replace("</body>", '  <script type="module" src="/src/main.tsx"></script>\n</body>'));
+    zip.file("src/vite-env.d.ts", '/// <reference types="vite/client" />\n');
+    zip.file("package.json", JSON.stringify({ name: "devfolio", private: true, version: "1.0.0", type: "module", scripts: { dev: "vite", build: "tsc && vite build", preview: "vite preview" }, dependencies: { react: "^18.3.1", "react-dom": "^18.3.1" }, devDependencies: { "@types/react": "^18.3.3", "@types/react-dom": "^18.3.0", "@vitejs/plugin-react": "^4.3.1", typescript: "^5.5.3", vite: "^5.4.0" } }, null, 2) + "\n");
+    zip.file("vite.config.ts", 'import { defineConfig } from "vite";\nimport react from "@vitejs/plugin-react";\n\nexport default defineConfig({ plugins: [react()] });\n');
+    zip.file("tsconfig.json", JSON.stringify({ compilerOptions: { target: "ES2020", useDefineForClassFields: true, lib: ["ES2020", "DOM", "DOM.Iterable"], module: "ESNext", skipLibCheck: true, moduleResolution: "bundler", allowImportingTsExtensions: true, resolveJsonModule: true, isolatedModules: true, noEmit: true, jsx: "react-jsx", strict: true }, include: ["src"] }, null, 2) + "\n");
+    if (!sandpack.files["/.gitignore"]) zip.file(".gitignore", "node_modules\ndist\n");
+    const blob = await zip.generateAsync({ type: "blob" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "devfolio.zip";
+    a.click();
+    URL.revokeObjectURL(a.href);
   }
 
   async function submit() {
@@ -194,6 +251,9 @@ function Workspace({ lessonId, title, data, store, setStore, onReset }) {
           <span className="cp-crumb-now">{title}</span>
         </nav>
         <div className="cp-actions">
+          {part.download && (
+            <button type="button" className="cp-btn is-dark" onClick={download}>Download code</button>
+          )}
           <button type="button" className="cp-btn is-dark" onClick={() => { if (window.confirm("Reset the code of this part to its starting version?")) { setResults(null); onReset(partIdx); } }}>Reset</button>
           <button type="button" className="cp-btn is-primary" onClick={() => { sandpack.runSandpack(); setTab("preview"); }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 4l14 8-14 8z" /></svg>
@@ -272,7 +332,20 @@ function Workspace({ lessonId, title, data, store, setStore, onReset }) {
                         <li className="cp-group">{t.group}</li>
                       )}
                       <li className={"cp-task" + (bad ? " is-bad" : "")}>
-                        <span className={"cp-box" + (ok ? " is-ok" : "") + (bad ? " is-bad" : "")}>{ok && <Tick />}</span>
+                        {t.manual ? (
+                          <button
+                            type="button"
+                            role="checkbox"
+                            aria-checked={!!store.manual?.[t.id]}
+                            aria-label={"Done: " + t.text.replace(/`/g, "")}
+                            className={"cp-box cp-box-btn" + (store.manual?.[t.id] ? " is-ok" : "") + (bad ? " is-bad" : "")}
+                            onClick={() => toggleManual(t.id)}
+                          >
+                            {store.manual?.[t.id] && <Tick />}
+                          </button>
+                        ) : (
+                          <span className={"cp-box" + (ok ? " is-ok" : "") + (bad ? " is-bad" : "")}>{ok && <Tick />}</span>
+                        )}
                         <div className="cp-task-body">
                           <span>{rich(t.text)}</span>
                           {bad && <span className="cp-task-err" role="alert">{rich(r.fail)}</span>}
@@ -293,6 +366,22 @@ function Workspace({ lessonId, title, data, store, setStore, onReset }) {
                 })}
               </ul>
             </div>
+
+            {part.fields && (
+              <div className="cp-fields">
+                {part.fields.map((f) => (
+                  <label key={f.id} className="cp-field">
+                    <span>{f.label}</span>
+                    <input
+                      type="url"
+                      value={store.fields?.[f.id] || ""}
+                      placeholder={f.placeholder}
+                      onChange={(e) => setField(f.id, e.target.value)}
+                    />
+                  </label>
+                ))}
+              </div>
+            )}
 
             {part.hint && (
               <details className="cp-hint">
@@ -363,9 +452,11 @@ function CapstoneInner({ id }) {
     if (store.code[partIdx]) return store.code[partIdx];
     // Əvvəlki hissədəki öz faylların (məs. index.html) davam edir
     const base = { ...part.files };
-    (part.inherit || []).forEach((p) => {
-      const prev = store.code[partIdx - 1]?.[p];
-      if (prev) base[p] = typeof prev === "string" ? prev : prev.code;
+    const inh = part.inherit;
+    const map = Array.isArray(inh) ? Object.fromEntries(inh.map((p) => [p, p])) : inh || {};
+    Object.entries(map).forEach(([target, source]) => {
+      const prev = store.code[partIdx - 1]?.[source];
+      if (prev) base[target] = typeof prev === "string" ? prev : prev.code;
     });
     return base;
     // faylları yalnız hissə dəyişəndə götür (yazarkən təkrar başlatma olmasın)
@@ -385,7 +476,7 @@ function CapstoneInner({ id }) {
     () =>
       part
         ? {
-            visibleFiles: Object.keys(part.files),
+            visibleFiles: part.visible || Object.keys(part.files),
             activeFile: part.active || Object.keys(part.files)[0],
             recompileMode: "delayed",
             recompileDelay: 600,
