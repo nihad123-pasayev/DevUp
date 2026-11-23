@@ -71,15 +71,57 @@ function hasVisibleContent(code) {
     .forEach((n) => n.remove());
   return doc.body.children.length > 0 || doc.body.textContent.trim() !== "";
 }
-function highlightCode(code, lang) {
-  const isHtml = lang === "html";
-  const grammar = isHtml
-    ? Prism.languages.markup ||
-      Prism.languages.html ||
-      Prism.languages.javascript
-    : Prism.languages.javascript;
-  const name = isHtml ? "markup" : "javascript";
-  return Prism.highlight(code, grammar, name);
+const SQL_GRAMMAR = {
+  comment: /--.*|\/\*[\s\S]*?\*\//,
+  string: /'(?:[^']|'')*'/,
+  keyword:
+    /\b(?:select|from|where|and|or|not|in|is|null|as|join|inner|left|right|full|outer|cross|on|using|group|by|order|having|limit|offset|distinct|union|all|insert|into|values|update|set|delete|create|alter|drop|table|index|unique|view|materialized|primary|key|foreign|references|default|check|constraint|add|column|rename|to|if|exists|begin|commit|rollback|savepoint|transaction|with|recursive|case|when|then|else|end|like|ilike|between|returning|conflict|do|nothing|cascade|restrict|explain|analyze|extension|function|returns|language|trigger|for|each|row|asc|desc|true|false|over|partition|window|cast|grant|revoke|to_tsvector|to_tsquery|using|gin|gist|btree|hash|generated|always|stored|serial|uuid|text|integer|int|bigint|boolean|numeric|varchar|timestamptz|timestamp|date|jsonb|json)\b/i,
+  function: /\b[a-z_][a-z0-9_]*(?=\()/i,
+  number: /\b\d+(?:\.\d+)?\b/,
+  operator: /<=|>=|<>|!=|::|\|\||[=<>+\-*/%]/,
+  punctuation: /[;(),.]/,
+};
+
+const GRAPHQL_GRAMMAR = {
+  comment: /#.*/,
+  string: /"(?:\\.|[^\\"\r\n])*"/,
+  keyword:
+    /\b(?:query|mutation|subscription|fragment|on|type|input|enum|interface|union|scalar|schema|extend|implements|directive)\b/,
+  boolean: /\b(?:true|false|null)\b/,
+  number: /-?\b\d+(?:\.\d+)?\b/,
+  "class-name": /\b[A-Z][A-Za-z0-9_]*\b/,
+  variable: /\$[A-Za-z_]\w*/,
+  punctuation: /[!(){}[\]:=,|&@.]/,
+};
+
+const TS_KEYWORDS =
+  /\b(?:abstract|as|async|await|break|case|catch|class|const|continue|declare|default|delete|do|else|enum|export|extends|finally|for|from|function|get|if|implements|import|in|infer|instanceof|interface|is|keyof|let|module|namespace|new|of|private|protected|public|readonly|return|satisfies|set|static|switch|throw|try|type|typeof|var|void|while|with|yield)\b/;
+const TS_GRAMMAR = Prism.languages.extend("javascript", {
+  keyword: TS_KEYWORDS,
+  builtin: /\b(?:string|number|boolean|any|unknown|never|object|symbol|bigint)\b/,
+});
+
+const LANG_LABELS = {
+  html: "HTML",
+  css: "CSS",
+  json: "JSON",
+  sql: "SQL",
+  typescript: "TypeScript",
+  graphql: "GraphQL",
+  javascript: "JavaScript",
+};
+
+function highlightCode(code, lang, label) {
+  const key = String(label || lang || "javascript").toLowerCase();
+  if (key === "html") {
+    const g = Prism.languages.markup || Prism.languages.html || Prism.languages.javascript;
+    return Prism.highlight(code, g, "markup");
+  }
+  if (key === "css" && Prism.languages.css) return Prism.highlight(code, Prism.languages.css, "css");
+  if (key === "sql") return Prism.highlight(code, SQL_GRAMMAR, "sql");
+  if (key === "graphql") return Prism.highlight(code, GRAPHQL_GRAMMAR, "graphql");
+  if (key === "typescript") return Prism.highlight(code, TS_GRAMMAR, "typescript");
+  return Prism.highlight(code, Prism.languages.javascript, "javascript");
 }
 
 function runHtmlChecks(code, tests) {
@@ -215,14 +257,8 @@ export default function LessonLab({ data, done, onComplete }) {
   const stepLang = (step.language || "javascript").toLowerCase();
   const isHtml = stepLang === "html";
   const isStatic = STATIC_LANGS.includes(stepLang);
-  const langLabel =
-    stepLang === "html"
-      ? "HTML"
-      : stepLang === "css"
-        ? "CSS"
-        : stepLang === "json"
-          ? "JSON"
-          : "JavaScript";
+  const labelKey = String(step.label || (isHtml ? "html" : stepLang)).toLowerCase();
+  const langLabel = LANG_LABELS[labelKey] || "JavaScript";
 
   function go(i) {
     clearTimeout(timerRef.current);
@@ -617,7 +653,7 @@ export default function LessonLab({ data, done, onComplete }) {
                 textareaId={editorId}
                 value={codes[index]}
                 onValueChange={setCode}
-                highlight={(code) => highlightCode(code, stepLang)}
+                highlight={(code) => highlightCode(code, stepLang, step.label)}
                 padding={16}
                 tabSize={2}
                 textareaClassName="ll-textarea"
