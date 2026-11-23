@@ -17,6 +17,7 @@ import Settings from "./pages/sidebarpages/Settings.jsx";
 import Help from "./pages/sidebarpages/Help.jsx";
 import LessonPage from "./pages/LessonPage.jsx";
 import ProjectPage from "./pages/ProjectPage.jsx";
+import CapstonePage from "./pages/CapstonePage.jsx";
 export default function App() {
   return (
     <BrowserRouter>
@@ -40,6 +41,7 @@ export default function App() {
         <Route path="/lessons/lesson/:id" element={<LessonPage />} />
         <Route path="/lessons/lesson/:id/:part" element={<LessonPage />} />
         <Route path="/project/:lessonId" element={<ProjectPage />} />
+        <Route path="/capstone/:id" element={<CapstonePage />} />
       </Routes>
     </BrowserRouter>
   );
