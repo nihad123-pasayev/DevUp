@@ -740,7 +740,7 @@ function EntryPage() {
               <span>Do exercises and track your progress.</span>
             </li>
             <li className="reveal" style={{ "--d": "0.24s" }}>
-              <b>Follow the path and complete lessons and get a certificate </b>
+              <b>Complete lessons and get a certificate </b>
               <span>Complete short lessons in the right order.</span>
             </li>
           </ol>
