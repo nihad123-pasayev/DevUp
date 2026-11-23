@@ -120,6 +120,7 @@ function EarnedCard({ cert, name }) {
   const [err, setErr] = useState("");
   const [shownName, setShownName] = useState(cert.recipient_name || name);
   const [changesLeft, setChangesLeft] = useState(Math.max(0, 2 - (cert.name_changes || 0)));
+  const [nameSet, setNameSet] = useState(!!cert.name_set);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
   const [saving, setSaving] = useState(false);
@@ -199,6 +200,7 @@ function EarnedCard({ cert, name }) {
     }
     setShownName(data.name);
     setChangesLeft(data.left);
+    setNameSet(true);
     setEditing(false);
   }
 
@@ -226,6 +228,11 @@ function EarnedCard({ cert, name }) {
         <h3>{program}</h3>
         <span className="certs-note">Issued {issued}</span>
       </div>
+      {!nameSet && (
+        <p className="certs-warn">
+          Your full name isn't set yet. Open the certificate and use Edit name before you download it.
+        </p>
+      )}
       <button type="button" className="certs-start" onClick={() => setOpen(true)}>
         View certificate
       </button>
@@ -254,7 +261,7 @@ function EarnedCard({ cert, name }) {
                 </button>
                 <button type="button" className="cf-btn" onClick={linkedin}>Add to LinkedIn</button>
                 {changesLeft > 0 && !editing && (
-                  <button type="button" className="cf-btn" onClick={startEdit}>Edit name</button>
+                  <button type="button" className={"cf-btn" + (nameSet ? "" : " is-primary")} onClick={startEdit}>{nameSet ? "Edit name" : "Set your name"}</button>
                 )}
               </div>
             </div>
@@ -278,7 +285,9 @@ function EarnedCard({ cert, name }) {
                   </button>
                 </div>
                 <p className="cf-hint">
-                  You can change the name {changesLeft === 1 ? "1 more time" : `${changesLeft} more times`}. Check the spelling before saving.
+                  {nameSet
+                    ? `You can change the name ${changesLeft === 1 ? "1 more time" : `${changesLeft} more times`}. Check the spelling before saving.`
+                    : "Write your full name as it should appear. This first save is free; after it you can change it 2 more times."}
                 </p>
                 {nameErr && <p className="cf-error" role="alert">{nameErr}</p>}
               </form>
@@ -333,7 +342,7 @@ export default function Certificates() {
         supabase.from("roadmaps").select("id, title, field, track").order("field"),
         supabase
           .from("certificates")
-          .select("id, code, issued_at, roadmap_id, recipient_name, name_changes")
+          .select("id, code, issued_at, roadmap_id, recipient_name, name_changes, name_set")
           .eq("user_id", user.id),
         supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle(),
         supabase.from("stages").select("roadmap_id, title, position, kind").eq("kind", "learning").order("position"),
@@ -366,7 +375,7 @@ export default function Certificates() {
         }
         const again = await supabase
           .from("certificates")
-          .select("id, code, issued_at, roadmap_id, recipient_name, name_changes")
+          .select("id, code, issued_at, roadmap_id, recipient_name, name_changes, name_set")
           .eq("user_id", user.id);
         if (!again.error) certRows = again.data || [];
         if (off) return;

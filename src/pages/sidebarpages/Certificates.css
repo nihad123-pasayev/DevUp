@@ -580,3 +580,13 @@
 }
 
 .cf-modal .cf-frame { margin-top: 28px; }
+
+.certs-warn {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fff6e5;
+  color: #8a5a00;
+  font-size: 14px;
+  line-height: 1.5;
+}
