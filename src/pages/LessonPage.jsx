@@ -323,10 +323,12 @@ export default function LessonPage() {
   const isRes = !!lesson && lesson.kind === "resource";
   const kind = lesson ? (isRes ? "lesson" : lessonKind(lesson)) : "lesson";
   useEffect(() => {
-  if (loading || kind !== "project") return;
-  const isCapstone = content?.lab_data?.type === "capstone";
-  navigate(isCapstone ? `/capstone/${id}` : `/project/${id}`, { replace: true });
-}, [loading, kind, id, content]);
+    if (loading || kind !== "project") return;
+    const isCapstone = content?.lab_data?.type === "capstone";
+    navigate(isCapstone ? `/capstone/${id}` : `/project/${id}`, {
+      replace: true,
+    });
+  }, [loading, kind, id, content]);
   const direct = kind !== "lesson";
   const current = isRes
     ? "theory"
@@ -411,7 +413,8 @@ export default function LessonPage() {
   const theoryDone = passedIds.includes("theory:" + id);
   const theoryBlocked =
     current === "theory" && !direct && !theoryDone && !isRes;
-  const blocked = labBlocked || theoryBlocked;
+  const resBlocked = isRes && !resDone;
+  const blocked = labBlocked || theoryBlocked || resBlocked;
 
   // Unit quiz bu cihazda keçilib, amma bazaya yazılmayıbsa, bazaya yaz
   useEffect(() => {
