@@ -736,12 +736,12 @@ function EntryPage() {
               <span>Select the area you want to learn.</span>
             </li>
             <li className="reveal" style={{ "--d": "0.12s" }}>
-              <b>Follow the path</b>
-              <span>Complete short lessons in the right order.</span>
-            </li>
-            <li className="reveal" style={{ "--d": "0.24s" }}>
               <b>Practice and level up</b>
               <span>Do exercises and track your progress.</span>
+            </li>
+            <li className="reveal" style={{ "--d": "0.24s" }}>
+              <b>Follow the path and complete lessons </b>
+              <span>Complete short lessons in the right order.</span>
             </li>
           </ol>
         </div>
