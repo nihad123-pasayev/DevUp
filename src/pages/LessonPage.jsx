@@ -323,8 +323,10 @@ export default function LessonPage() {
   const isRes = !!lesson && lesson.kind === "resource";
   const kind = lesson ? (isRes ? "lesson" : lessonKind(lesson)) : "lesson";
   useEffect(() => {
-    if (kind === "project") navigate(`/project/${id}`, { replace: true });
-  }, [kind, id]);
+  if (loading || kind !== "project") return;
+  const isCapstone = content?.lab_data?.type === "capstone";
+  navigate(isCapstone ? `/capstone/${id}` : `/project/${id}`, { replace: true });
+}, [loading, kind, id, content]);
   const direct = kind !== "lesson";
   const current = isRes
     ? "theory"
