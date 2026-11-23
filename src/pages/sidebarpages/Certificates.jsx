@@ -118,13 +118,7 @@ function EarnedCard({ cert, name }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
-  const [shownName, setShownName] = useState(cert.recipient_name || name);
-  const [changesLeft, setChangesLeft] = useState(Math.max(0, 2 - (cert.name_changes || 0)));
-  const [nameSet, setNameSet] = useState(!!cert.name_set);
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [nameErr, setNameErr] = useState("");
+  const shownName = cert.recipient_name || name;
   const rm = cert.roadmap;
   const program = displayName(rm);
   const issued = dateText(cert.issued_at);
@@ -172,38 +166,6 @@ function EarnedCard({ cert, name }) {
     }
   }
 
-  function startEdit() {
-    setDraft(shownName);
-    setNameErr("");
-    setEditing(true);
-  }
-
-  async function saveName(e) {
-    e.preventDefault();
-    const v = draft.trim().replace(/\s+/g, " ");
-    if (v.length < 2 || v.length > 60) {
-      setNameErr("Name must be 2 to 60 characters.");
-      return;
-    }
-    if (v === shownName) {
-      setEditing(false);
-      return;
-    }
-    setSaving(true);
-    setNameErr("");
-    const { data, error } = await supabase.rpc("update_certificate_name", { p_id: cert.id, p_name: v });
-    setSaving(false);
-    if (error || !data?.ok) {
-      if (error) console.error("update name:", error.code, error.message);
-      setNameErr(data?.error === "limit" ? "You have no name changes left." : "Couldn't save the name. Try again.");
-      return;
-    }
-    setShownName(data.name);
-    setChangesLeft(data.left);
-    setNameSet(true);
-    setEditing(false);
-  }
-
   function linkedin() {
     const d = new Date(cert.issued_at);
     const q = new URLSearchParams({
@@ -228,11 +190,6 @@ function EarnedCard({ cert, name }) {
         <h3>{program}</h3>
         <span className="certs-note">Issued {issued}</span>
       </div>
-      {!nameSet && (
-        <p className="certs-warn">
-          Your full name isn't set yet. Open the certificate and use Edit name before you download it.
-        </p>
-      )}
       <button type="button" className="certs-start" onClick={() => setOpen(true)}>
         View certificate
       </button>
@@ -260,38 +217,15 @@ function EarnedCard({ cert, name }) {
                   {busy ? "Preparing PDF…" : "Download PDF"}
                 </button>
                 <button type="button" className="cf-btn" onClick={linkedin}>Add to LinkedIn</button>
-                {changesLeft > 0 && !editing && (
-                  <button type="button" className={"cf-btn" + (nameSet ? "" : " is-primary")} onClick={startEdit}>{nameSet ? "Edit name" : "Set your name"}</button>
-                )}
               </div>
             </div>
-            {editing && (
-              <form className="cf-edit" onSubmit={saveName}>
-                <label htmlFor={`cf-name-${cert.id}`}>Name on certificate</label>
-                <div className="cf-edit-row">
-                  <input
-                    id={`cf-name-${cert.id}`}
-                    className="cf-input"
-                    value={draft}
-                    maxLength={60}
-                    autoFocus
-                    onChange={(e) => setDraft(e.target.value)}
-                  />
-                  <button type="submit" className="cf-btn is-primary" disabled={saving}>
-                    {saving ? "Saving…" : "Save"}
-                  </button>
-                  <button type="button" className="cf-btn" onClick={() => setEditing(false)} disabled={saving}>
-                    Cancel
-                  </button>
-                </div>
-                <p className="cf-hint">
-                  {nameSet
-                    ? `You can change the name ${changesLeft === 1 ? "1 more time" : `${changesLeft} more times`}. Check the spelling before saving.`
-                    : "Write your full name as it should appear. This first save is free; after it you can change it 2 more times."}
-                </p>
-                {nameErr && <p className="cf-error" role="alert">{nameErr}</p>}
-              </form>
-            )}
+            <p className="cf-hint">
+              Name is wrong?{" "}
+              <a href={`mailto:devup.team.az@gmail.com?subject=${encodeURIComponent("Certificate name correction")}&body=${encodeURIComponent(`Certificate: ${program}\nCorrect name: `)}`}>
+                Contact support
+              </a>
+              .
+            </p>
             {err && <p className="cf-error" role="alert">{err}</p>}
           </div>
         </div>
