@@ -7,7 +7,30 @@ import { markLessonComplete } from "../progress.js";
 import "./ProjectPage.css";
 
 /* ---------- helpers ---------- */
-function runChecks(checks, code) {
+const QUIET = { log() {}, info() {}, warn() {}, error() {} };
+
+/* runtime = true: the learner's code is executed and each test runs next to it.
+   runtime = false: the test only reads the code text (regex checks). */
+function runChecks(checks, code, runtime) {
+  if (runtime) {
+    try {
+      new Function("doc", "code", "console", code);
+    } catch (e) {
+      return [{ ok: false, fail: `Your code has a syntax error: ${e.message}` }];
+    }
+    return checks.map((c) => {
+      try {
+        const ok = !!new Function("doc", "code", "console", `${code}\n;return (${c.test});`)(
+          null,
+          code,
+          QUIET
+        );
+        return { ok, fail: c.fail };
+      } catch {
+        return { ok: false, fail: c.fail };
+      }
+    });
+  }
   const doc = new DOMParser().parseFromString(code, "text/html");
   return checks.map((c) => {
     try {
@@ -184,7 +207,7 @@ export default function ProjectPage() {
 
   function checkMilestone() {
     if (!current) return;
-    const items = runChecks(current.checks, code);
+    const items = runChecks(current.checks, code, canRun);
     const ok = items.every((i) => i.ok);
     setResults({ title: `Milestone ${current.id}`, items, ok });
     if (ok) {
@@ -199,13 +222,13 @@ export default function ProjectPage() {
     const items = [];
     const nextPassed = {};
     milestones.forEach((m) => {
-      const r = runChecks(m.checks, code);
+      const r = runChecks(m.checks, code, canRun);
       nextPassed[m.id] = r.every((i) => i.ok);
       r.filter((i) => !i.ok).forEach((i) =>
         items.push({ ok: false, fail: `Milestone ${m.id}: ${i.fail}` })
       );
     });
-    runChecks(data.final_checks, code)
+    runChecks(data.final_checks, code, canRun)
       .filter((i) => !i.ok)
       .forEach((i) => items.push({ ok: false, fail: `Final check: ${i.fail}` }));
 
