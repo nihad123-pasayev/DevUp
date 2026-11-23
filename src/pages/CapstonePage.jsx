@@ -137,6 +137,14 @@ function Workspace({ lessonId, title, data, store, setStore, onReset }) {
   const part = parts[partIdx];
   const [results, setResults] = useState(null);
   const [tab, setTab] = useState("preview");
+  const [big, setBig] = useState(false);
+
+  useEffect(() => {
+    if (!big) return undefined;
+    const onKey = (e) => { if (e.key === "Escape") setBig(false); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [big]);
   const [saving, setSaving] = useState(false);
   const timer = useRef(null);
 
@@ -291,13 +299,16 @@ function Workspace({ lessonId, title, data, store, setStore, onReset }) {
             <div className="cp-files"><div className="cp-files-h">FILES</div><SandpackFileExplorer /></div>
             <div className="cp-code"><SandpackCodeEditor showTabs showLineNumbers showInlineErrors closableTabs={false} style={{ height: "100%" }} /></div>
           </div>
-          <div className="cp-out">
+          <div className={"cp-out" + (big ? " is-big" : "")}>
             <div className="cp-out-tabs" role="tablist">
               {["preview", "console"].map((t) => (
                 <button key={t} type="button" role="tab" aria-selected={tab === t} className={"cp-out-tab" + (tab === t ? " is-on" : "")} onClick={() => setTab(t)}>
                   {t === "preview" ? "Preview" : "Console"}
                 </button>
               ))}
+              <button type="button" className="cp-out-expand" onClick={() => setBig((v) => !v)} aria-pressed={big}>
+                {big ? "Close (Esc)" : "Expand"}
+              </button>
             </div>
             <div className="cp-out-body" style={{ display: tab === "preview" ? "block" : "none" }}>
               <SandpackPreview showNavigator showOpenInCodeSandbox={false} showRefreshButton style={{ height: "100%" }} />
