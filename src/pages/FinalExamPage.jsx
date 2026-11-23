@@ -232,7 +232,7 @@ export default function FinalExamPage() {
           <div className="fx-badge">Final Exam</div>
           <h1>Prove what you learned</h1>
           <p className="fx-muted">
-            This exam covers all units of the roadmap, except the certification project.
+            This exam covers all units of the roadmap
           </p>
           <div className="fx-facts">
             <div><b>{questions.length}</b><span>multiple-choice questions</span></div>
