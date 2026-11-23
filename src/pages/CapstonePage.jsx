@@ -11,6 +11,7 @@ import {
 } from "@codesandbox/sandpack-react";
 import { supabase } from "../supabaseclient.js";
 import { markLessonComplete } from "../progress.js";
+import { playCelebration } from "./UnitCelebration.js";
 
 const THEME = {
   colors: {
@@ -229,17 +230,38 @@ function Workspace({ lessonId, title, data, store, setStore, onReset }) {
     URL.revokeObjectURL(a.href);
   }
 
+  const [finished, setFinished] = useState(false);
+
   async function submit() {
     setSaving(true);
     const ok = await markLessonComplete(lessonId);
     setSaving(false);
-    if (ok) navigate("/lessons");
+    if (ok) {
+      setFinished(true);
+      playCelebration();
+    }
   }
 
   const canOpen = (i) => i <= partIdx || store.done.includes(i - 1) || store.done.includes(i);
 
   return (
     <div className="cp-shell">
+      {finished && (
+        <div className="cp-done" role="status" aria-live="polite">
+          <div className="cp-done-card">
+            <span className="cp-done-icon" aria-hidden="true">
+              <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 12l5 5 9-10" />
+              </svg>
+            </span>
+            <h2>Congratulations!</h2>
+            <p>You finished the DevFolio project and completed the Web certification project. Great work!</p>
+            <button type="button" className="cp-btn is-primary" onClick={() => navigate("/lessons")}>
+              Back to lessons
+            </button>
+          </div>
+        </div>
+      )}
       <header className="cp-top">
         <Link to="/lessons" className="cp-logo">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6cb2ff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5" /></svg>
