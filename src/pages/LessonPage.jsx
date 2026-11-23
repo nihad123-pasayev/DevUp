@@ -360,15 +360,16 @@ export default function LessonPage() {
     list.length > 0 && list.every((l) => course.progress[l.id] === "completed");
   const resDone = course.progress[id] === "completed";
   async function completeResource() {
-    const ok = await markLessonComplete(id);
-    if (ok) {
-      setCourse((c) => ({
-        ...c,
-        progress: { ...c.progress, [id]: "completed" },
-      }));
-      setCelebrate(String(id));
-    }
+  const ok = await markLessonComplete(id);
+  if (ok) {
+    setCourse((c) => ({
+      ...c,
+      progress: { ...c.progress, [id]: "completed" },
+    }));
+    // Brief dərslərində "Success!" pəncərəsi çıxmır
+    if (!content?.lab_data?.no_celebrate) setCelebrate(String(id));
   }
+}
 
   let nextLink;
   if (!direct && !isRes && partIdx < PARTS.length - 1) {
