@@ -115,6 +115,7 @@ function Scaled({ paperRef, children }) {
 
 function EarnedCard({ cert, name }) {
   const paperRef = useRef(null);
+  const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [shownName, setShownName] = useState(cert.recipient_name || name);
@@ -126,6 +127,24 @@ function EarnedCard({ cert, name }) {
   const rm = cert.roadmap;
   const program = displayName(rm);
   const issued = dateText(cert.issued_at);
+  const paper = (
+    <Paper
+      name={shownName}
+      program={program}
+      skills={cert.skills}
+      blurb={BLURB[rm?.field] || "Completed every unit, the certification project and the final exam."}
+      issued={issued}
+    />
+  );
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const onKey = (e) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
 
   async function download() {
     const node = paperRef.current?.firstChild;
@@ -175,11 +194,7 @@ function EarnedCard({ cert, name }) {
     setSaving(false);
     if (error || !data?.ok) {
       if (error) console.error("update name:", error.code, error.message);
-      setNameErr(
-        data?.error === "limit"
-          ? "You have no name changes left."
-          : "Couldn't save the name. Try again."
-      );
+      setNameErr(data?.error === "limit" ? "You have no name changes left." : "Couldn't save the name. Try again.");
       return;
     }
     setShownName(data.name);
@@ -201,57 +216,77 @@ function EarnedCard({ cert, name }) {
   }
 
   return (
-    <article className="cf-card certs-earned">
-      <Scaled paperRef={paperRef}>
-        <Paper
-          name={shownName}
-          program={program}
-          skills={cert.skills}
-          blurb={BLURB[rm?.field] || "Completed every unit, the certification project and the final exam."}
-          issued={issued}
-        />
-      </Scaled>
-      <div className="cf-row">
-        <div>
-          <h2 className="cf-title">{program}</h2>
-          <p className="cf-meta">Issued {issued}</p>
-        </div>
-        <div className="cf-actions">
-          <button type="button" className="cf-btn is-primary" onClick={download} disabled={busy}>
-            {busy ? "Preparing PDF…" : "Download PDF"}
-          </button>
-          <button type="button" className="cf-btn" onClick={linkedin}>Add to LinkedIn</button>
-          {changesLeft > 0 && !editing && (
-            <button type="button" className="cf-btn" onClick={startEdit}>Edit name</button>
-          )}
-        </div>
+    <article className="certs-card certs-earned">
+      <div className="certs-row">
+        <span className="certs-badge">{rm?.field}</span>
+        <span className="certs-status is-earned">Earned</span>
       </div>
-      {editing && (
-        <form className="cf-edit" onSubmit={saveName}>
-          <label htmlFor={`cf-name-${cert.id}`}>Name on certificate</label>
-          <div className="cf-edit-row">
-            <input
-              id={`cf-name-${cert.id}`}
-              className="cf-input"
-              value={draft}
-              maxLength={60}
-              autoFocus
-              onChange={(e) => setDraft(e.target.value)}
-            />
-            <button type="submit" className="cf-btn is-primary" disabled={saving}>
-              {saving ? "Saving…" : "Save"}
+      <Scaled>{paper}</Scaled>
+      <div className="certs-row">
+        <h3>{program}</h3>
+        <span className="certs-note">Issued {issued}</span>
+      </div>
+      <button type="button" className="certs-start" onClick={() => setOpen(true)}>
+        View certificate
+      </button>
+
+      {open && (
+        <div className="cf-overlay" onClick={() => setOpen(false)}>
+          <div
+            className="cf-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${program} certificate`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button type="button" className="cf-close" aria-label="Close" onClick={() => setOpen(false)}>
+              &times;
             </button>
-            <button type="button" className="cf-btn" onClick={() => setEditing(false)} disabled={saving}>
-              Cancel
-            </button>
+            <Scaled paperRef={paperRef}>{paper}</Scaled>
+            <div className="cf-row">
+              <div>
+                <h2 className="cf-title">{program}</h2>
+                <p className="cf-meta">Issued {issued}</p>
+              </div>
+              <div className="cf-actions">
+                <button type="button" className="cf-btn is-primary" onClick={download} disabled={busy}>
+                  {busy ? "Preparing PDF…" : "Download PDF"}
+                </button>
+                <button type="button" className="cf-btn" onClick={linkedin}>Add to LinkedIn</button>
+                {changesLeft > 0 && !editing && (
+                  <button type="button" className="cf-btn" onClick={startEdit}>Edit name</button>
+                )}
+              </div>
+            </div>
+            {editing && (
+              <form className="cf-edit" onSubmit={saveName}>
+                <label htmlFor={`cf-name-${cert.id}`}>Name on certificate</label>
+                <div className="cf-edit-row">
+                  <input
+                    id={`cf-name-${cert.id}`}
+                    className="cf-input"
+                    value={draft}
+                    maxLength={60}
+                    autoFocus
+                    onChange={(e) => setDraft(e.target.value)}
+                  />
+                  <button type="submit" className="cf-btn is-primary" disabled={saving}>
+                    {saving ? "Saving…" : "Save"}
+                  </button>
+                  <button type="button" className="cf-btn" onClick={() => setEditing(false)} disabled={saving}>
+                    Cancel
+                  </button>
+                </div>
+                <p className="cf-hint">
+                  You can change the name {changesLeft === 1 ? "1 more time" : `${changesLeft} more times`}. Check the spelling before saving.
+                </p>
+                {nameErr && <p className="cf-error" role="alert">{nameErr}</p>}
+              </form>
+            )}
+            {err && <p className="cf-error" role="alert">{err}</p>}
           </div>
-          <p className="cf-hint">
-            You can change the name {changesLeft === 1 ? "1 more time" : `${changesLeft} more times`}. Check the spelling before saving.
-          </p>
-          {nameErr && <p className="cf-error" role="alert">{nameErr}</p>}
-        </form>
+        </div>
       )}
-      {err && <p className="cf-error" role="alert">{err}</p>}
     </article>
   );
 }
@@ -312,6 +347,30 @@ export default function Certificates() {
       (pg.data || []).forEach((r) => {
         prog[r.roadmap_id] = { total: r.total, done: r.done };
       });
+
+      // Final Exam keçilib, amma sertifikat hələ yaranmayıbsa, yarat
+      let certRows = ct.data || [];
+      const missing = (rm.data || []).filter((r) => {
+        const p = prog[r.id];
+        return p && p.total > 0 && p.done >= p.total && !certRows.some((c) => c.roadmap_id === r.id);
+      });
+      if (missing.length) {
+        const ex = await supabase.from("lessons").select("id, stage:stages(roadmap_id)").eq("kind", "exam");
+        const exams = (ex.data || []).map((x) => ({
+          id: x.id,
+          roadmapId: (Array.isArray(x.stage) ? x.stage[0] : x.stage)?.roadmap_id,
+        }));
+        for (const r of missing) {
+          const e = exams.find((x) => x.roadmapId === r.id);
+          if (e) await supabase.functions.invoke("send-certificate-email", { body: { lessonId: e.id } }).catch(() => {});
+        }
+        const again = await supabase
+          .from("certificates")
+          .select("id, code, issued_at, roadmap_id, recipient_name, name_changes")
+          .eq("user_id", user.id);
+        if (!again.error) certRows = again.data || [];
+        if (off) return;
+      }
       const name =
         pr.data?.full_name ||
         user.user_metadata?.full_name ||
@@ -322,7 +381,7 @@ export default function Certificates() {
         error: rm.error ? "Couldn't load roadmaps." : "",
         name,
         roadmaps: rm.data || [],
-        certs: ct.data || [],
+        certs: certRows,
         prog,
         stages: st.data || [],
       });
