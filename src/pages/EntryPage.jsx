@@ -463,10 +463,24 @@ function EntryPage() {
     if (!openField) return;
     const onKey = (e) => e.key === "Escape" && setOpenField(null);
     window.addEventListener("keydown", onKey);
-    document.body.style.overflow = "hidden";
+
+    // Səhifəni dondur, amma scroll yerini saxla (başa qayıtmasın)
+    const y = window.scrollY;
+    const gap = window.innerWidth - document.documentElement.clientWidth;
+    const b = document.body.style;
+    const prev = { position: b.position, top: b.top, width: b.width, paddingRight: b.paddingRight };
+    b.position = "fixed";
+    b.top = `-${y}px`;
+    b.width = "100%";
+    if (gap > 0) b.paddingRight = `${gap}px`;
+
     return () => {
       window.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
+      b.position = prev.position;
+      b.top = prev.top;
+      b.width = prev.width;
+      b.paddingRight = prev.paddingRight;
+      window.scrollTo({ top: y, left: 0, behavior: "instant" });
     };
   }, [openField]);
 
