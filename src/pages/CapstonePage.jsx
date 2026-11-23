@@ -338,6 +338,28 @@ function CapstoneInner({ id }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [part, partIdx, resetKey]);
 
+  const current = useMemo(() => {
+    if (!files) return null;
+    const out = {};
+    Object.entries(files).forEach(([p, f]) => {
+      out[p] = { code: typeof f === "string" ? f : f.code };
+    });
+    return out;
+  }, [files]);
+
+  const options = useMemo(
+    () =>
+      part
+        ? {
+            visibleFiles: Object.keys(part.files),
+            activeFile: part.active || Object.keys(part.files)[0],
+            recompileMode: "delayed",
+            recompileDelay: 600,
+          }
+        : null,
+    [part],
+  );
+
   if (state.loading) return <div className="cp-center">Loading...</div>;
   if (!state.lesson || !parts || !parts.length || !part)
     return (
@@ -347,24 +369,13 @@ function CapstoneInner({ id }) {
       </div>
     );
 
-  const current = {};
-  Object.entries(files).forEach(([p, f]) => {
-    current[p] = { code: typeof f === "string" ? f : f.code };
-  });
-
   return (
     <SandpackProvider
       key={id + "-" + partIdx + "-" + resetKey}
       template={part.template || "static"}
       theme={THEME}
       files={current}
-      options={{
-        visibleFiles: Object.keys(part.files),
-        activeFile: part.active || Object.keys(part.files)[0],
-        recompileMode: "delayed",
-        recompileDelay: 600,
-        externalResources: [],
-      }}
+      options={options}
       customSetup={part.deps ? { dependencies: part.deps } : undefined}
     >
       <Workspace lessonId={id} title={nameOf(state.lesson)} data={state.data} store={store} setStore={setStore} onReset={onReset} />
