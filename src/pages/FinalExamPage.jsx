@@ -232,7 +232,7 @@ export default function FinalExamPage() {
           <div className="fx-badge">Final Exam</div>
           <h1>Prove what you learned</h1>
           <p className="fx-muted">
-            This exam covers all units of the roadmap
+            This exam covers all units of the roadmap, except the certification project.
           </p>
           <div className="fx-facts">
             <div><b>{questions.length}</b><span>multiple-choice questions</span></div>
@@ -257,7 +257,7 @@ export default function FinalExamPage() {
   if (phase === "exam") {
     const q = questions[cur];
     const answered = Object.keys(answers).length;
-    const low = left <= 300;
+    const low = left <= 900; // 15 dəqiqədən az qalanda qırmızı
     return (
       <div className="fx-page is-exam">
         <header className="fx-top">
@@ -276,7 +276,15 @@ export default function FinalExamPage() {
         <div className="fx-main">
           <section className="fx-card fx-q">
             <div className="fx-qmeta">Question {cur + 1} of {questions.length}</div>
-            <h2 className="fx-qtext">{q.q}</h2>
+            <div className="fx-qtext">
+              {q.q.split("```").map((seg, k) =>
+                k % 2 ? (
+                  <pre key={k} className="fx-code"><code>{seg.replace(/^\n|\n$/g, "")}</code></pre>
+                ) : (
+                  seg.trim() && <p key={k}>{seg.trim()}</p>
+                ),
+              )}
+            </div>
             <div className="fx-opts" role="radiogroup">
               {q.options.map((o, i) => (
                 <button
