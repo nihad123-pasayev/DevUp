@@ -4,6 +4,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import EditorImport from "react-simple-code-editor";
 import Prism from "prismjs";
+import LessonAIChat from "./LessonAIChat";
 
 // Bu paket köhnə (CommonJS) formatdadır; bəzi Vite versiyalarında komponent .default içində gəlir
 const Editor = EditorImport.default ?? EditorImport;
@@ -261,13 +262,24 @@ function prepare(text) {
 }
 
 
-export default function LessonContent({ text, content }) {
+// lessonId verilsə (yalnız theory hissəsində), sağda AI chat paneli göstərilir
+export default function LessonContent({ text, content, lessonId, lessonTitle }) {
   const raw = text ?? content ?? "";
-  return (
+
+  const body = (
     <div className="lc">
       <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
         {prepare(raw)}
       </ReactMarkdown>
+    </div>
+  );
+
+  if (!lessonId) return body;
+
+  return (
+    <div className="theory-with-ai">
+      <div className="theory-main">{body}</div>
+      <LessonAIChat key={lessonId} lessonId={lessonId} lessonTitle={lessonTitle} />
     </div>
   );
 }

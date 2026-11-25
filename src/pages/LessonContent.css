@@ -399,3 +399,15 @@
   border: 0;
   object-fit: cover; /* Kənarlarda boşluq saxlamadan tam doldurur */
 }
+.theory-with-ai {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .theory-with-ai {
+    grid-template-columns: 1fr;
+  }
+}

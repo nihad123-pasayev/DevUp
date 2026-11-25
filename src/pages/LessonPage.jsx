@@ -323,18 +323,18 @@ export default function LessonPage() {
   const isRes = !!lesson && lesson.kind === "resource";
   const kind = lesson ? (isRes ? "lesson" : lessonKind(lesson)) : "lesson";
   useEffect(() => {
-  if (loading || kind !== "project") return;
-  const isCapstone = content?.lab_data?.type === "capstone";
-  navigate(isCapstone ? `/capstone/${id}` : `/project/${id}`, {
-    replace: true,
-  });
-}, [loading, kind, id, content, navigate]);
+    if (loading || kind !== "project") return;
+    const isCapstone = content?.lab_data?.type === "capstone";
+    navigate(isCapstone ? `/capstone/${id}` : `/project/${id}`, {
+      replace: true,
+    });
+  }, [loading, kind, id, content, navigate]);
   useEffect(() => {
-  if (loading || kind !== "exam") return;
-  if (Array.isArray(content?.quiz) && content.quiz.length) {
-    navigate(`/exam/${id}`, { replace: true });
-  }
-}, [loading, kind, id, content, navigate]);
+    if (loading || kind !== "exam") return;
+    if (Array.isArray(content?.quiz) && content.quiz.length) {
+      navigate(`/exam/${id}`, { replace: true });
+    }
+  }, [loading, kind, id, content, navigate]);
   const direct = kind !== "lesson";
   const current = isRes
     ? "theory"
@@ -366,16 +366,16 @@ export default function LessonPage() {
     list.length > 0 && list.every((l) => course.progress[l.id] === "completed");
   const resDone = course.progress[id] === "completed";
   async function completeResource() {
-  const ok = await markLessonComplete(id);
-  if (ok) {
-    setCourse((c) => ({
-      ...c,
-      progress: { ...c.progress, [id]: "completed" },
-    }));
-    // Brief dərslərində "Success!" pəncərəsi çıxmır
-    if (!content?.lab_data?.no_celebrate) setCelebrate(String(id));
+    const ok = await markLessonComplete(id);
+    if (ok) {
+      setCourse((c) => ({
+        ...c,
+        progress: { ...c.progress, [id]: "completed" },
+      }));
+      // Brief dərslərində "Success!" pəncərəsi çıxmır
+      if (!content?.lab_data?.no_celebrate) setCelebrate(String(id));
+    }
   }
-}
 
   let nextLink;
   if (!direct && !isRes && partIdx < PARTS.length - 1) {
@@ -574,7 +574,10 @@ export default function LessonPage() {
         <main className="lp-main">
           <div
             className={
-              "lp-page" + (current === "lab" && hasLab ? " is-wide" : "")
+              "lp-page" +
+              ((current === "lab" && hasLab) || (current === "theory" && !isRes)
+                ? " is-wide"
+                : "")
             }
           >
             <div className="lp-head">
@@ -622,7 +625,12 @@ export default function LessonPage() {
                   )}
                   <article className="lp-card">
                     {partText ? (
-                      <LessonContent key={id + "-theory"} text={partText} />
+                      <LessonContent
+                        key={id + "-theory"}
+                        text={partText}
+                        lessonId={id}
+                        lessonTitle={title}
+                      />
                     ) : (
                       <>
                         <h2>{title}</h2>
