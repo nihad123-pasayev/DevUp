@@ -14,7 +14,11 @@ function renderInline(line, keyPrefix) {
       return <strong key={key}>{piece.slice(2, -2)}</strong>;
     }
     if (piece.startsWith("`") && piece.endsWith("`") && piece.length > 2) {
-      return <code key={key} className="ai-inline-code">{piece.slice(1, -1)}</code>;
+      return (
+        <code key={key} className="ai-inline-code">
+          {piece.slice(1, -1)}
+        </code>
+      );
     }
     return piece;
   });
@@ -68,6 +72,8 @@ export default function LessonAIChat({ lessonId, lessonTitle }) {
   const listRef = useRef(null);
   const abortRef = useRef(null);
   const timerRef = useRef(null);
+  const copyTimerRef = useRef(null);
+  const [copiedIndex, setCopiedIndex] = useState(null);
 
   useEffect(() => {
     if (listRef.current) {
@@ -80,12 +86,14 @@ export default function LessonAIChat({ lessonId, lessonTitle }) {
     return () => {
       if (abortRef.current) abortRef.current.abort();
       if (timerRef.current) clearInterval(timerRef.current);
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
     };
   }, []);
 
   async function ask(mode, text) {
     if (loading) return;
-    const question = mode === "summary" ? "Make a summary of this lesson" : text.trim();
+    const question =
+      mode === "summary" ? "Make a summary of this lesson" : text.trim();
     if (!question) return;
 
     const next = [...messages, { role: "user", text: question }];
@@ -107,7 +115,10 @@ export default function LessonAIChat({ lessonId, lessonTitle }) {
       timerRef.current = setInterval(() => {
         if (shown < full.length) {
           const gap = full.length - shown;
-          shown = Math.min(full.length, shown + Math.max(2, Math.ceil(gap / 20)));
+          shown = Math.min(
+            full.length,
+            shown + Math.max(2, Math.ceil(gap / 20)),
+          );
           setMessages([...next, { role: "model", text: full.slice(0, shown) }]);
         } else if (streamEnded) {
           clearInterval(timerRef.current);
@@ -120,7 +131,8 @@ export default function LessonAIChat({ lessonId, lessonTitle }) {
       const { data: sessionData } = await supabase.auth.getSession();
       const accessToken = sessionData?.session?.access_token ?? "";
       const baseUrl = supabase.supabaseUrl || import.meta.env.VITE_SUPABASE_URL;
-      const anonKey = supabase.supabaseKey || import.meta.env.VITE_SUPABASE_ANON_KEY;
+      const anonKey =
+        supabase.supabaseKey || import.meta.env.VITE_SUPABASE_ANON_KEY;
 
       const res = await fetch(`${baseUrl}/functions/v1/${FUNCTION_NAME}`, {
         method: "POST",
@@ -196,9 +208,12 @@ export default function LessonAIChat({ lessonId, lessonTitle }) {
     }
   }
 
-  async function copyAnswer(text) {
+  async function copyAnswer(text, index) {
     try {
       await navigator.clipboard.writeText(text);
+      setCopiedIndex(index);
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+      copyTimerRef.current = setTimeout(() => setCopiedIndex(null), 2000);
     } catch {
       // clipboard not available
     }
@@ -238,7 +253,9 @@ export default function LessonAIChat({ lessonId, lessonTitle }) {
           {messages.length === 0 && (
             <div className="ai-empty">
               <p>Didn't understand something in this lesson? Ask here.</p>
-              <p className="ai-empty-example">For example: "Explain this with a simple example"</p>
+              <p className="ai-empty-example">
+                For example: "Explain this with a simple example"
+              </p>
             </div>
           )}
 
@@ -253,8 +270,14 @@ export default function LessonAIChat({ lessonId, lessonTitle }) {
                 <div className="ai-msg ai-msg-bot">
                   {renderAnswer(m.text)}
                   {!loading && (
-                    <button type="button" className="ai-copy" onClick={() => copyAnswer(m.text)}>
-                      Copy
+                    <button
+                      type="button"
+                      className={
+                        "ai-copy" + (copiedIndex === i ? " is-copied" : "")
+                      }
+                      onClick={() => copyAnswer(m.text, i)}
+                    >
+                      {copiedIndex === i ? "Copied" : "Copy"}
                     </button>
                   )}
                 </div>
@@ -291,8 +314,23 @@ export default function LessonAIChat({ lessonId, lessonTitle }) {
             maxLength={2000}
             disabled={loading}
           />
-          <button type="submit" className="ai-send" disabled={loading || !input.trim()} aria-label="Send">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <button
+            type="submit"
+            className="ai-send"
+            disabled={loading || !input.trim()}
+            aria-label="Send"
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
               <path d="M12 19V5" />
               <path d="M5 12l7-7 7 7" />
             </svg>

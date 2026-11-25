@@ -239,3 +239,41 @@
     cursor: pointer;
   }
 }
+/* Text colors: forced, so page-level styles (p, .lp-card p ...) cannot make the text dark */
+.ai-panel .ai-msg-bot,
+.ai-panel .ai-msg-bot p,
+.ai-panel .ai-msg-bot strong,
+.ai-panel .ai-msg-bot div,
+.ai-panel .ai-empty p,
+.ai-panel .ai-title {
+  color: #ffffff !important;
+}
+
+.ai-panel .ai-empty-example,
+.ai-panel .ai-subtitle {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.ai-panel .ai-msg-user {
+  color: #101a3a !important;
+}
+
+.ai-panel .ai-code-block,
+.ai-panel .ai-code-block code {
+  color: #e6edf7 !important;
+}
+
+.ai-panel .ai-inline-code {
+  color: #ffffff !important;
+}
+
+.ai-panel .ai-form textarea,
+.ai-panel .ai-form textarea:disabled {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff;
+  opacity: 1;
+}
+
+.ai-panel .ai-copy.is-copied {
+  color: #7be0a3 !important;
+}
