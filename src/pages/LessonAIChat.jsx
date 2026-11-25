@@ -64,7 +64,7 @@ export default function LessonAIChat({ lessonId, lessonTitle }) {
 
   async function ask(mode, text) {
     if (loading) return;
-    const question = mode === "summary" ? "Make a summary (konspekt) of this lesson" : text.trim();
+    const question = mode === "summary" ? "Make a summary (conspect) of this lesson" : text.trim();
     if (!question) return;
 
     const next = [...messages, { role: "user", text: question }];
@@ -73,7 +73,7 @@ export default function LessonAIChat({ lessonId, lessonTitle }) {
     setError("");
     setLoading(true);
 
-    const { data, error: fnError } = await supabase.functions.invoke("lesson-ai", {
+   const { data, error: fnError } = await supabase.functions.invoke("dynamic-endpoint", {
       body: { lessonId, mode, messages: next },
     });
 
