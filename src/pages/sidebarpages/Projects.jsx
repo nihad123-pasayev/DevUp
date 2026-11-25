@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Sidebar from "../Sidebar";
-import MyProjects from "../MyProjects";
+import { supabase } from "/src/supabaseclient.js";
 import "./Projects.css";
 
 const TABS = [
@@ -113,6 +114,55 @@ export default function Projects() {
   const [tab, setTab] = useState("mine");
   const [query, setQuery] = useState("");
   const [field, setField] = useState("All fields");
+  const [myProjects, setMyProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  // Tamamlanmış layihə dərsləri (My projects)
+  useEffect(() => {
+    async function loadProjects() {
+      const { data: auth } = await supabase.auth.getUser();
+      const user = auth?.user;
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+      const { data: done, error } = await supabase
+        .from("user_progress")
+        .select("lesson_id, completed_at, lessons!inner(id, title, kind, stages!inner(roadmaps!inner(field, track, title)))")
+        .eq("user_id", user.id)
+        .eq("status", "completed")
+        .eq("lessons.kind", "project")
+        .order("completed_at", { ascending: false });
+      if (error || !done?.length) {
+        setLoading(false);
+        return;
+      }
+      const ids = done.map((d) => d.lesson_id);
+      const [contentRes, subRes] = await Promise.all([
+        supabase.from("lesson_content").select("lesson_id, type:lab_data->>type, ptitle:lab_data->>title").in("lesson_id", ids),
+        supabase.from("project_submissions").select("lesson_id, repo_url").eq("user_id", user.id).in("lesson_id", ids),
+      ]);
+      const content = new Map((contentRes.data || []).map((c) => [c.lesson_id, c]));
+      const repos = new Map((subRes.data || []).map((s) => [s.lesson_id, s.repo_url]));
+      setMyProjects(
+        done.map((d) => {
+          const road = d.lessons?.stages?.roadmaps;
+          const c = content.get(d.lesson_id);
+          return {
+            id: d.lesson_id,
+            title: c?.ptitle || d.lessons?.title || "Project",
+            type: c?.type,
+            field: road?.field || "",
+            roadmap: road?.title || "",
+            repo: repos.get(d.lesson_id),
+          };
+        }),
+      );
+      setLoading(false);
+    }
+    loadProjects();
+  }, []);
   function matches(item, titleKey) {
     const q = query.trim().toLowerCase();
     const okQuery = item[titleKey].toLowerCase().includes(q);
@@ -120,6 +170,7 @@ export default function Projects() {
     return okQuery && okField;
   }
 
+  const visibleMine = myProjects.filter((p) => matches(p, "title"));
   const visibleIdeas = IDEAS.filter((p) => matches(p, "title"));
 
   return (
@@ -146,7 +197,7 @@ export default function Projects() {
           ))}
         </div>
 
-        {tab === "ideas" && (
+        {tab !== "find" && (
           <div className="projects-toolbar">
             <div className="projects-search">
               <svg
@@ -187,7 +238,52 @@ export default function Projects() {
           </div>
         )}
 
-        {tab === "mine" && <MyProjects />}
+        {tab === "mine" &&
+          (loading ? (
+            <div className="projects-empty">
+              <p className="projects-empty-text">Loading...</p>
+            </div>
+          ) : myProjects.length === 0 ? (
+            <div className="projects-empty">
+              <h2>No projects yet</h2>
+              <p className="projects-empty-text">
+                Finish a project lesson and it will appear here.
+              </p>
+            </div>
+          ) : visibleMine.length === 0 ? (
+            <div className="projects-empty">
+              <h2>No results</h2>
+              <p className="projects-empty-text">
+                Try a different search or field.
+              </p>
+            </div>
+          ) : (
+            <div className="projects-grid">
+              {visibleMine.map((p) => (
+                <button
+                  className="projects-card"
+                  key={p.id}
+                  onClick={() =>
+                    navigate(p.type === "capstone" ? `/capstone/${p.id}` : `/project/${p.id}`)
+                  }
+                >
+                  <div className="projects-card-top">
+                    <span className="projects-badge">Completed</span>
+                    <span className="projects-card-field">{p.field}</span>
+                  </div>
+                  <h3>{p.title}</h3>
+                  <p>
+                    {p.roadmap}
+                    {p.roadmap ? " · " : ""}
+                    {p.type === "capstone" ? "Certification project" : "Unit project"}
+                  </p>
+                  <div className="projects-tech">
+                    {p.repo && <span>On GitHub</span>}
+                  </div>
+                </button>
+              ))}
+            </div>
+          ))}
 
         {tab === "ideas" &&
           (visibleIdeas.length === 0 ? (
