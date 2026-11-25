@@ -1,6 +1,6 @@
 import { useState } from "react";
 import Sidebar from "../Sidebar";
-import MyProjects from "../components/MyProjects.jsx";
+import MyProjects from "../MyProjects";
 import "./Projects.css";
 
 const TABS = [
