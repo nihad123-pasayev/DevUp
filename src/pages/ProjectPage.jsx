@@ -10,7 +10,7 @@ import "./ProjectPage.css";
 const QUIET = { log() {}, info() {}, warn() {}, error() {} };
 
 /* GitHub OAuth App "DevUp Repos" Client ID (public, not the secret) */
-const GITHUB_CLIENT_ID = "Ov23lisVxvptOscjDD40";
+const GITHUB_CLIENT_ID = "BURA_CLIENT_ID_YAZ";
 const GH_KEY = "devup-github-oauth";
 
 function readGithubCallback(lessonId) {
@@ -69,14 +69,54 @@ function runChecks(checks, code, runtime) {
     });
   }
   const doc = new DOMParser().parseFromString(code, "text/html");
+  const { css, prop, has } = cssTools(doc);
   return checks.map((c) => {
     try {
-      const ok = !!new Function("doc", "code", `return (${c.test});`)(doc, code);
+      const ok = !!new Function("doc", "code", "css", "prop", "has", `return (${c.test});`)(
+        doc,
+        code,
+        css,
+        prop,
+        has
+      );
       return { ok, fail: c.fail };
     } catch {
       return { ok: false, fail: c.fail };
     }
   });
+}
+
+/* CSS projects: css = all <style> text, has(sel) = a rule with this exact selector exists,
+   prop(sel, name) = last value written for that property in rules with this selector (or null) */
+function cssTools(doc) {
+  const css = [...doc.querySelectorAll("style")].map((n) => n.textContent).join("\n");
+  const clean = css.replace(/\/\*[\s\S]*?\*\//g, "");
+  const rules = [];
+  const re = /([^{}]+)\{([^{}]*)\}/g;
+  let m;
+  while ((m = re.exec(clean))) {
+    const selectors = m[1]
+      .split(",")
+      .map((x) => x.trim().replace(/\s+/g, " "))
+      .filter((x) => x && !x.startsWith("@"));
+    if (selectors.length) rules.push({ selectors, body: m[2] });
+  }
+  const norm = (x) => String(x).trim().replace(/\s+/g, " ");
+  const has = (sel) => rules.some((r) => r.selectors.includes(norm(sel)));
+  const prop = (sel, name) => {
+    let value = null;
+    rules.forEach((r) => {
+      if (!r.selectors.includes(norm(sel))) return;
+      r.body.split(";").forEach((d) => {
+        const i = d.indexOf(":");
+        if (i > 0 && d.slice(0, i).trim().toLowerCase() === name.toLowerCase()) {
+          value = d.slice(i + 1).replace(/!important/i, "").trim();
+        }
+      });
+    });
+    return value;
+  };
+  return { css, prop, has };
 }
 
 function readJson(key, fallback) {
