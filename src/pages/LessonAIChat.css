@@ -4,7 +4,7 @@
   height: calc(100vh - 32px);
   display: flex;
   flex-direction: column;
-  background: linear-gradient(180deg, #0a0e2e 0%, #111a68 55%, #1a35b8 100%);
+  background: linear-gradient(180deg, #0a0e2e 0%, #0b23ff 55%, #294bf3 100%);
   border-radius: 16px;
   font-family: "Manrope", sans-serif;
   color: #ffffff;
