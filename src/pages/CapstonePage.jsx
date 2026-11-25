@@ -129,6 +129,33 @@ function runChecks(part, files, extra = {}) {
   return result;
 }
 
+const GH_KEY = "devup-github-oauth";
+const GITHUB_CLIENT_ID = "Ov23lisVxvptOscjDD40";
+
+// GitHub istifadəçini ?code=&state= ilə qaytarıbsa, kodu qaytarır
+function readGithubCallback(lessonId) {
+  try {
+    const p = new URLSearchParams(window.location.search);
+    const code = p.get("code");
+    const state = p.get("state");
+    const saved = JSON.parse(sessionStorage.getItem(GH_KEY) || "null");
+    if (code && state && saved && saved.state === state && String(saved.lessonId) === String(lessonId)) return code;
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
+async function githubError(error) {
+  try {
+    const body = await error.context.json();
+    if (body?.error) return body.error;
+  } catch {
+    /* ignore */
+  }
+  return "Could not upload to GitHub. Try again.";
+}
+
 function Workspace({ lessonId, title, data, store, setStore, onReset }) {
   const navigate = useNavigate();
   const { sandpack } = useSandpack();
@@ -209,33 +236,111 @@ function Workspace({ lessonId, title, data, store, setStore, onReset }) {
     });
   }
 
-  // Kodu Vite layihəsi kimi zip-ə yığıb endirir
-  async function download() {
-    const { default: JSZip } = await import("jszip");
-    const zip = new JSZip();
+  // Kodu Vite layihəsi kimi fayllara yığır (zip və GitHub üçün eyni)
+  function buildFiles() {
+    const out = {};
     const skip = /^\/(package\.json|tsconfig\.json|public\/index\.html)$/;
     Object.entries(sandpack.files).forEach(([path, f]) => {
       if (skip.test(path)) return;
       const code = typeof f === "string" ? f : f.code;
-      if (path === "/README.md") zip.file("README.md", code);
-      else if (path === "/.gitignore") zip.file(".gitignore", code);
-      else if (path === "/index.tsx") zip.file("src/main.tsx", code);
-      else zip.file("src" + path, code);
+      if (path === "/README.md") out["README.md"] = code;
+      else if (path === "/.gitignore") out[".gitignore"] = code;
+      else if (path === "/index.tsx") out["src/main.tsx"] = code;
+      else out["src" + path] = code;
     });
     const pub = sandpack.files["/public/index.html"];
     const pubCode = pub ? (typeof pub === "string" ? pub : pub.code) : '<!doctype html>\n<html lang="en">\n<head>\n<meta charset="UTF-8" />\n<meta name="viewport" content="width=device-width, initial-scale=1.0" />\n<title>DevFolio</title>\n</head>\n<body>\n<div id="root"></div>\n</body>\n</html>\n';
-    zip.file("index.html", pubCode.replace("</body>", '  <script type="module" src="/src/main.tsx"></script>\n</body>'));
-    zip.file("src/vite-env.d.ts", '/// <reference types="vite/client" />\n');
-    zip.file("package.json", JSON.stringify({ name: "devfolio", private: true, version: "1.0.0", type: "module", scripts: { dev: "vite", build: "tsc && vite build", preview: "vite preview" }, dependencies: { react: "^18.3.1", "react-dom": "^18.3.1" }, devDependencies: { "@types/react": "^18.3.3", "@types/react-dom": "^18.3.0", "@vitejs/plugin-react": "^4.3.1", typescript: "^5.5.3", vite: "^5.4.0" } }, null, 2) + "\n");
-    zip.file("vite.config.ts", 'import { defineConfig } from "vite";\nimport react from "@vitejs/plugin-react";\n\nexport default defineConfig({ plugins: [react()] });\n');
-    zip.file("tsconfig.json", JSON.stringify({ compilerOptions: { target: "ES2020", useDefineForClassFields: true, lib: ["ES2020", "DOM", "DOM.Iterable"], module: "ESNext", skipLibCheck: true, moduleResolution: "bundler", allowImportingTsExtensions: true, resolveJsonModule: true, isolatedModules: true, noEmit: true, jsx: "react-jsx", strict: true }, include: ["src"] }, null, 2) + "\n");
-    if (!sandpack.files["/.gitignore"]) zip.file(".gitignore", "node_modules\ndist\n");
+    out["index.html"] = pubCode.replace("</body>", '  <script type="module" src="/src/main.tsx"></script>\n</body>');
+    out["src/vite-env.d.ts"] = '/// <reference types="vite/client" />\n';
+    out["package.json"] = JSON.stringify({ name: "devfolio", private: true, version: "1.0.0", type: "module", scripts: { dev: "vite", build: "tsc && vite build", preview: "vite preview" }, dependencies: { react: "^18.3.1", "react-dom": "^18.3.1" }, devDependencies: { "@types/react": "^18.3.3", "@types/react-dom": "^18.3.0", "@vitejs/plugin-react": "^4.3.1", typescript: "^5.5.3", vite: "^5.4.0" } }, null, 2) + "\n";
+    out["vite.config.ts"] = 'import { defineConfig } from "vite";\nimport react from "@vitejs/plugin-react";\n\nexport default defineConfig({ plugins: [react()] });\n';
+    out["tsconfig.json"] = JSON.stringify({ compilerOptions: { target: "ES2020", useDefineForClassFields: true, lib: ["ES2020", "DOM", "DOM.Iterable"], module: "ESNext", skipLibCheck: true, moduleResolution: "bundler", allowImportingTsExtensions: true, resolveJsonModule: true, isolatedModules: true, noEmit: true, jsx: "react-jsx", strict: true }, include: ["src"] }, null, 2) + "\n";
+    if (!out[".gitignore"]) out[".gitignore"] = "node_modules\ndist\n";
+    return out;
+  }
+
+  async function download() {
+    const { default: JSZip } = await import("jszip");
+    const zip = new JSZip();
+    Object.entries(buildFiles()).forEach(([path, code]) => zip.file(path, code));
     const blob = await zip.generateAsync({ type: "blob" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = "devfolio.zip";
     a.click();
     URL.revokeObjectURL(a.href);
+  }
+
+  // ---- Add to GitHub ----
+  const ghClientId = GITHUB_CLIENT_ID;
+  const [ghCode] = useState(() => readGithubCallback(lessonId));
+  const [gh, setGh] = useState({ status: ghCode ? "pushing" : "idle", url: "", message: "" });
+  const ghStarted = useRef(false);
+  const buildFilesRef = useRef(buildFiles);
+  useEffect(() => {
+    buildFilesRef.current = buildFiles;
+  });
+
+  // Əvvəl göndərilibsə "View on GitHub" linki göstər
+  useEffect(() => {
+    let off = false;
+    async function load() {
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth?.user) return;
+      const { data } = await supabase
+        .from("project_submissions")
+        .select("repo_url")
+        .eq("user_id", auth.user.id)
+        .eq("lesson_id", lessonId)
+        .maybeSingle();
+      if (!off && data?.repo_url) {
+        setGh((g) => (g.status === "idle" ? { status: "done", url: data.repo_url, message: "" } : { ...g, url: data.repo_url }));
+      }
+    }
+    load();
+    return () => { off = true; };
+  }, [lessonId]);
+
+  // GitHub-dan qayıdanda kodu və fayllari funksiyaya göndər
+  useEffect(() => {
+    if (!ghCode || ghStarted.current) return;
+    ghStarted.current = true;
+    sessionStorage.removeItem(GH_KEY);
+    window.history.replaceState({}, "", window.location.pathname);
+    async function push() {
+      const { data, error } = await supabase.functions.invoke("github-push", {
+        body: {
+          code: ghCode,
+          clientId: ghClientId,
+          lessonId,
+          repoName: "devfolio",
+          description: "DevFolio, built on DevUp",
+          files: buildFilesRef.current(),
+        },
+      });
+      if (error || !data?.url) {
+        const message = error ? await githubError(error) : data?.error || "Could not upload to GitHub.";
+        setGh((g) => ({ ...g, status: "error", message }));
+        return;
+      }
+      setGh({ status: "done", url: data.url, message: data.created ? "Repository created!" : "Repository updated!" });
+    }
+    push();
+  }, [ghCode, ghClientId, lessonId]);
+
+  function startGithub() {
+    if (!ghClientId) {
+      setGh((g) => ({ ...g, status: "error", message: "GitHub is not set up yet." }));
+      return;
+    }
+    const state = crypto.randomUUID();
+    sessionStorage.setItem(GH_KEY, JSON.stringify({ state, lessonId }));
+    window.location.href =
+      "https://github.com/login/oauth/authorize" +
+      "?client_id=" + encodeURIComponent(ghClientId) +
+      "&scope=public_repo" +
+      "&state=" + state +
+      "&redirect_uri=" + encodeURIComponent(window.location.origin + window.location.pathname);
   }
 
   const [finished, setFinished] = useState(false);
@@ -283,6 +388,24 @@ function Workspace({ lessonId, title, data, store, setStore, onReset }) {
         <div className="cp-actions">
           {part.download && (
             <button type="button" className="cp-btn is-dark" onClick={download}>Download code</button>
+          )}
+          {part.download && gh.status === "pushing" && (
+            <button type="button" className="cp-btn is-dark" disabled>Pushing to GitHub…</button>
+          )}
+          {part.download && gh.status !== "pushing" && (
+            <>
+              {gh.status === "done" && gh.url && (
+                <a className="cp-btn is-dark" href={gh.url} target="_blank" rel="noreferrer">View on GitHub ↗</a>
+              )}
+              <button type="button" className="cp-btn is-dark" onClick={startGithub}>
+                {gh.status === "done" ? "Update GitHub" : "Add to GitHub"}
+              </button>
+            </>
+          )}
+          {part.download && gh.message && (
+            <span role={gh.status === "error" ? "alert" : "status"} style={{ color: gh.status === "error" ? "#ff9b9b" : "#7be0a3", fontSize: 13, alignSelf: "center" }}>
+              {gh.message}
+            </span>
           )}
           <button type="button" className="cp-btn is-dark" onClick={() => { if (window.confirm("Reset the code of this part to its starting version?")) { setResults(null); onReset(partIdx); } }}>Reset</button>
           <button type="button" className="cp-btn is-primary" onClick={() => { sandpack.runSandpack(); setTab("preview"); }}>

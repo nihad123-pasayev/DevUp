@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Sidebar from "../Sidebar";
-import { supabase } from "/src/supabaseclient.js";
+import MyProjects from "../components/MyProjects.jsx";
 import "./Projects.css";
 
 const TABS = [
@@ -23,7 +23,7 @@ const IDEAS = [
   {
     id: 1,
     title: "Todo App",
-    field: "Frontend",
+    field: "Web",
     level: "Beginner",
     tech: ["HTML", "CSS", "JavaScript"],
     text: "Add, complete and delete tasks, saved in the browser.",
@@ -31,7 +31,7 @@ const IDEAS = [
   {
     id: 2,
     title: "Weather App",
-    field: "Frontend",
+    field: "Web",
     level: "Beginner",
     tech: ["JavaScript", "API"],
     text: "Search a city and show its current weather from a public API.",
@@ -39,7 +39,7 @@ const IDEAS = [
   {
     id: 3,
     title: "Personal Portfolio",
-    field: "Frontend",
+    field: "Web",
     level: "Beginner",
     tech: ["React", "CSS"],
     text: "A multi-section site presenting your skills and projects.",
@@ -113,28 +113,6 @@ export default function Projects() {
   const [tab, setTab] = useState("mine");
   const [query, setQuery] = useState("");
   const [field, setField] = useState("All fields");
-  const [myProjects, setMyProjects] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function loadProjects() {
-      const { data: userData } = await supabase.auth.getUser();
-      const user = userData?.user;
-      if (!user) {
-        setLoading(false);
-        return;
-      }
-      const { data, error } = await supabase
-        .from("projects")
-        .select("id, title, description, field, status, tech")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
-      if (!error && data) setMyProjects(data);
-      setLoading(false);
-    }
-    loadProjects();
-  }, []);
-
   function matches(item, titleKey) {
     const q = query.trim().toLowerCase();
     const okQuery = item[titleKey].toLowerCase().includes(q);
@@ -142,7 +120,6 @@ export default function Projects() {
     return okQuery && okField;
   }
 
-  const visibleMine = myProjects.filter((p) => matches(p, "title"));
   const visibleIdeas = IDEAS.filter((p) => matches(p, "title"));
 
   return (
@@ -153,9 +130,6 @@ export default function Projects() {
             <h1>Projects</h1>
             <p>Build real things, get ideas and find places to practice.</p>
           </div>
-          {tab === "mine" && (
-            <button className="projects-add-btn">+ Add project</button>
-          )}
         </header>
 
         <div className="projects-tabs" role="tablist">
@@ -172,7 +146,7 @@ export default function Projects() {
           ))}
         </div>
 
-        {tab !== "find" && (
+        {tab === "ideas" && (
           <div className="projects-toolbar">
             <div className="projects-search">
               <svg
@@ -213,44 +187,7 @@ export default function Projects() {
           </div>
         )}
 
-        {tab === "mine" &&
-          (loading ? (
-            <div className="projects-empty">
-              <p className="projects-empty-text">Loading...</p>
-            </div>
-          ) : myProjects.length === 0 ? (
-            <div className="projects-empty">
-              <h2>No projects yet</h2>
-              <p className="projects-empty-text">
-                Projects you build will appear here.
-              </p>
-            </div>
-          ) : visibleMine.length === 0 ? (
-            <div className="projects-empty">
-              <h2>No results</h2>
-              <p className="projects-empty-text">
-                Try a different search or field.
-              </p>
-            </div>
-          ) : (
-            <div className="projects-grid">
-              {visibleMine.map((p) => (
-                <button className="projects-card" key={p.id}>
-                  <div className="projects-card-top">
-                    <span className="projects-badge">{p.status}</span>
-                    <span className="projects-card-field">{p.field}</span>
-                  </div>
-                  <h3>{p.title}</h3>
-                  <p>{p.description}</p>
-                  <div className="projects-tech">
-                    {(p.tech || []).map((t) => (
-                      <span key={t}>{t}</span>
-                    ))}
-                  </div>
-                </button>
-              ))}
-            </div>
-          ))}
+        {tab === "mine" && <MyProjects />}
 
         {tab === "ideas" &&
           (visibleIdeas.length === 0 ? (
