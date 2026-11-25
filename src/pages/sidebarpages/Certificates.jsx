@@ -14,7 +14,10 @@ function displayName(rm) {
   const f = rm?.field || "";
   if (f === "Web") return "Web Development";
   if (f === "Backend") return "Backend Development";
-  if (f === "Mobile") return rm?.track ? `Mobile Development (${rm.track})` : "Mobile Development";
+  if (f === "Mobile")
+    return rm?.track
+      ? `Mobile Development (${rm.track})`
+      : "Mobile Development";
   if (f === "Data") return "Data Analytics";
   if (f) return f;
   return (rm?.title || "DevUp").replace(/\s*Roadmap.*$/i, "");
@@ -22,42 +25,139 @@ function displayName(rm) {
 
 const BLURB = {
   Web: "Demonstrated the skills required to build modern, responsive web applications from scratch.",
-  Backend: "Demonstrated the skills required to design, build and deploy reliable backend services.",
-  Mobile: "Demonstrated the skills required to build and publish cross-platform mobile applications.",
-  Cybersecurity: "Demonstrated the skills required to find, analyze and defend against security threats.",
+  Backend:
+    "Demonstrated the skills required to design, build and deploy reliable backend services.",
+  Mobile:
+    "Demonstrated the skills required to build and publish cross-platform mobile applications.",
+  Cybersecurity:
+    "Demonstrated the skills required to find, analyze and defend against security threats.",
   Data: "Demonstrated the skills required to collect, clean, analyze and present data.",
-  "Artificial Intelligence": "Demonstrated the skills required to build and apply machine learning and AI systems.",
-  "DevOps & Cloud": "Demonstrated the skills required to build, ship and operate software in the cloud.",
+  "Artificial Intelligence":
+    "Demonstrated the skills required to build and apply machine learning and AI systems.",
+  "DevOps & Cloud":
+    "Demonstrated the skills required to build, ship and operate software in the cloud.",
+};
+// Sertifikatda görünən ümumi qruplar (stage adlarına görə)
+const SKILL_GROUPS = {
+  Backend: [
+    [
+      "JavaScript, TypeScript & Node.js",
+      ["JavaScript Essentials", "Node.js", "TypeScript"],
+    ],
+    ["Express.js & REST APIs", ["Express.js & REST APIs"]],
+    ["SQL, NoSQL & Caching", ["Databases & SQL", "NoSQL & Caching"]],
+    [
+      "Authentication, Security & Testing",
+      ["Authentication & Security", "Testing"],
+    ],
+    [
+      "Docker, Deployment & Cloud Services",
+      [
+        "Advanced Backend",
+        "Backend-as-a-Service & Full-Stack Frameworks",
+        "Docker & Deployment",
+      ],
+    ],
+  ],
+  Web: [
+    ["HTML & CSS", ["HTML", "CSS"]],
+    ["JavaScript & TypeScript", ["JavaScript", "TypeScript"]],
+    ["React & Next.js", ["React", "Next.js"]],
+    [
+      "APIs, Git & Deployment",
+      [
+        "Working with APIs & Deployment",
+        "Git & GitHub",
+        "Web Fundamentals & Tools",
+      ],
+    ],
+  ],
 };
 
+function groupSkills(field, titles) {
+  const groups = SKILL_GROUPS[field];
+  if (!groups) return titles;
+  const out = groups
+    .filter(([, members]) => members.some((t) => titles.includes(t)))
+    .map(([label]) => label);
+  return out.length ? out : titles;
+}
+
 const dateText = (iso) =>
-  new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+  new Date(iso).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 
 /* ---------- Sertifikat kağızı (1000 x 707) ---------- */
 function Paper({ name, program, skills, blurb, issued }) {
   return (
     <div className="cf-paper" style={{ width: PAPER_W, height: PAPER_H }}>
       <div className="cf-left">
-        <svg className="cf-logo" viewBox="0 0 514 242" role="img" aria-label="DevUp">
-          <path d="M205 112L230 188L268 189L295 112L262 113L251 166L249 165L238 113ZM137 118L126 131L122 145L122 160L124 168L128 175L138 185L155 191L176 191L192 187L193 167L179 172L165 172L159 170L153 164L154 161L201 160L201 143L199 134L191 120L183 114L171 110L155 110L143 114ZM152 142L153 137L160 129L166 129L172 135L172 144L154 144ZM11 80L10 188L66 189L81 185L94 177L105 164L109 156L112 143L111 115L103 98L92 88L78 82L67 80ZM44 105L58 105L67 109L74 116L78 125L78 143L74 152L67 160L58 164L44 164L42 162L42 107Z" fill="#132039" fillRule="evenodd" />
-          <path d="M487 112L481 110L466 110L460 112L451 120L449 119L448 112L416 113L417 225L449 224L450 181L456 187L464 191L477 191L489 185L499 173L503 162L504 153L503 134L498 122ZM457 133L465 134L470 139L472 145L472 154L470 161L462 168L456 168L453 166L448 157L449 141ZM383 10L380 11L349 51L366 52L368 54L368 143L366 151L360 158L352 161L342 160L335 154L332 149L331 78L302 78L302 145L304 157L308 166L317 177L326 184L339 189L360 189L374 183L385 174L390 167L395 155L396 54L398 52L415 51Z" fill="#0b72f5" fillRule="evenodd" />
+        <svg
+          className="cf-logo"
+          viewBox="0 0 514 242"
+          role="img"
+          aria-label="DevUp"
+        >
+          <path
+            d="M205 112L230 188L268 189L295 112L262 113L251 166L249 165L238 113ZM137 118L126 131L122 145L122 160L124 168L128 175L138 185L155 191L176 191L192 187L193 167L179 172L165 172L159 170L153 164L154 161L201 160L201 143L199 134L191 120L183 114L171 110L155 110L143 114ZM152 142L153 137L160 129L166 129L172 135L172 144L154 144ZM11 80L10 188L66 189L81 185L94 177L105 164L109 156L112 143L111 115L103 98L92 88L78 82L67 80ZM44 105L58 105L67 109L74 116L78 125L78 143L74 152L67 160L58 164L44 164L42 162L42 107Z"
+            fill="#132039"
+            fillRule="evenodd"
+          />
+          <path
+            d="M487 112L481 110L466 110L460 112L451 120L449 119L448 112L416 113L417 225L449 224L450 181L456 187L464 191L477 191L489 185L499 173L503 162L504 153L503 134L498 122ZM457 133L465 134L470 139L472 145L472 154L470 161L462 168L456 168L453 166L448 157L449 141ZM383 10L380 11L349 51L366 52L368 54L368 143L366 151L360 158L352 161L342 160L335 154L332 149L331 78L302 78L302 145L304 157L308 166L317 177L326 184L339 189L360 189L374 183L385 174L390 167L395 155L396 54L398 52L415 51Z"
+            fill="#0b72f5"
+            fillRule="evenodd"
+          />
         </svg>
 
-        <svg className="cf-seal" viewBox="0 0 150 190" role="img" aria-label="Seal">
+        <svg
+          className="cf-seal"
+          viewBox="0 0 150 190"
+          role="img"
+          aria-label="Seal"
+        >
           <defs>
             <path id="cf-ring" d="M75,23 a52,52 0 1,1 -0.01,0" />
           </defs>
           <polygon points="52,120 36,184 62,170 76,188 84,124" fill="#264a8a" />
-          <polygon points="98,120 114,184 88,170 74,188 66,124" fill="#0b72f5" />
+          <polygon
+            points="98,120 114,184 88,170 74,188 66,124"
+            fill="#0b72f5"
+          />
           <circle cx="75" cy="75" r="68" fill="#0b72f5" />
-          <circle cx="75" cy="75" r="64" fill="none" stroke="#ffffff" strokeWidth="1" opacity="0.5" />
-          <text fontSize="11" fontWeight="500" fill="#ffffff" letterSpacing="2" fontFamily="Arial, Helvetica, sans-serif">
-            <textPath href="#cf-ring" textLength="318" lengthAdjust="spacing">DEVUP TEAM  ·  DEVUP TEAM  ·</textPath>
+          <circle
+            cx="75"
+            cy="75"
+            r="64"
+            fill="none"
+            stroke="#ffffff"
+            strokeWidth="1"
+            opacity="0.5"
+          />
+          <text
+            fontSize="11"
+            fontWeight="500"
+            fill="#ffffff"
+            letterSpacing="2"
+            fontFamily="Arial, Helvetica, sans-serif"
+          >
+            <textPath href="#cf-ring" textLength="318" lengthAdjust="spacing">
+              DEVUP TEAM · DEVUP TEAM ·
+            </textPath>
           </text>
           <circle cx="75" cy="75" r="42" fill="#ffffff" />
           <svg x="51" y="50" width="48" height="49" viewBox="0 0 244 248">
-            <path d="M15 10 L11 14 L12 139 L114 85 L99 68 L101 62 L160 55 L173 55 L175 57 L167 130 L161 130 L143 113 L92 165 L92 238 L134 238 L153 235 L178 225 L197 212 L211 197 L225 172 L233 138 L233 110 L229 88 L217 60 L207 46 L184 26 L169 18 L139 10Z" fill="#132039" />
-            <path d="M73 129 L11 161 L11 238 L72 238 L75 235 L75 131Z" fill="#0b72f5" />
+            <path
+              d="M15 10 L11 14 L12 139 L114 85 L99 68 L101 62 L160 55 L173 55 L175 57 L167 130 L161 130 L143 113 L92 165 L92 238 L134 238 L153 235 L178 225 L197 212 L211 197 L225 172 L233 138 L233 110 L229 88 L217 60 L207 46 L184 26 L169 18 L139 10Z"
+              fill="#132039"
+            />
+            <path
+              d="M73 129 L11 161 L11 238 L72 238 L75 235 L75 131Z"
+              fill="#0b72f5"
+            />
           </svg>
         </svg>
         <div />
@@ -72,7 +172,9 @@ function Paper({ name, program, skills, blurb, issued }) {
         <div className="cf-program">{program}</div>
         <div className="cf-chips">
           {skills.map((s) => (
-            <span key={s} className="cf-chip">{s}</span>
+            <span key={s} className="cf-chip">
+              {s}
+            </span>
           ))}
         </div>
         <div className="cf-blurb">{blurb}</div>
@@ -136,7 +238,10 @@ function EarnedCard({ cert, name }) {
       name={shownName}
       program={program}
       skills={cert.skills}
-      blurb={BLURB[rm?.field] || "Completed every unit, the certification project and the final exam."}
+      blurb={
+        BLURB[rm?.field] ||
+        "Completed every unit, the certification project and the final exam."
+      }
       issued={issued}
     />
   );
@@ -156,7 +261,10 @@ function EarnedCard({ cert, name }) {
     setBusy(true);
     setErr("");
     try {
-      const [{ toPng }, { jsPDF }] = await Promise.all([import("html-to-image"), import("jspdf")]);
+      const [{ toPng }, { jsPDF }] = await Promise.all([
+        import("html-to-image"),
+        import("jspdf"),
+      ]);
       const png = await toPng(node, {
         pixelRatio: 2,
         cacheBust: true,
@@ -164,7 +272,12 @@ function EarnedCard({ cert, name }) {
         height: PAPER_H,
         style: { transform: "none" },
       });
-      const pdf = new jsPDF({ orientation: "landscape", unit: "px", format: [PAPER_W, PAPER_H], compress: true });
+      const pdf = new jsPDF({
+        orientation: "landscape",
+        unit: "px",
+        format: [PAPER_W, PAPER_H],
+        compress: true,
+      });
       pdf.addImage(png, "PNG", 0, 0, PAPER_W, PAPER_H);
       pdf.save(`DevUp - ${program} certificate.pdf`);
     } catch (e) {
@@ -185,7 +298,11 @@ function EarnedCard({ cert, name }) {
       issueMonth: String(d.getMonth() + 1),
       certId: cert.code,
     });
-    window.open(`https://www.linkedin.com/profile/add?${q.toString()}`, "_blank", "noopener,noreferrer");
+    window.open(
+      `https://www.linkedin.com/profile/add?${q.toString()}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
   }
 
   return (
@@ -199,7 +316,11 @@ function EarnedCard({ cert, name }) {
         <h3>{program}</h3>
         <span className="certs-note">Issued {issued}</span>
       </div>
-      <button type="button" className="certs-start" onClick={() => setOpen(true)}>
+      <button
+        type="button"
+        className="certs-start"
+        onClick={() => setOpen(true)}
+      >
         View certificate
       </button>
 
@@ -212,7 +333,12 @@ function EarnedCard({ cert, name }) {
             aria-label={`${program} certificate`}
             onClick={(e) => e.stopPropagation()}
           >
-            <button type="button" className="cf-close" aria-label="Close" onClick={() => setOpen(false)}>
+            <button
+              type="button"
+              className="cf-close"
+              aria-label="Close"
+              onClick={() => setOpen(false)}
+            >
               &times;
             </button>
             <Scaled paperRef={paperRef}>{paper}</Scaled>
@@ -222,10 +348,17 @@ function EarnedCard({ cert, name }) {
                 <p className="cf-meta">Issued {issued}</p>
               </div>
               <div className="cf-actions">
-                <button type="button" className="cf-btn is-primary" onClick={download} disabled={busy}>
+                <button
+                  type="button"
+                  className="cf-btn is-primary"
+                  onClick={download}
+                  disabled={busy}
+                >
                   {busy ? "Preparing PDF…" : "Download PDF"}
                 </button>
-                <button type="button" className="cf-btn" onClick={linkedin}>Add to LinkedIn</button>
+                <button type="button" className="cf-btn" onClick={linkedin}>
+                  Add to LinkedIn
+                </button>
               </div>
             </div>
             <p className="cf-hint">
@@ -235,7 +368,11 @@ function EarnedCard({ cert, name }) {
               </a>
               .
             </p>
-            {err && <p className="cf-error" role="alert">{err}</p>}
+            {err && (
+              <p className="cf-error" role="alert">
+                {err}
+              </p>
+            )}
           </div>
         </div>
       )}
@@ -261,14 +398,28 @@ const TABS = [
   { id: "new", label: "Not started" },
 ];
 const EMPTY = {
-  earned: ["No certificates yet", "Pass a roadmap's Final Exam to earn your first certificate."],
-  progress: ["Nothing in progress", "Start a lesson and your roadmap will show up here."],
+  earned: [
+    "No certificates yet",
+    "Pass a roadmap's Final Exam to earn your first certificate.",
+  ],
+  progress: [
+    "Nothing in progress",
+    "Start a lesson and your roadmap will show up here.",
+  ],
   new: ["Everything started", "You've started every roadmap."],
   all: ["No roadmaps yet", "Roadmaps and certificates will appear here soon."],
 };
 
 export default function Certificates() {
-  const [data, setData] = useState({ loading: true, error: "", name: "", roadmaps: [], certs: [], prog: {}, stages: [] });
+  const [data, setData] = useState({
+    loading: true,
+    error: "",
+    name: "",
+    roadmaps: [],
+    certs: [],
+    prog: {},
+    stages: [],
+  });
   const [tab, setTab] = useState("all");
   const [field, setField] = useState("All fields");
 
@@ -278,17 +429,35 @@ export default function Certificates() {
       const { data: auth } = await supabase.auth.getUser();
       const user = auth?.user;
       if (!user) {
-        if (!off) setData((d) => ({ ...d, loading: false, error: "Sign in to see your certificates." }));
+        if (!off)
+          setData((d) => ({
+            ...d,
+            loading: false,
+            error: "Sign in to see your certificates.",
+          }));
         return;
       }
       const [rm, ct, pr, st, pg] = await Promise.all([
-        supabase.from("roadmaps").select("id, title, field, track").order("field"),
+        supabase
+          .from("roadmaps")
+          .select("id, title, field, track")
+          .order("field"),
         supabase
           .from("certificates")
-          .select("id, code, issued_at, roadmap_id, recipient_name, name_changes, name_set")
+          .select(
+            "id, code, issued_at, roadmap_id, recipient_name, name_changes, name_set",
+          )
           .eq("user_id", user.id),
-        supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle(),
-        supabase.from("stages").select("roadmap_id, title, position, kind").eq("kind", "learning").order("position"),
+        supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("id", user.id)
+          .maybeSingle(),
+        supabase
+          .from("stages")
+          .select("roadmap_id, title, position, kind")
+          .eq("kind", "learning")
+          .order("position"),
         supabase.rpc("my_roadmap_progress"),
       ]);
       if (off) return;
@@ -304,21 +473,35 @@ export default function Certificates() {
       let certRows = ct.data || [];
       const missing = (rm.data || []).filter((r) => {
         const p = prog[r.id];
-        return p && p.total > 0 && p.done >= p.total && !certRows.some((c) => c.roadmap_id === r.id);
+        return (
+          p &&
+          p.total > 0 &&
+          p.done >= p.total &&
+          !certRows.some((c) => c.roadmap_id === r.id)
+        );
       });
       if (missing.length) {
-        const ex = await supabase.from("lessons").select("id, stage:stages(roadmap_id)").eq("kind", "exam");
+        const ex = await supabase
+          .from("lessons")
+          .select("id, stage:stages(roadmap_id)")
+          .eq("kind", "exam");
         const exams = (ex.data || []).map((x) => ({
           id: x.id,
-          roadmapId: (Array.isArray(x.stage) ? x.stage[0] : x.stage)?.roadmap_id,
+          roadmapId: (Array.isArray(x.stage) ? x.stage[0] : x.stage)
+            ?.roadmap_id,
         }));
         for (const r of missing) {
           const e = exams.find((x) => x.roadmapId === r.id);
-          if (e) await supabase.functions.invoke("send-certificate-email", { body: { lessonId: e.id } }).catch(() => {});
+          if (e)
+            await supabase.functions
+              .invoke("send-certificate-email", { body: { lessonId: e.id } })
+              .catch(() => {});
         }
         const again = await supabase
           .from("certificates")
-          .select("id, code, issued_at, roadmap_id, recipient_name, name_changes, name_set")
+          .select(
+            "id, code, issued_at, roadmap_id, recipient_name, name_changes, name_set",
+          )
           .eq("user_id", user.id);
         if (!again.error) certRows = again.data || [];
         if (off) return;
@@ -367,7 +550,9 @@ export default function Certificates() {
   };
 
   const visible = items.filter(
-    (i) => (tab === "all" || i.state === tab) && (field === "All fields" || i.rm.field === field)
+    (i) =>
+      (tab === "all" || i.state === tab) &&
+      (field === "All fields" || i.rm.field === field),
   );
 
   return (
@@ -375,7 +560,9 @@ export default function Certificates() {
       <div className="certs-page cf-page">
         <header className="cf-head">
           <h1>Certificates</h1>
-          <p>Pass a roadmap's Final Exam to earn its certificate of completion.</p>
+          <p>
+            Pass a roadmap's Final Exam to earn its certificate of completion.
+          </p>
         </header>
 
         <div className="certs-tabs" role="tablist">
@@ -407,9 +594,15 @@ export default function Certificates() {
         </div>
 
         {loading ? (
-          <div className="certs-empty"><p className="certs-empty-text">Loading...</p></div>
+          <div className="certs-empty">
+            <p className="certs-empty-text">Loading...</p>
+          </div>
         ) : error ? (
-          <div className="certs-empty"><p className="certs-empty-text" role="alert">{error}</p></div>
+          <div className="certs-empty">
+            <p className="certs-empty-text" role="alert">
+              {error}
+            </p>
+          </div>
         ) : counts[tab] === 0 ? (
           <div className="certs-empty">
             <h2>{EMPTY[tab][0]}</h2>
@@ -424,28 +617,48 @@ export default function Certificates() {
           <div className="certs-grid">
             {visible.map(({ rm, cert, p, state }) => {
               if (state === "earned") {
-                const skills = stages
-                  .filter((s) => s.roadmap_id === rm.id && !/additional tools/i.test(s.title))
+                const titles = stages
+                  .filter(
+                    (s) =>
+                      s.roadmap_id === rm.id &&
+                      !/additional tools/i.test(s.title),
+                  )
                   .map((s) => s.title);
+                const skills = groupSkills(rm.field, titles);
                 return (
-                  <EarnedCard key={rm.id} cert={{ ...cert, roadmap: rm, skills }} name={name} />
+                  <EarnedCard
+                    key={rm.id}
+                    cert={{ ...cert, roadmap: rm, skills }}
+                    name={name}
+                  />
                 );
               }
-              const percent = p.total ? Math.min(100, Math.round((p.done / p.total) * 100)) : 0;
+              const percent = p.total
+                ? Math.min(100, Math.round((p.done / p.total) * 100))
+                : 0;
               return (
                 <article className="certs-card" key={rm.id}>
                   <div className="certs-row">
                     <span className="certs-badge">{rm.field}</span>
-                    <span className={"certs-status" + (state === "progress" ? " is-progress" : "")}>
+                    <span
+                      className={
+                        "certs-status" +
+                        (state === "progress" ? " is-progress" : "")
+                      }
+                    >
                       {state === "progress" ? "In progress" : "Not started"}
                     </span>
                   </div>
                   <h3>{displayName(rm)}</h3>
                   <div className="certs-bar">
-                    <div className="certs-bar-fill" style={{ width: percent + "%" }} />
+                    <div
+                      className="certs-bar-fill"
+                      style={{ width: percent + "%" }}
+                    />
                   </div>
                   <p className="certs-note">
-                    {p.done} / {p.total} lessons. Pass the Final Exam to earn this certificate.
+                    {p.done} / {p.total} lessons. Pass the Final Exam to earn
+                    this certificate.
                   </p>
                   <a className="certs-start" href="/lessons">
                     {state === "progress" ? "Continue" : "Start roadmap"}
