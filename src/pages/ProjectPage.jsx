@@ -9,6 +9,43 @@ import "./ProjectPage.css";
 /* ---------- helpers ---------- */
 const QUIET = { log() {}, info() {}, warn() {}, error() {} };
 
+/* GitHub OAuth App "DevUp Repos" Client ID (public, not the secret) */
+const GITHUB_CLIENT_ID = "Ov23lisVxvptOscjDD40";
+const GH_KEY = "devup-github-oauth";
+
+function readGithubCallback(lessonId) {
+  try {
+    const p = new URLSearchParams(window.location.search);
+    const c = p.get("code");
+    const st = p.get("state");
+    const saved = JSON.parse(sessionStorage.getItem(GH_KEY) || "null");
+    if (c && st && saved && saved.state === st && String(saved.lessonId) === String(lessonId)) return c;
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
+async function githubError(error) {
+  try {
+    const body = await error.context.json();
+    if (body?.error) return body.error;
+  } catch {
+    /* ignore */
+  }
+  return "Could not upload to GitHub. Try again.";
+}
+
+function repoSlug(text) {
+  return (
+    String(text || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9._-]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 60) || "devup-project"
+  );
+}
+
 /* runtime = true: the learner's code is executed and each test runs next to it.
    runtime = false: the test only reads the code text (regex checks). */
 function runChecks(checks, code, runtime) {
@@ -110,6 +147,9 @@ export default function ProjectPage() {
   const [results, setResults] = useState(null); // { title, items }
   const [finishing, setFinishing] = useState(false);
   const [finished, setFinished] = useState(false);
+  const [ghCode] = useState(() => readGithubCallback(lessonId));
+  const [gh, setGh] = useState({ status: ghCode ? "pushing" : "idle", url: "", message: "" });
+  const ghStarted = useRef(false);
   const guideRef = useRef(null);
   const frameRef = useRef(null);
   const [logState, setLogState] = useState({ key: "", items: [] });
@@ -268,6 +308,86 @@ export default function ProjectPage() {
     }
   }
 
+  // Kodu fayl kimi endirir
+  function downloadCode() {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([code], { type: "text/plain" }));
+    a.download = fileName;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  // GitHub-a göndəriləcək fayllar
+  function buildFiles() {
+    const name = String(fileName).replace(/[^\w.@-]+/g, "-") || "index.html";
+    return {
+      [name]: code,
+      "README.md": `# ${data.title}\n\nBuilt on DevUp.\n`,
+    };
+  }
+  const buildFilesRef = useRef(buildFiles);
+  useEffect(() => {
+    buildFilesRef.current = buildFiles;
+  });
+
+  // Əvvəl göndərilibsə "View on GitHub" linki göstər
+  useEffect(() => {
+    let off = false;
+    async function load() {
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth?.user) return;
+      const { data: sub } = await supabase
+        .from("project_submissions")
+        .select("repo_url")
+        .eq("user_id", auth.user.id)
+        .eq("lesson_id", lessonId)
+        .maybeSingle();
+      if (!off && sub?.repo_url) {
+        setGh((g) => (g.status === "idle" ? { status: "done", url: sub.repo_url, message: "" } : { ...g, url: sub.repo_url }));
+      }
+    }
+    load();
+    return () => { off = true; };
+  }, [lessonId]);
+
+  // GitHub-dan qayıdanda kodu göndər (layihə yüklənəndən sonra)
+  useEffect(() => {
+    if (!ghCode || !data || ghStarted.current) return;
+    ghStarted.current = true;
+    sessionStorage.removeItem(GH_KEY);
+    window.history.replaceState({}, "", window.location.pathname);
+    async function push() {
+      const { data: res, error: err } = await supabase.functions.invoke("github-push", {
+        body: {
+          code: ghCode,
+          clientId: GITHUB_CLIENT_ID,
+          lessonId,
+          repoName: repoSlug(data.title),
+          description: data.title + " (built on DevUp)",
+          files: buildFilesRef.current(),
+        },
+      });
+      if (err || !res?.url) {
+        const message = err ? await githubError(err) : res?.error || "Could not upload to GitHub.";
+        setGh((g) => ({ ...g, status: "error", message }));
+        return;
+      }
+      setGh({ status: "done", url: res.url, message: res.created ? "Repository created!" : "Repository updated!" });
+    }
+    push();
+  }, [ghCode, data, lessonId]);
+
+  function startGithub() {
+    const state = crypto.randomUUID();
+    sessionStorage.setItem(GH_KEY, JSON.stringify({ state, lessonId }));
+    window.location.href =
+      "https://github.com/login/oauth/authorize" +
+      "?client_id=" + encodeURIComponent(GITHUB_CLIENT_ID) +
+      "&scope=public_repo" +
+      "&state=" + state +
+      "&redirect_uri=" + encodeURIComponent(window.location.origin + window.location.pathname);
+  }
+
   if (loading) return <div className="pp-state">Loading project...</div>;
   if (error) return <div className="pp-state">{error}</div>;
 
@@ -319,8 +439,27 @@ export default function ProjectPage() {
               <div className="pp-actions">
                 <button type="button" onClick={resetCode}>Reset</button>
                 <button type="button" onClick={showSolution}>Show solution</button>
+                {finished && <button type="button" onClick={downloadCode}>Download</button>}
+                {finished && gh.status === "pushing" && (
+                  <button type="button" disabled>Pushing…</button>
+                )}
+                {finished && gh.status !== "pushing" && (
+                  <>
+                    {gh.status === "done" && gh.url && (
+                      <button type="button" onClick={() => window.open(gh.url, "_blank", "noopener")}>View on GitHub ↗</button>
+                    )}
+                    <button type="button" onClick={startGithub}>
+                      {gh.status === "done" ? "Update GitHub" : "Add to GitHub"}
+                    </button>
+                  </>
+                )}
               </div>
             </div>
+            {finished && gh.message && (
+              <div role={gh.status === "error" ? "alert" : "status"} style={{ padding: "6px 12px", fontSize: 13, color: gh.status === "error" ? "#ff9b9b" : "#7be0a3" }}>
+                {gh.message}
+              </div>
+            )}
             <textarea
               value={code}
               onChange={(e) => setCode(e.target.value)}
