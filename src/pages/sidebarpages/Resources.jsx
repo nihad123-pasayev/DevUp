@@ -6,7 +6,8 @@ import "./Resources.css";
 
 const PAGE_SIZE = 24;
 const NEW_DAYS = 14;
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const TYPES = [
   { id: "book", label: "Books" },
@@ -54,7 +55,12 @@ const LANGUAGES = [
   { id: "ru", label: "Русский" },
 ];
 
-const LANGUAGE_NAMES = { en: "English", az: "Azərbaycanca", tr: "Türkçe", ru: "Русский" };
+const LANGUAGE_NAMES = {
+  en: "English",
+  az: "Azərbaycanca",
+  tr: "Türkçe",
+  ru: "Русский",
+};
 
 const SORTS = [
   { id: "new", label: "Newest first" },
@@ -89,7 +95,10 @@ function readParams() {
 
 // characters that would break a PostgREST or() filter
 function cleanTerm(s) {
-  return s.replace(/[%*,():"\\]/g, " ").replace(/\s+/g, " ").trim();
+  return s
+    .replace(/[%*,():"\\]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function mapRow(r) {
@@ -115,7 +124,10 @@ function describe(r) {
 function embedSrc(r) {
   const u = r.embed_url || "";
   if (!u.startsWith("https://www.youtube.com/embed/")) return null;
-  return u.replace("https://www.youtube.com/", "https://www.youtube-nocookie.com/");
+  return u.replace(
+    "https://www.youtube.com/",
+    "https://www.youtube-nocookie.com/",
+  );
 }
 
 function tiltMove(e) {
@@ -163,7 +175,9 @@ function BookCover({ r, large }) {
         <div className="resources-book-front">
           <span className="resources-book-topic">{r.topic}</span>
           <strong className="resources-book-title">{r.title}</strong>
-          {r.author ? <span className="resources-book-author">{r.author}</span> : null}
+          {r.author ? (
+            <span className="resources-book-author">{r.author}</span>
+          ) : null}
         </div>
         <div className="resources-book-pages" />
         <div className="resources-book-back" />
@@ -229,7 +243,12 @@ function ResourceCard({ r, isSaved, onSave, onOpen }) {
               <span className="resources-thumb-fallback">Playlist</span>
             )}
             <span className="resources-play" aria-hidden="true">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
                 <path d="M8 5v14l11-7z" />
               </svg>
             </span>
@@ -253,7 +272,9 @@ function ResourceCard({ r, isSaved, onSave, onOpen }) {
         </div>
       ) : null}
 
-      <h3 className={r.type === "book" ? "resources-sr" : undefined}>{r.title}</h3>
+      <h3 className={r.type === "book" ? "resources-sr" : undefined}>
+        {r.title}
+      </h3>
       {meta ? <p>{meta}</p> : null}
 
       <div className="resources-tags">
@@ -276,7 +297,12 @@ function ResourceCard({ r, isSaved, onSave, onOpen }) {
           {OPEN_LABELS[r.type]}
         </a>
       ) : (
-        <a className="resources-open" href={r.url} target="_blank" rel="noreferrer">
+        <a
+          className="resources-open"
+          href={r.url}
+          target="_blank"
+          rel="noreferrer"
+        >
           {OPEN_LABELS[r.type]}
         </a>
       )}
@@ -380,22 +406,35 @@ function ResourceModal({ r, isSaved, copied, onSave, onCopy, onClose }) {
           </div>
 
           <div className="resources-dialog-actions">
-            <a className="resources-primary" href={r.url} target="_blank" rel="noreferrer">
+            <a
+              className="resources-primary"
+              href={r.url}
+              target="_blank"
+              rel="noreferrer"
+            >
               {primary}
             </a>
-            <button type="button" className="resources-secondary" onClick={() => onSave(r)}>
+            <button
+              type="button"
+              className="resources-secondary"
+              onClick={() => onSave(r)}
+            >
               <BookmarkIcon filled={isSaved} />
               {isSaved ? "Saved" : "Save"}
             </button>
-            <button type="button" className="resources-secondary" onClick={() => onCopy(r)}>
+            <button
+              type="button"
+              className="resources-secondary"
+              onClick={() => onCopy(r)}
+            >
               {copied ? "Link copied" : "Copy link"}
             </button>
           </div>
 
           {isBook ? (
             <p className="resources-dialog-note">
-              Free book. The link goes to the author&apos;s or publisher&apos;s own page, so you
-              always get the official version.
+              Free book. The link goes to the author&apos;s or publisher&apos;s
+              own page, so you always get the official version.
             </p>
           ) : null}
         </div>
@@ -404,9 +443,253 @@ function ResourceModal({ r, isSaved, copied, onSave, onCopy, onClose }) {
     document.body,
   );
 }
+const SUGGEST_TYPES = [
+  { id: "book", label: "Book" },
+  { id: "website", label: "Website" },
+  { id: "video", label: "Video" },
+  { id: "tool", label: "Tool" },
+  { id: "cheatsheet", label: "Cheat sheet" },
+  { id: "practice", label: "Practice" },
+  { id: "other", label: "Other" },
+];
+const DESC_MAX = 1000;
+const DESC_MIN = 10;
 
+function validLink(raw) {
+  let s = raw.trim();
+  if (!s || /\s/.test(s)) return false;
+  if (!/^https?:\/\//i.test(s)) s = "https://" + s;
+  try {
+    const u = new URL(s);
+    return (
+      (u.protocol === "https:" || u.protocol === "http:") &&
+      u.hostname.includes(".")
+    );
+  } catch {
+    return false;
+  }
+}
+
+async function errorMessage(error) {
+  try {
+    const body = await error.context.json();
+    if (body && body.error) return body.error;
+  } catch {
+    /* not a JSON error */
+  }
+  return "Could not send your suggestion. Please try again.";
+}
+
+function SuggestModal({ initialType, onClose }) {
+  const linkRef = useRef(null);
+  const [kind, setKind] = useState(
+    SUGGEST_TYPES.some((t) => t.id === initialType) ? initialType : "book",
+  );
+  const [link, setLink] = useState("");
+  const [text, setText] = useState("");
+  const [error, setError] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    if (linkRef.current) linkRef.current.focus();
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [onClose]);
+
+  function submit(e) {
+    e.preventDefault();
+    if (sending) return;
+    if (!validLink(link)) {
+      setError("Enter a valid link, for example https://example.com/page.");
+      return;
+    }
+    if (text.trim().length < DESC_MIN) {
+      setError("Add a short description (at least 10 characters).");
+      return;
+    }
+    setError("");
+    setSending(true);
+    supabase.functions
+      .invoke("suggest-resource", {
+        body: { type: kind, url: link.trim(), description: text.trim() },
+      })
+      .then(async ({ error: err }) => {
+        if (err) {
+          setError(await errorMessage(err));
+          setSending(false);
+          return;
+        }
+        setSent(true);
+        setSending(false);
+      })
+      .catch(() => {
+        setError("Could not send your suggestion. Please try again.");
+        setSending(false);
+      });
+  }
+
+  return createPortal(
+    <div
+      className="resources-modal"
+      role="presentation"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        className="resources-dialog is-suggest"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="resources-suggest-title"
+      >
+        <button
+          type="button"
+          className="resources-dialog-close"
+          aria-label="Close"
+          onClick={onClose}
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            aria-hidden="true"
+          >
+            <path d="M6 6l12 12M18 6L6 18" />
+          </svg>
+        </button>
+
+        {sent ? (
+          <div className="resources-sent">
+            <div className="resources-sent-icon" aria-hidden="true">
+              ✓
+            </div>
+            <h2 id="resources-suggest-title">Thank you!</h2>
+            <p>
+              Your suggestion reached the DevUp team. We will review it soon.
+            </p>
+            <button
+              type="button"
+              className="resources-primary"
+              onClick={onClose}
+            >
+              Done
+            </button>
+          </div>
+        ) : (
+          <form className="resources-suggest" onSubmit={submit} noValidate>
+            <h2 id="resources-suggest-title">Suggest a resource</h2>
+            <p className="resources-suggest-sub">
+              Know a book, site or tool that helped you? Tell us and we may add
+              it.
+            </p>
+
+            <span className="resources-form-label" id="resources-kind-label">
+              What is it?
+            </span>
+            <div
+              className="resources-types"
+              role="radiogroup"
+              aria-labelledby="resources-kind-label"
+            >
+              {SUGGEST_TYPES.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={kind === t.id}
+                  className={
+                    "resources-type" + (kind === t.id ? " is-active" : "")
+                  }
+                  onClick={() => setKind(t.id)}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
+            <label
+              className="resources-form-label"
+              htmlFor="resources-suggest-link"
+            >
+              Link
+            </label>
+            <input
+              id="resources-suggest-link"
+              ref={linkRef}
+              className="resources-input"
+              type="text"
+              inputMode="url"
+              autoComplete="off"
+              placeholder="https://example.com/page"
+              maxLength={500}
+              value={link}
+              onChange={(e) => setLink(e.target.value)}
+            />
+
+            <label
+              className="resources-form-label"
+              htmlFor="resources-suggest-desc"
+            >
+              Description
+            </label>
+            <textarea
+              id="resources-suggest-desc"
+              className="resources-textarea"
+              rows={5}
+              maxLength={DESC_MAX}
+              placeholder="What is it and why is it useful?"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+            />
+            <div className="resources-form-count">
+              {text.length}/{DESC_MAX}
+            </div>
+
+            {error ? (
+              <p className="resources-form-error" role="alert">
+                {error}
+              </p>
+            ) : null}
+
+            <div className="resources-suggest-actions">
+              <button
+                type="button"
+                className="resources-secondary"
+                onClick={onClose}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="resources-primary"
+                disabled={sending}
+              >
+                {sending ? "Sending…" : "Send suggestion"}
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+    </div>,
+    document.body,
+  );
+}
 export default function Resources() {
   const [init] = useState(readParams);
+  const [suggesting, setSuggesting] = useState(false);
   const [type, setType] = useState(init.type);
   const [field, setField] = useState(init.field);
   const [lang, setLang] = useState(init.lang);
@@ -415,7 +698,13 @@ export default function Resources() {
   const [search, setSearch] = useState(init.q.trim());
   const [limit, setLimit] = useState(PAGE_SIZE);
   const [reloadKey, setReloadKey] = useState(0);
-  const [result, setResult] = useState({ key: "", base: "", rows: [], total: 0, error: null });
+  const [result, setResult] = useState({
+    key: "",
+    base: "",
+    rows: [],
+    total: 0,
+    error: null,
+  });
   const [saved, setSaved] = useState(() => new Set());
   const [selected, setSelected] = useState(null);
   const [copied, setCopied] = useState(false);
@@ -448,7 +737,9 @@ export default function Resources() {
     q =
       sort === "az"
         ? q.order("title", { ascending: true })
-        : q.order("created_at", { ascending: false }).order("title", { ascending: true });
+        : q
+            .order("created_at", { ascending: false })
+            .order("title", { ascending: true });
     q = q.order("id", { ascending: true }).range(0, limit - 1);
 
     q.then(({ data, count, error }) => {
@@ -520,6 +811,10 @@ export default function Resources() {
   }, [type, field, lang, sort, search, selected]);
 
   const closeModal = useCallback(() => setSelected(null), []);
+  const closeSuggest = useCallback(() => setSuggesting(false), []);
+  function openSuggest() {
+    setSuggesting(true);
+  }
 
   function changeType(id) {
     setType(id);
@@ -608,8 +903,29 @@ export default function Resources() {
     <Sidebar>
       <div className="resources-page">
         <header className="resources-header">
-          <h1>Resources</h1>
-          <p>Books, sites, videos and tools to learn from.</p>
+          <div>
+            <h1>Resources</h1>
+            <p>Books, sites, videos and tools to learn from.</p>
+          </div>
+          <button
+            type="button"
+            className="resources-suggest-btn"
+            onClick={openSuggest}
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            Suggest a resource
+          </button>
         </header>
 
         <div className="resources-tabs" role="tablist">
@@ -654,7 +970,9 @@ export default function Resources() {
             {FIELDS.map((f) => (
               <button
                 key={f}
-                className={"resources-field" + (field === f ? " is-active" : "")}
+                className={
+                  "resources-field" + (field === f ? " is-active" : "")
+                }
                 onClick={() => changeField(f)}
               >
                 {f}
@@ -686,7 +1004,8 @@ export default function Resources() {
             </select>
             {sameBase && !showError ? (
               <span className="resources-count" aria-live="polite">
-                {result.total.toLocaleString()} {result.total === 1 ? "result" : "results"}
+                {result.total.toLocaleString()}{" "}
+                {result.total === 1 ? "result" : "results"}
               </span>
             ) : null}
           </div>
@@ -696,7 +1015,9 @@ export default function Resources() {
           {showError ? (
             <div className="resources-empty">
               <h2>Couldn&apos;t load resources</h2>
-              <p className="resources-empty-text">Check your connection and try again.</p>
+              <p className="resources-empty-text">
+                Check your connection and try again.
+              </p>
               <button
                 type="button"
                 className="resources-clear"
@@ -710,8 +1031,14 @@ export default function Resources() {
               {hasFilters ? (
                 <>
                   <h2>No results</h2>
-                  <p className="resources-empty-text">Try a different search or filter.</p>
-                  <button type="button" className="resources-clear" onClick={clearFilters}>
+                  <p className="resources-empty-text">
+                    Try a different search or filter.
+                  </p>
+                  <button
+                    type="button"
+                    className="resources-clear"
+                    onClick={clearFilters}
+                  >
                     Clear filters
                   </button>
                 </>
@@ -726,7 +1053,11 @@ export default function Resources() {
             <div className="resources-grid">
               {showSkeleton
                 ? Array.from({ length: 8 }, (_, i) => (
-                    <div className="resources-card resources-skeleton" key={i} aria-hidden="true">
+                    <div
+                      className="resources-card resources-skeleton"
+                      key={i}
+                      aria-hidden="true"
+                    >
                       <span />
                       <span />
                       <span />
@@ -770,7 +1101,9 @@ export default function Resources() {
           list (CC BY 4.0).
         </p>
       </div>
-
+      {suggesting ? (
+        <SuggestModal initialType={type} onClose={closeSuggest} />
+      ) : null}
       {selected ? (
         <ResourceModal
           r={selected}
