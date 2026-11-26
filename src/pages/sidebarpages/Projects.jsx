@@ -110,12 +110,44 @@ const SITES = [
   },
 ];
 
+const FIELD_COLORS = {
+  Web: "#2563eb",
+  Backend: "#7c3aed",
+  Mobile: "#16a34a",
+  Cybersecurity: "#dc2626",
+  Data: "#0891b2",
+  "Artificial Intelligence": "#db2777",
+  "DevOps & Cloud": "#ea580c",
+};
+
+const LANG_LABELS = {
+  html: "HTML",
+  javascript: "JavaScript",
+  typescript: "TypeScript",
+  dart: "Dart",
+  sql: "SQL",
+  python: "Python",
+};
+
+function timeAgo(value) {
+  if (!value) return "";
+  const days = Math.floor((Date.now() - new Date(value).getTime()) / 86400000);
+  if (days < 1) return "Today";
+  if (days === 1) return "Yesterday";
+  if (days < 30) return days + " days ago";
+  const months = Math.floor(days / 30);
+  if (months < 12) return months === 1 ? "1 month ago" : months + " months ago";
+  const years = Math.floor(days / 365);
+  return years === 1 ? "1 year ago" : years + " years ago";
+}
+
 export default function Projects() {
   const [tab, setTab] = useState("mine");
   const [query, setQuery] = useState("");
   const [field, setField] = useState("All fields");
   const [myProjects, setMyProjects] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [copiedId, setCopiedId] = useState(null);
   const navigate = useNavigate();
 
   // Tamamlanmış layihə dərsləri (My projects)
@@ -140,7 +172,7 @@ export default function Projects() {
       }
       const ids = done.map((d) => d.lesson_id);
       const [contentRes, subRes] = await Promise.all([
-        supabase.from("lesson_content").select("lesson_id, type:lab_data->>type, ptitle:lab_data->>title").in("lesson_id", ids),
+        supabase.from("lesson_content").select("lesson_id, type:lab_data->>type, ptitle:lab_data->>title, lang:lab_data->>language").in("lesson_id", ids),
         supabase.from("project_submissions").select("lesson_id, repo_url").eq("user_id", user.id).in("lesson_id", ids),
       ]);
       const content = new Map((contentRes.data || []).map((c) => [c.lesson_id, c]));
@@ -155,6 +187,9 @@ export default function Projects() {
             type: c?.type,
             field: road?.field || "",
             roadmap: road?.title || "",
+            track: road?.track || "",
+            completedAt: d.completed_at,
+            tech: c?.type === "capstone" ? [] : [LANG_LABELS[c?.lang || "html"] || c?.lang].filter(Boolean),
             repo: repos.get(d.lesson_id),
           };
         }),
@@ -168,6 +203,13 @@ export default function Projects() {
     const okQuery = item[titleKey].toLowerCase().includes(q);
     const okField = field === "All fields" || item.field === field;
     return okQuery && okField;
+  }
+
+  function shareRepo(e, p) {
+    e.stopPropagation();
+    navigator.clipboard?.writeText(p.repo);
+    setCopiedId(p.id);
+    setTimeout(() => setCopiedId((id) => (id === p.id ? null : id)), 2000);
   }
 
   const visibleMine = myProjects.filter((p) => matches(p, "title"));
@@ -259,29 +301,69 @@ export default function Projects() {
             </div>
           ) : (
             <div className="projects-grid">
-              {visibleMine.map((p) => (
-                <button
-                  className="projects-card"
-                  key={p.id}
-                  onClick={() =>
-                    navigate(p.type === "capstone" ? `/capstone/${p.id}` : `/project/${p.id}`)
-                  }
-                >
-                  <div className="projects-card-top">
-                    <span className="projects-badge">Completed</span>
-                    <span className="projects-card-field">{p.field}</span>
+              {visibleMine.map((p) => {
+                const color = FIELD_COLORS[p.field] || "#64748b";
+                const tint = { background: color + "1f", color };
+                const open = () =>
+                  navigate(p.type === "capstone" ? `/capstone/${p.id}` : `/project/${p.id}`);
+                return (
+                  <div
+                    className="projects-card"
+                    key={p.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={open}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        open();
+                      }
+                    }}
+                    style={{ borderLeft: "5px solid " + color, cursor: "pointer", textAlign: "left" }}
+                  >
+                    <div className="projects-card-top">
+                      <span className="projects-badge">
+                        Completed{p.completedAt ? " · " + timeAgo(p.completedAt) : ""}
+                      </span>
+                      <span className="projects-card-field" style={{ color, fontWeight: 600 }}>
+                        {p.field}
+                      </span>
+                    </div>
+                    <h3>{p.title}</h3>
+                    <p>
+                      {p.roadmap.replace(/\s*\(.*\)$/, "")}
+                      {p.roadmap ? " · " : ""}
+                      {p.type === "capstone" ? "Certification project" : "Unit project"}
+                    </p>
+                    <div className="projects-tech" style={{ alignItems: "center" }}>
+                      {p.track && <span style={tint}>{p.track}</span>}
+                      {p.tech.map((t) => (
+                        <span key={t}>{t}</span>
+                      ))}
+                      {p.repo && (
+                        <a
+                          href={p.repo}
+                          target="_blank"
+                          rel="noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          style={{ ...tint, padding: "4px 10px", borderRadius: 999, fontSize: 13, fontWeight: 600, textDecoration: "none" }}
+                        >
+                          On GitHub ↗
+                        </a>
+                      )}
+                      {p.repo && (
+                        <button
+                          type="button"
+                          onClick={(e) => shareRepo(e, p)}
+                          style={{ border: "1px solid " + color, background: "transparent", color, padding: "3px 10px", borderRadius: 999, fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+                        >
+                          {copiedId === p.id ? "Copied" : "Share"}
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  <h3>{p.title}</h3>
-                  <p>
-                    {p.roadmap}
-                    {p.roadmap ? " · " : ""}
-                    {p.type === "capstone" ? "Certification project" : "Unit project"}
-                  </p>
-                  <div className="projects-tech">
-                    {p.repo && <span>On GitHub</span>}
-                  </div>
-                </button>
-              ))}
+                );
+              })}
             </div>
           ))}
 
