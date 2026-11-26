@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Sidebar from "../Sidebar";
-import { supabase } from "../supabaseclient.js";
+import { supabase } from "../../supabaseclient";
 import "./Resources.css";
 
 const PAGE_SIZE = 24;
