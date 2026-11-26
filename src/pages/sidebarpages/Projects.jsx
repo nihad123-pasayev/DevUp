@@ -20,43 +20,23 @@ const FIELDS = [
   "Artificial Intelligence",
   "DevOps & Cloud",
 ];
+const SECTIONS = ["Practice by field", "Open source contribution", "Challenges and competitions"];
+
 const SITES = [
-  {
-    id: 1,
-    name: "GitHub",
-    url: "https://github.com",
-    text: "Browse open source repositories and find projects to learn from.",
-  },
-  {
-    id: 2,
-    name: "Frontend Mentor",
-    url: "https://www.frontendmentor.io",
-    text: "Real design challenges with ready-made assets for frontend practice.",
-  },
-  {
-    id: 3,
-    name: "roadmap.sh Projects",
-    url: "https://roadmap.sh/projects",
-    text: "Project ideas grouped by roadmap and difficulty.",
-  },
-  {
-    id: 4,
-    name: "freeCodeCamp",
-    url: "https://www.freecodecamp.org",
-    text: "Hands-on projects as part of free certification courses.",
-  },
-  {
-    id: 5,
-    name: "Kaggle",
-    url: "https://www.kaggle.com",
-    text: "Datasets and competitions for data-focused projects.",
-  },
-  {
-    id: 6,
-    name: "Devpost",
-    url: "https://devpost.com",
-    text: "Hackathon projects for inspiration and teamwork.",
-  },
+  { id: 1, name: "The Odin Project", url: "https://www.theodinproject.com", field: "Web", section: "Practice by field", tags: ["Free", "Beginner friendly"], text: "Follow a full path (JavaScript or Ruby on Rails) and build portfolio projects along the way." },
+  { id: 2, name: "Frontend Mentor", url: "https://www.frontendmentor.io", field: "Web", section: "Practice by field", tags: ["Real designs"], text: "Build pages from real design files and compare your result with the design." },
+  { id: 3, name: "freeCodeCamp", url: "https://www.freecodecamp.org", field: "Web", section: "Practice by field", tags: ["Free", "Certificates"], text: "Complete hands-on projects as part of free certification courses." },
+  { id: 4, name: "roadmap.sh Projects", url: "https://roadmap.sh/projects", field: "Any", section: "Practice by field", tags: ["By roadmap"], text: "Pick project ideas grouped by roadmap and difficulty." },
+  { id: 5, name: "Exercism", url: "https://exercism.org", field: "Any", section: "Practice by field", tags: ["Free", "Free mentoring"], text: "Solve coding exercises in many languages and get automatic feedback and mentor help." },
+  { id: 6, name: "PortSwigger Web Security Academy", url: "https://portswigger.net/web-security", field: "Cybersecurity", section: "Practice by field", tags: ["Free", "Hands-on labs"], text: "Learn web security and practice in interactive labs made by the creators of Burp Suite." },
+  { id: 7, name: "Kaggle", url: "https://www.kaggle.com", field: "Data", section: "Practice by field", tags: ["Datasets"], text: "Download datasets, analyze them in notebooks and join competitions." },
+  { id: 8, name: "Hugging Face Learn", url: "https://huggingface.co/learn", field: "Artificial Intelligence", section: "Practice by field", tags: ["Courses"], text: "Follow AI courses such as LLMs, agents and diffusion using open source tools." },
+  { id: 9, name: "first-contributions", url: "https://github.com/firstcontributions/first-contributions", field: "Any", section: "Open source contribution", tags: ["Beginner friendly", "Step by step"], text: "Practice the fork, branch, commit and pull request flow by adding your name to a file." },
+  { id: 10, name: "Good First Issue", url: "https://goodfirstissue.dev", field: "Any", section: "Open source contribution", tags: ["Beginner friendly"], text: "Browse easy issues from well known open source projects and pick one by language." },
+  { id: 11, name: "Up For Grabs", url: "https://up-for-grabs.net", field: "Any", section: "Open source contribution", tags: ["Beginner friendly"], text: "Find projects that keep tasks ready for new contributors." },
+  { id: 12, name: "GitHub", url: "https://github.com", field: "Any", section: "Open source contribution", tags: ["Open source"], text: "Browse open source repositories and find projects to learn from." },
+  { id: 13, name: "Devpost", url: "https://devpost.com", field: "Any", section: "Challenges and competitions", tags: ["Hackathons"], text: "Explore hackathon projects for inspiration and teamwork." },
+  { id: 14, name: "Cloud Resume Challenge", url: "https://cloudresumechallenge.dev", field: "DevOps & Cloud", section: "Challenges and competitions", tags: ["16 steps"], text: "Build a resume site on the cloud step by step to show real cloud skills." },
 ];
 
 const FIELD_COLORS = {
@@ -189,6 +169,7 @@ export default function Projects() {
   const [ideasLoading, setIdeasLoading] = useState(true);
   const [level, setLevel] = useState("All levels");
   const [selectedIdea, setSelectedIdea] = useState(null);
+  const [userFields, setUserFields] = useState([]);
   const navigate = useNavigate();
 
   // Tamamlanmış layihə dərsləri (My projects)
@@ -240,6 +221,31 @@ export default function Projects() {
     loadProjects();
   }, []);
 
+  // İstifadəçinin ən çox oxuduğu 2 sahə ("For you" üçün)
+  useEffect(() => {
+    async function loadFields() {
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth?.user) return;
+      const { data } = await supabase
+        .from("user_progress")
+        .select("lessons!inner(stages!inner(roadmaps!inner(field)))")
+        .eq("user_id", auth.user.id)
+        .limit(300);
+      const counts = {};
+      (data || []).forEach((r) => {
+        const f = r.lessons?.stages?.roadmaps?.field;
+        if (f) counts[f] = (counts[f] || 0) + 1;
+      });
+      setUserFields(
+        Object.entries(counts)
+          .sort((x, y) => y[1] - x[1])
+          .slice(0, 2)
+          .map((e) => e[0]),
+      );
+    }
+    loadFields();
+  }, []);
+
   // Ideyalar bazadakı project_ideas cədvəlindən gəlir
   useEffect(() => {
     async function loadIdeas() {
@@ -270,6 +276,13 @@ export default function Projects() {
   }
 
   const visibleMine = myProjects.filter((p) => matches(p, "title"));
+  const q = query.trim().toLowerCase();
+  const visibleSites = SITES.filter(
+    (x) =>
+      (field === "All fields" || x.field === field || x.field === "Any") &&
+      (x.name + " " + x.text).toLowerCase().includes(q),
+  );
+
   const visibleIdeas = ideas.filter((p) => matches(p, "title") && (level === "All levels" || p.level === level));
 
   return (
@@ -296,8 +309,7 @@ export default function Projects() {
           ))}
         </div>
 
-        {tab !== "find" && (
-          <div className="projects-toolbar">
+        <div className="projects-toolbar">
             <div className="projects-search">
               <svg
                 width="20"
@@ -347,8 +359,7 @@ export default function Projects() {
                 ))}
               </div>
             )}
-          </div>
-        )}
+        </div>
 
         {tab === "mine" &&
           (loading ? (
@@ -487,23 +498,86 @@ export default function Projects() {
 
         {selectedIdea && <IdeaPanel idea={selectedIdea} onClose={() => setSelectedIdea(null)} />}
 
-        {tab === "find" && (
-          <div className="projects-grid">
-            {SITES.map((s) => (
-              <a
-                className="projects-card projects-site"
-                key={s.id}
-                href={s.url}
-                target="_blank"
-                rel="noreferrer"
-              >
-                <h3>{s.name}</h3>
-                <p>{s.text}</p>
-                <span className="projects-visit">Visit site</span>
-              </a>
-            ))}
-          </div>
-        )}
+        {tab === "find" &&
+          (visibleSites.length === 0 ? (
+            <div className="projects-empty">
+              <h2>No results</h2>
+              <p className="projects-empty-text">Try a different search or field.</p>
+            </div>
+          ) : (
+            <>
+              {SECTIONS.map((sec) => {
+                const items = visibleSites
+                  .filter((x) => x.section === sec)
+                  .sort((x, y) => Number(userFields.includes(y.field)) - Number(userFields.includes(x.field)));
+                if (!items.length) return null;
+                return (
+                  <section key={sec} style={{ marginBottom: 36 }}>
+                    <h2 style={{ fontSize: 22, margin: "8px 0 16px" }}>{sec}</h2>
+
+                    {sec === "Open source contribution" && field === "All fields" && !q && (
+                      <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 16, padding: "18px 22px", marginBottom: 18, color: "#0f172a" }}>
+                        <strong style={{ fontSize: 16 }}>Start here: your first open source contribution</strong>
+                        <ol style={{ margin: "10px 0 0", paddingLeft: 20, display: "grid", gap: 6, lineHeight: 1.5 }}>
+                          <li>
+                            Learn the flow on{" "}
+                            <a href="https://github.com/firstcontributions/first-contributions" target="_blank" rel="noreferrer">
+                              first-contributions
+                            </a>
+                            .
+                          </li>
+                          <li>
+                            Find an easy issue on{" "}
+                            <a href="https://goodfirstissue.dev" target="_blank" rel="noreferrer">
+                              Good First Issue
+                            </a>
+                            .
+                          </li>
+                          <li>Fix it and open your first pull request.</li>
+                        </ol>
+                      </div>
+                    )}
+
+                    <div className="projects-grid">
+                      {items.map((x) => {
+                        const color = FIELD_COLORS[x.field] || "#64748b";
+                        const forYou = userFields.includes(x.field);
+                        return (
+                          <a
+                            className="projects-card projects-site"
+                            key={x.id}
+                            href={x.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            style={{ borderLeft: "5px solid " + color }}
+                          >
+                            <div className="projects-card-top">
+                              <span className="projects-card-field" style={{ color, fontWeight: 600 }}>
+                                {x.field === "Any" ? "Any field" : x.field}
+                              </span>
+                              {forYou && (
+                                <span className="projects-badge" style={{ background: color + "1f", color }}>
+                                  For you
+                                </span>
+                              )}
+                            </div>
+                            <h3>{x.name}</h3>
+                            <p>{x.text}</p>
+                            <div className="projects-tech">
+                              {x.tags.map((t) => (
+                                <span key={t}>{t}</span>
+                              ))}
+                            </div>
+                            <span className="projects-visit">Visit site</span>
+                          </a>
+                        );
+                      })}
+                    </div>
+                  </section>
+                );
+              })}
+            </>
+          ))}
       </div>
     </Sidebar>
   );
