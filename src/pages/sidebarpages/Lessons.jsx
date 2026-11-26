@@ -1,10 +1,13 @@
 import "./Lessons.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Sidebar from "../Sidebar";
+import MobilePicker from "../MobilePicker"; // YENİ
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   getMyRoadmaps,
   getFullProgress,
+  getMobileTrack, // YENİ
+  setMobileTrack, // YENİ
   roadmapStats,
   lessonKind,
   unlockedStageIds,
@@ -92,6 +95,8 @@ function LessonsPage() {
   const tabsRef = useRef(null);
   const indRef = useRef(null);
   const [openLesson, setOpenLesson] = useState(null);
+  const [pickerOpen, setPickerOpen] = useState(false); // YENİ
+  const [track, setTrack] = useState(null); // YENİ
   const location = useLocation();
   const navigate = useNavigate();
   const [toast, setToast] = useState(
@@ -113,13 +118,27 @@ function LessonsPage() {
     return () => clearTimeout(t);
   }, [toast]);
 
+  // YENİ: cari Mobile yolu da yüklənir
   useEffect(() => {
-    Promise.all([getMyRoadmaps(), getFullProgress()]).then(([r, p]) => {
-      setRoadmaps(r);
-      setProgress(p);
-      setLoading(false);
-    });
+    Promise.all([getMyRoadmaps(), getFullProgress(), getMobileTrack()]).then(
+      ([r, p, t]) => {
+        setRoadmaps(r);
+        setProgress(p);
+        setTrack(t);
+        setLoading(false);
+      },
+    );
   }, []);
+
+  // YENİ: Mobile yolunu dəyiş (React Native <-> Flutter)
+  const pickTrack = async (id) => {
+    if (id !== track && (await setMobileTrack(id))) {
+      setTrack(id);
+      setRoadmaps(await getMyRoadmaps());
+      setToast("Switched to " + id);
+    }
+    setPickerOpen(false);
+  };
 
   // hər roadmap-da ilk tamamlanmamış dərs və onun mərhələsi = "cari"
   const current = useMemo(() => {
@@ -319,6 +338,16 @@ function LessonsPage() {
                     </span>
                     <span>{r.stages.length} stages</span>
                   </div>
+                  {/* YENİ: Mobile yolunu dəyişmək düyməsi */}
+                  {r.field === "Mobile" && (
+                    <button
+                      type="button"
+                      className="lessons-switch"
+                      onClick={() => setPickerOpen(true)}
+                    >
+                      Change path
+                    </button>
+                  )}
                 </div>
                 <div
                   className="lessons-ring"
@@ -568,6 +597,15 @@ function LessonsPage() {
             </article>
           );
         })}
+
+        {/* YENİ: Mobile yolu seçimi */}
+        <MobilePicker
+          open={pickerOpen}
+          current={track}
+          onPick={pickTrack}
+          onClose={() => setPickerOpen(false)}
+        />
+
         {toast && (
           <div className="lessons-toast" role="status">
             {toast}

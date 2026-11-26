@@ -730,3 +730,5 @@ button.lessons-item {
   font-weight: 600;
   box-shadow: 0 8px 24px rgba(22, 33, 54, 0.25);
 }
+.lessons-switch { margin-top: 10px; padding: 6px 12px; border: 1px solid currentColor; border-radius: 8px; background: transparent; color: inherit; font: inherit; font-size: 13px; cursor: pointer; }
+.lessons-switch:hover { background: rgba(255, 255, 255, 0.12); }

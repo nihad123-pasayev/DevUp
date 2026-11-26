@@ -144,6 +144,7 @@ export async function getStreak() {
   }
   return streak;
 }
+
 export async function getMobileTrack() {
   const uid = await getUserId();
   if (!uid) return null;
@@ -155,14 +156,16 @@ export async function getMobileTrack() {
   return data?.mobile_track || null;
 }
 
+// Uğurlu olub-olmadığını qaytarır (true / false)
 export async function setMobileTrack(track) {
   const uid = await getUserId();
-  if (!uid) return;
+  if (!uid) return false;
   const { error } = await supabase
     .from("profiles")
     .update({ mobile_track: track })
     .eq("id", uid);
   if (error) console.error("mobile track error", error);
+  return !error;
 }
 
 // Mobile-ın iki roadmap-ından yalnız seçiləni saxla
@@ -173,6 +176,7 @@ export function filterByTrack(roadmaps, track) {
     (r) => r.field !== "Mobile" || (r.title || "").toLowerCase().includes(key),
   );
 }
+
 export function lessonKind(l) {
   const t = String(l?.kind || "").toLowerCase();
   if (t.includes("exam")) return "exam";
@@ -180,6 +184,7 @@ export function lessonKind(l) {
   if (t.includes("quiz")) return "quiz";
   return "lesson";
 }
+
 // Açıq bölmələr: ilk bölmə həmişə açıqdır, növbəti yalnız əvvəlkinin bütün mövzuları bitəndə açılır
 export function unlockedStageIds(roadmap, progress) {
   const open = new Set();
@@ -192,6 +197,7 @@ export function unlockedStageIds(roadmap, progress) {
 }
 
 export const LOCK_MESSAGE = "Finish the previous unit's lessons first.";
+
 // Bu cihazda tamamlanmış mövzular (lab bitəndə "lab:<id>" kimi yazılır)
 export function localDoneIds() {
   try {

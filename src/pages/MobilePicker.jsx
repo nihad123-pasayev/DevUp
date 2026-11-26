@@ -30,15 +30,14 @@ const OPTIONS = [
   },
 ];
 
-export default function MobilePicker({ open, onPick, onClose }) {
-  // Seçimi yalnız istifadəçi klikləyəndə saxlamaq üçün lokal state
-  const [selected, setSelected] = useState(null);
+export default function MobilePicker({ open, current, onPick, onClose }) {
+  const [selected, setSelected] = useState(current ?? null);
   const [prevOpen, setPrevOpen] = useState(open);
 
-  // Pəncərə hər dəfə açılanda seçimi sıfırla (effektsiz)
+  // Pəncərə açılanda cari seçimi göstər
   if (open !== prevOpen) {
     setPrevOpen(open);
-    if (open) setSelected(null);
+    if (open) setSelected(current ?? null);
   }
 
   useEffect(() => {
@@ -130,7 +129,11 @@ export default function MobilePicker({ open, onPick, onClose }) {
                     className="mp-btn"
                     onClick={() => handleSelect(o.id)}
                   >
-                    {isChosen ? "Selected" : `Choose ${o.title}`}
+                    {isChosen
+                      ? "Current path"
+                      : current
+                        ? `Switch to ${o.title}`
+                        : `Choose ${o.title}`}
                   </button>
                 </div>
               );
