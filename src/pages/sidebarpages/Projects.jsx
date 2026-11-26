@@ -22,6 +22,15 @@ const FIELDS = [
 ];
 const SECTIONS = ["Practice by field", "Open source contribution", "Challenges and competitions"];
 
+const SECTION_INFO = {
+  "Practice by field":
+    "Free courses, exercises and labs where you build real projects in your field. Pick the ones that match what you are learning now.",
+  "Open source contribution":
+    "Open source means the code is public on GitHub and anyone can help improve it. A contribution is a small improvement you send to someone else's project, such as fixing a typo or a bug. It is great practice with Git and teamwork, and it shows on your GitHub profile.",
+  "Challenges and competitions":
+    "Events and step by step challenges where you build something real, alone or in a team, and show it to others.",
+};
+
 const SITES = [
   { id: 1, name: "The Odin Project", url: "https://www.theodinproject.com", field: "Web", section: "Practice by field", tags: ["Free", "Beginner friendly"], text: "Follow a full path (JavaScript or Ruby on Rails) and build portfolio projects along the way." },
   { id: 2, name: "Frontend Mentor", url: "https://www.frontendmentor.io", field: "Web", section: "Practice by field", tags: ["Real designs"], text: "Build pages from real design files and compare your result with the design." },
@@ -288,6 +297,14 @@ export default function Projects() {
   return (
     <Sidebar>
       <div className="projects-page">
+        <style>{`
+          .projects-card.has-accent:hover,
+          .projects-card.has-accent:focus-visible {
+            border-color: var(--pc) !important;
+            box-shadow: 0 10px 28px color-mix(in srgb, var(--pc) 22%, transparent);
+            outline: none;
+          }
+        `}</style>
         <header className="projects-header">
           <div>
             <h1>Projects</h1>
@@ -389,7 +406,7 @@ export default function Projects() {
                   navigate(p.type === "capstone" ? `/capstone/${p.id}` : `/project/${p.id}`);
                 return (
                   <div
-                    className="projects-card"
+                    className="projects-card has-accent"
                     key={p.id}
                     role="button"
                     tabIndex={0}
@@ -400,7 +417,7 @@ export default function Projects() {
                         open();
                       }
                     }}
-                    style={{ borderLeft: "5px solid " + color, cursor: "pointer", textAlign: "left" }}
+                    style={{ "--pc": color, borderLeft: "5px solid " + color, cursor: "pointer", textAlign: "left" }}
                   >
                     <div className="projects-card-top">
                       <span className="projects-badge">
@@ -467,10 +484,10 @@ export default function Projects() {
                 const lc = LEVEL_COLORS[p.level] || "#64748b";
                 return (
                   <button
-                    className="projects-card"
+                    className="projects-card has-accent"
                     key={p.id}
                     onClick={() => setSelectedIdea(p)}
-                    style={{ borderLeft: "5px solid " + color, cursor: "pointer", textAlign: "left" }}
+                    style={{ "--pc": color, borderLeft: "5px solid " + color, cursor: "pointer", textAlign: "left" }}
                   >
                     <div className="projects-card-top">
                       <span className="projects-badge" style={{ background: lc + "1f", color: lc }}>
@@ -513,27 +530,37 @@ export default function Projects() {
                 if (!items.length) return null;
                 return (
                   <section key={sec} style={{ marginBottom: 36 }}>
-                    <h2 style={{ fontSize: 22, margin: "8px 0 16px" }}>{sec}</h2>
+                    <h2 style={{ fontSize: 22, margin: "8px 0 6px" }}>{sec}</h2>
+                    <p style={{ margin: "0 0 16px", maxWidth: 760, lineHeight: 1.55, color: "#475569" }}>
+                      {SECTION_INFO[sec]}
+                    </p>
 
                     {sec === "Open source contribution" && field === "All fields" && !q && (
                       <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 16, padding: "18px 22px", marginBottom: 18, color: "#0f172a" }}>
                         <strong style={{ fontSize: 16 }}>Start here: your first open source contribution</strong>
-                        <ol style={{ margin: "10px 0 0", paddingLeft: 20, display: "grid", gap: 6, lineHeight: 1.5 }}>
+                        <p style={{ margin: "6px 0 0", lineHeight: 1.5 }}>
+                          New to this? Follow these three steps. You will learn how developers work together on real projects.
+                        </p>
+                        <ol style={{ margin: "10px 0 0", paddingLeft: 20, display: "grid", gap: 10, lineHeight: 1.5 }}>
                           <li>
-                            Learn the flow on{" "}
+                            <strong>Practice the flow.</strong> On{" "}
                             <a href="https://github.com/firstcontributions/first-contributions" target="_blank" rel="noreferrer">
                               first-contributions
-                            </a>
-                            .
+                            </a>{" "}
+                            you make your own copy of a project (a fork), change one file and send your change back (a pull request). It is a
+                            safe practice project, so you cannot break anything.
                           </li>
                           <li>
-                            Find an easy issue on{" "}
+                            <strong>Find an easy task.</strong>{" "}
                             <a href="https://goodfirstissue.dev" target="_blank" rel="noreferrer">
                               Good First Issue
-                            </a>
-                            .
+                            </a>{" "}
+                            lists beginner friendly tasks from real projects. Choose a programming language you know.
                           </li>
-                          <li>Fix it and open your first pull request.</li>
+                          <li>
+                            <strong>Fix it and send a pull request.</strong> A pull request is a message to the project owner that says
+                            "please add my change". If they accept it, your code becomes part of the project.
+                          </li>
                         </ol>
                       </div>
                     )}
@@ -544,12 +571,12 @@ export default function Projects() {
                         const forYou = userFields.includes(x.field);
                         return (
                           <a
-                            className="projects-card projects-site"
+                            className="projects-card projects-site has-accent"
                             key={x.id}
                             href={x.url}
                             target="_blank"
                             rel="noreferrer"
-                            style={{ borderLeft: "5px solid " + color }}
+                            style={{ "--pc": color, borderLeft: "5px solid " + color }}
                           >
                             <div className="projects-card-top">
                               <span className="projects-card-field" style={{ color, fontWeight: 600 }}>
