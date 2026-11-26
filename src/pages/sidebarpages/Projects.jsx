@@ -20,57 +20,6 @@ const FIELDS = [
   "Artificial Intelligence",
   "DevOps & Cloud",
 ];
-const IDEAS = [
-  {
-    id: 1,
-    title: "Todo App",
-    field: "Web",
-    level: "Beginner",
-    tech: ["HTML", "CSS", "JavaScript"],
-    text: "Add, complete and delete tasks, saved in the browser.",
-  },
-  {
-    id: 2,
-    title: "Weather App",
-    field: "Web",
-    level: "Beginner",
-    tech: ["JavaScript", "API"],
-    text: "Search a city and show its current weather from a public API.",
-  },
-  {
-    id: 3,
-    title: "Personal Portfolio",
-    field: "Web",
-    level: "Beginner",
-    tech: ["React", "CSS"],
-    text: "A multi-section site presenting your skills and projects.",
-  },
-  {
-    id: 4,
-    title: "Blog with Auth",
-    field: "Backend",
-    level: "Intermediate",
-    tech: ["React", "Supabase"],
-    text: "Sign up, log in, write and publish posts.",
-  },
-  {
-    id: 5,
-    title: "REST API",
-    field: "Backend",
-    level: "Intermediate",
-    tech: ["Node.js", "Express"],
-    text: "A CRUD API with validation and clear error messages.",
-  },
-  {
-    id: 6,
-    title: "Habit Tracker",
-    field: "Mobile",
-    level: "Intermediate",
-    tech: ["React Native"],
-    text: "Track daily habits and see your streaks.",
-  },
-];
-
 const SITES = [
   {
     id: 1,
@@ -141,6 +90,94 @@ function timeAgo(value) {
   return years === 1 ? "1 year ago" : years + " years ago";
 }
 
+const LEVELS = ["All levels", "Beginner", "Intermediate", "Advanced"];
+const LEVEL_RANK = { Beginner: 0, Intermediate: 1, Advanced: 2 };
+const LEVEL_COLORS = { Beginner: "#16a34a", Intermediate: "#d97706", Advanced: "#dc2626" };
+
+// Yan paneldə bir ideyanın tam təsviri
+function IdeaPanel({ idea, onClose }) {
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  const color = FIELD_COLORS[idea.field] || "#64748b";
+  const h = { margin: "24px 0 8px", fontSize: 14, letterSpacing: "0.04em", textTransform: "uppercase", color: "#64748b" };
+  const list = { margin: 0, paddingLeft: 20, display: "grid", gap: 8, lineHeight: 1.5 };
+
+  return (
+    <div
+      onClick={onClose}
+      style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.45)", zIndex: 1000, display: "flex", justifyContent: "flex-end" }}
+    >
+      <aside
+        role="dialog"
+        aria-modal="true"
+        aria-label={idea.title}
+        onClick={(e) => e.stopPropagation()}
+        style={{ width: "min(560px, 100%)", height: "100%", overflowY: "auto", background: "#fff", color: "#0f172a", padding: "28px 28px 40px", borderLeft: "6px solid " + color, boxShadow: "-10px 0 40px rgba(0,0,0,0.2)" }}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+            <span style={{ background: (LEVEL_COLORS[idea.level] || "#64748b") + "1f", color: LEVEL_COLORS[idea.level] || "#64748b", padding: "4px 12px", borderRadius: 999, fontSize: 13, fontWeight: 700 }}>
+              {idea.level}
+            </span>
+            <span style={{ color, fontWeight: 700, fontSize: 14 }}>{idea.field}</span>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            style={{ border: "1px solid #cbd5e1", background: "#fff", color: "#0f172a", borderRadius: 10, width: 36, height: 36, fontSize: 18, cursor: "pointer" }}
+          >
+            ×
+          </button>
+        </div>
+
+        <h2 style={{ margin: "16px 0 12px", fontSize: 28, lineHeight: 1.2 }}>{idea.title}</h2>
+        <p style={{ margin: 0, lineHeight: 1.6, color: "#334155" }}>{idea.summary}</p>
+
+        {idea.features.length > 0 && (
+          <>
+            <h3 style={h}>What to build</h3>
+            <ul style={list}>
+              {idea.features.map((f, i) => (
+                <li key={i}>{f}</li>
+              ))}
+            </ul>
+          </>
+        )}
+
+        {idea.bonus.length > 0 && (
+          <>
+            <h3 style={h}>Bonus challenges</h3>
+            <ul style={list}>
+              {idea.bonus.map((f, i) => (
+                <li key={i}>{f}</li>
+              ))}
+            </ul>
+          </>
+        )}
+
+        <p style={{ margin: "28px 0 0", fontSize: 13, color: "#64748b", lineHeight: 1.5 }}>
+          Idea from the open source{" "}
+          {idea.source_url ? (
+            <a href={idea.source_url} target="_blank" rel="noreferrer" style={{ color: "#2563eb" }}>
+              app-ideas collection ↗
+            </a>
+          ) : (
+            "app-ideas collection"
+          )}{" "}
+          by Florin Pop and contributors (MIT license).
+        </p>
+      </aside>
+    </div>
+  );
+}
+
 export default function Projects() {
   const [tab, setTab] = useState("mine");
   const [query, setQuery] = useState("");
@@ -148,6 +185,10 @@ export default function Projects() {
   const [myProjects, setMyProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [copiedId, setCopiedId] = useState(null);
+  const [ideas, setIdeas] = useState([]);
+  const [ideasLoading, setIdeasLoading] = useState(true);
+  const [level, setLevel] = useState("All levels");
+  const [selectedIdea, setSelectedIdea] = useState(null);
   const navigate = useNavigate();
 
   // Tamamlanmış layihə dərsləri (My projects)
@@ -198,6 +239,22 @@ export default function Projects() {
     }
     loadProjects();
   }, []);
+
+  // Ideyalar bazadakı project_ideas cədvəlindən gəlir
+  useEffect(() => {
+    async function loadIdeas() {
+      const { data } = await supabase
+        .from("project_ideas")
+        .select("id, title, field, level, summary, features, bonus, source_url");
+      const rows = (data || []).map((r) => ({ ...r, features: r.features || [], bonus: r.bonus || [] }));
+      rows.sort(
+        (a, b) => (LEVEL_RANK[a.level] ?? 9) - (LEVEL_RANK[b.level] ?? 9) || a.title.localeCompare(b.title),
+      );
+      setIdeas(rows);
+      setIdeasLoading(false);
+    }
+    loadIdeas();
+  }, []);
   function matches(item, titleKey) {
     const q = query.trim().toLowerCase();
     const okQuery = item[titleKey].toLowerCase().includes(q);
@@ -213,7 +270,7 @@ export default function Projects() {
   }
 
   const visibleMine = myProjects.filter((p) => matches(p, "title"));
-  const visibleIdeas = IDEAS.filter((p) => matches(p, "title"));
+  const visibleIdeas = ideas.filter((p) => matches(p, "title") && (level === "All levels" || p.level === level));
 
   return (
     <Sidebar>
@@ -277,6 +334,19 @@ export default function Projects() {
                 </button>
               ))}
             </div>
+            {tab === "ideas" && (
+              <div className="projects-fields" style={{ marginTop: 8 }}>
+                {LEVELS.map((l) => (
+                  <button
+                    key={l}
+                    className={"projects-field" + (level === l ? " is-active" : "")}
+                    onClick={() => setLevel(l)}
+                  >
+                    {l}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -368,32 +438,54 @@ export default function Projects() {
           ))}
 
         {tab === "ideas" &&
-          (visibleIdeas.length === 0 ? (
+          (ideasLoading ? (
+            <div className="projects-empty">
+              <p className="projects-empty-text">Loading...</p>
+            </div>
+          ) : visibleIdeas.length === 0 ? (
             <div className="projects-empty">
               <h2>No results</h2>
               <p className="projects-empty-text">
-                Try a different search or field.
+                Try a different search, field or level.
               </p>
             </div>
           ) : (
             <div className="projects-grid">
-              {visibleIdeas.map((p) => (
-                <button className="projects-card" key={p.id}>
-                  <div className="projects-card-top">
-                    <span className="projects-badge is-level">{p.level}</span>
-                    <span className="projects-card-field">{p.field}</span>
-                  </div>
-                  <h3>{p.title}</h3>
-                  <p>{p.text}</p>
-                  <div className="projects-tech">
-                    {p.tech.map((t) => (
-                      <span key={t}>{t}</span>
-                    ))}
-                  </div>
-                </button>
-              ))}
+              {visibleIdeas.map((p) => {
+                const color = FIELD_COLORS[p.field] || "#64748b";
+                const lc = LEVEL_COLORS[p.level] || "#64748b";
+                return (
+                  <button
+                    className="projects-card"
+                    key={p.id}
+                    onClick={() => setSelectedIdea(p)}
+                    style={{ borderLeft: "5px solid " + color, cursor: "pointer", textAlign: "left" }}
+                  >
+                    <div className="projects-card-top">
+                      <span className="projects-badge" style={{ background: lc + "1f", color: lc }}>
+                        {p.level}
+                      </span>
+                      <span className="projects-card-field" style={{ color, fontWeight: 600 }}>
+                        {p.field}
+                      </span>
+                    </div>
+                    <h3>{p.title}</h3>
+                    <p
+                      style={{ display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}
+                    >
+                      {p.summary}
+                    </p>
+                    <div className="projects-tech">
+                      {p.features.length > 0 && <span>{p.features.length} things to build</span>}
+                      {p.bonus.length > 0 && <span>{p.bonus.length} bonus</span>}
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           ))}
+
+        {selectedIdea && <IdeaPanel idea={selectedIdea} onClose={() => setSelectedIdea(null)} />}
 
         {tab === "find" && (
           <div className="projects-grid">
