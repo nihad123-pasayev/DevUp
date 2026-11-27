@@ -32,9 +32,10 @@ function SnackPhone({ code }) {
         });
         snack.setOnline(true);
         setUrl(snack.getState().webPreviewURL || "");
-      } catch {
+      } catch (e) {
+        console.error("[PhonePreview]", e);
         if (!off) {
-          setError("The phone preview could not start. Check your internet and reload.");
+          setError("The phone preview could not start: " + (e && e.message ? e.message : "unknown error"));
         }
       }
     })();
