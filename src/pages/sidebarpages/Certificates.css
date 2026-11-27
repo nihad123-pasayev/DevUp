@@ -141,116 +141,185 @@
 
 /* ---------- Sertifikat kağızı (1000 x 707) ---------- */
 .cf-paper {
-  display: flex;
+  position: relative;
+  width: 1000px;
+  height: 707px;
   background: #ffffff;
-  color: #132039;
+  color: #0f1b4a;
   font-family: "Inter", "Segoe UI", Arial, sans-serif;
   overflow: hidden;
-}
-
-.cf-left {
-  width: 31%;
-  flex: none;
-  background: #e3eefc;
-  display: grid;
-  grid-template-rows: auto 1fr auto;
-  justify-items: center;
-  align-items: center;
-  padding: 60px 28px 80px;
   box-sizing: border-box;
-}
-
-.cf-logo {
-  width: 225px;
-  height: auto;
-  display: block;
-}
-
-.cf-seal {
-  width: 250px;
-  height: auto;
-  display: block;
-}
-
-.cf-right {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   text-align: center;
-  padding: 52px 52px 40px;
+}
+
+.cf-waves {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.cf-border {
+  position: absolute;
+  inset: 14px;
+  border: 3px solid #1a4fd6;
+  pointer-events: none;
+}
+
+.cf-border-inner {
+  inset: 23px;
+  border: 1px solid #5d8df0;
+}
+
+/* brend: ikon + xətt + DevUp */
+.cf-brand {
+  position: absolute;
+  left: 62px;
+  top: 52px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cf-brand-icon {
+  width: 55px;
+  height: auto;
+  display: block;
+}
+
+.cf-brand-sep {
+  width: 1px;
+  height: 47px;
+  background: #9db8f0;
+}
+
+.cf-brand-logo {
+  width: 130px;
+  height: auto;
+  display: block;
+}
+
+/* QR */
+.cf-qr {
+  position: absolute;
+  right: 57px;
+  top: 32px;
+  width: 104px;
+}
+
+.cf-qr-box {
+  width: 84px;
+  height: 84px;
+  margin: 0 auto;
+  padding: 6px;
   box-sizing: border-box;
+  border: 1px solid #1a56db;
+  background: #ffffff;
+}
+
+.cf-qr-box svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.cf-qr-label {
+  margin-top: 6px;
+  font-size: 8.5px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  color: #1a63e8;
+}
+
+.cf-qr-id {
+  margin-top: 3px;
+  font-size: 9.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: #0f1b4a;
+}
+
+/* başlıq */
+.cf-kicker-row {
+  position: absolute;
+  top: 160px;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+}
+
+.cf-kicker-row i {
+  display: block;
+  width: 170px;
+  height: 1px;
+  background: #1a56db;
 }
 
 .cf-kicker {
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: 5px;
-  text-transform: uppercase;
-  color: #0b72f5;
+  margin-right: -0.34em;
+  font-size: 19.5px;
+  font-weight: 500;
+  letter-spacing: 0.34em;
+  color: #1a63e8;
 }
 
-.cf-rule {
-  width: 56px;
-  height: 3px;
-  margin: 18px 0 40px;
-  border-radius: 2px;
-  background: #0b72f5;
+/* mərkəz mətnləri */
+.cf-small,
+.cf-for,
+.cf-name,
+.cf-program,
+.cf-blurb {
+  position: absolute;
+  left: 0;
+  right: 0;
 }
 
 .cf-small,
 .cf-for {
-  font-size: 16px;
-  color: #5b6577;
+  font-size: 19.5px;
+  color: #4a5878;
 }
+
+.cf-small { top: 214px; }
 
 .cf-name {
-  margin: 14px 0 22px;
+  top: 240px;
   font-family: "Fraunces", Georgia, "Times New Roman", serif;
-  font-weight: 400;
-  font-size: 58px;
-  line-height: 1.1;
-  color: #132039;
+  font-weight: 500;
+  font-size: 73px;
+  line-height: 1.15;
+  color: #0f1b4a;
 }
+
+.cf-for { top: 346px; }
 
 .cf-program {
-  margin-top: 6px;
-  font-size: 44px;
-  font-weight: 500;
+  top: 374px;
+  font-size: 45px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
   line-height: 1.2;
-  color: #132039;
-}
-
-.cf-chips {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px;
-  margin: 34px 0 30px;
-  max-width: 560px;
-}
-
-.cf-chip {
-  padding: 5px 13px;
-  border-radius: 999px;
-  background: #e3eefc;
-  color: #0b4fb0;
-  font-size: 14px;
-  font-weight: 500;
+  color: #0f1b4a;
 }
 
 .cf-blurb {
-  max-width: 500px;
-  font-size: 17px;
-  line-height: 1.65;
-  color: #5b6577;
+  top: 452px;
+  max-width: 560px;
+  margin: 0 auto;
+  font-size: 19px;
+  line-height: 1.5;
+  color: #3d4b72;
 }
 
+/* aşağı */
 .cf-foot {
-  width: 100%;
-  margin-top: auto;
-  padding-top: 22px;
-  border-top: 1px solid #d9e0ec;
+  position: absolute;
+  left: 73px;
+  right: 73px;
+  bottom: 57px;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
@@ -258,21 +327,22 @@
 }
 
 .cf-label {
-  font-size: 12px;
-  letter-spacing: 1.5px;
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: #8b95a7;
+  color: #1a63e8;
 }
 
 .cf-date {
-  margin-top: 4px;
-  font-size: 16px;
+  margin-top: 5px;
+  font-size: 22px;
   font-weight: 600;
-  color: #132039;
+  color: #0f1b4a;
 }
 
 .cf-sign {
-  min-width: 250px;
+  width: 280px;
   text-align: center;
 }
 
@@ -280,15 +350,15 @@
   font-family: "Fraunces", Georgia, serif;
   font-style: italic;
   font-weight: 400;
-  font-size: 31px;
+  font-size: 35px;
   line-height: 1;
-  color: #264a8a;
+  color: #1a3a8f;
 }
 
 .cf-sign-line {
-  height: 1px;
-  margin: 6px 0 6px;
-  background: #132039;
+  height: 1.5px;
+  margin: 7px 0 9px;
+  background: #1a3a8f;
 }
 
 @media (max-width: 520px) {
