@@ -1,117 +1,70 @@
-import {
-  SandpackProvider,
-  SandpackLayout,
-  SandpackPreview,
-  useSandpack,
-} from "@codesandbox/sandpack-react";
-import { useEffect, useRef, useState } from "react";
+import { Component, createElement, useEffect, useMemo, useRef, useState } from "react";
+import * as React from "react";
+import * as JsxRuntime from "react/jsx-runtime";
+import * as RNWeb from "react-native-web";
+import { transform } from "sucrase";
 import "./PhonePreview.css";
 
-// Runs React Native code in the browser with react-native-web (no Expo servers needed).
-const INDEX_TS = `import React from "react";
-import { createRoot } from "react-dom/client";
-import * as mod from "./App";
-
-function pick(m: any): any {
-  let c = m;
-  for (let i = 0; i < 3; i++) {
-    if (c && typeof c === "object" && "default" in c) c = c.default;
-  }
-  return c;
+// Compiles the lesson's TypeScript/JSX and runs it with react-native-web, right in the page.
+function compile(code) {
+  const out = transform(code, {
+    transforms: ["typescript", "jsx", "imports"],
+    jsxRuntime: "automatic",
+    production: true,
+  }).code;
+  const mod = { exports: {} };
+  const req = (name) => {
+    if (name === "react") return React;
+    if (name === "react-native") return RNWeb;
+    if (name === "react/jsx-runtime") return JsxRuntime;
+    throw new Error("This preview cannot load the module: " + name);
+  };
+  new Function("require", "module", "exports", out)(req, mod, mod.exports);
+  const e = mod.exports;
+  return e.default || e;
 }
-const App: any = pick(mod);
 
-class Boundary extends React.Component<{ children: React.ReactNode }, { err: string }> {
-  state = { err: "" };
-  static getDerivedStateFromError(e: any) {
+class Boundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { err: "" };
+  }
+  static getDerivedStateFromError(e) {
     return { err: String(e && e.message ? e.message : e) };
   }
   render() {
-    if (this.state.err) {
-      return (
-        <pre style={{ color: "#c0392b", padding: 12, whiteSpace: "pre-wrap", font: "12px monospace" }}>
-          {this.state.err + "\\n\\nApp type: " + typeof App + (App && typeof App === "object" ? " keys: " + Object.keys(App).join(",") : "")}
-        </pre>
-      );
-    }
+    if (this.state.err) return <pre className="pv-err">{this.state.err}</pre>;
     return this.props.children;
   }
 }
 
-createRoot(document.getElementById("root") as HTMLElement).render(
-  <Boundary>
-    <App />
-  </Boundary>
-);
-`;
-
-const INDEX_HTML = `<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <style>
-      html, body, #root { height: 100%; margin: 0; }
-      #root { display: flex; flex-direction: column; }
-      body { font-family: -apple-system, system-ui, sans-serif; }
-    </style>
-  </head>
-  <body>
-    <div id="root"></div>
-  </body>
-</html>
-`;
-
-function toWeb(code) {
-  return code.replace(/from\s+(["'])react-native\1/g, 'from "react-native-web"');
-}
-
-function Sync({ code }) {
-  const { sandpack } = useSandpack();
-  const first = useRef(true);
-  useEffect(() => {
-    if (first.current) {
-      first.current = false;
-      return;
-    }
-    sandpack.updateFile("/App.tsx", toWeb(code));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [code]);
-  return null;
-}
-
 function SnackPhone({ code }) {
-  const files = {
-    "/App.tsx": toWeb(code),
-    "/index.tsx": INDEX_TS,
-    "/public/index.html": INDEX_HTML,
-  };
+  const [shown, setShown] = useState(code);
+
+  useEffect(() => {
+    const t = setTimeout(() => setShown(code), 500);
+    return () => clearTimeout(t);
+  }, [code]);
+
+  const result = useMemo(() => {
+    try {
+      return { App: compile(shown) };
+    } catch (e) {
+      return { error: String(e && e.message ? e.message : e) };
+    }
+  }, [shown]);
+
   return (
     <div className="pv-wrap">
       <div className="pv-phone">
         <div className="pv-sp">
-          <SandpackProvider
-            template="react-ts"
-            files={files}
-            customSetup={{
-              dependencies: {
-                react: "^18.2.0",
-                "react-dom": "^18.2.0",
-                "react-native-web": "^0.19.13",
-              },
-            }}
-            options={{ recompileMode: "delayed", recompileDelay: 600 }}
-          >
-            <Sync code={code} />
-            <SandpackLayout style={{ border: 0, borderRadius: 0, height: "100%" }}>
-              <SandpackPreview
-                showNavigator={false}
-                showOpenInCodeSandbox={false}
-                showRefreshButton={false}
-                style={{ height: "100%" }}
-              />
-            </SandpackLayout>
-          </SandpackProvider>
+          <div className="pv-root">
+            {result.error ? (
+              <pre className="pv-err">{result.error}</pre>
+            ) : (
+              <Boundary key={shown}>{createElement(result.App)}</Boundary>
+            )}
+          </div>
         </div>
       </div>
     </div>
