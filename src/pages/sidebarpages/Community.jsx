@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Sidebar from "../Sidebar";
 import { supabase } from "/src/supabaseclient.js";
 import "./Community.css";
@@ -8,6 +8,11 @@ const TABS = [
   { id: "poll", label: "Polls" },
   { id: "experience", label: "Experiences" },
 ];
+const TAB_HINTS = {
+  question: "Stuck on something? Ask a question and other learners will help you.",
+  poll: "Can't decide between options? Create a poll and let the community vote.",
+  experience: "Share your experience and your success. Your story can help other learners.",
+};
 const FIELDS = [
   "All fields",
   "Web",
@@ -21,11 +26,13 @@ const FIELDS = [
 const POST_FIELDS = FIELDS.slice(1);
 const SORTS = [
   { id: "newest", label: "Newest" },
+  { id: "likes", label: "Most liked" },
   { id: "answers", label: "Most answered" },
   { id: "views", label: "Most viewed" },
 ];
 const POLL_SORTS = [
   { id: "newest", label: "Newest" },
+  { id: "likes", label: "Most liked" },
   { id: "votes", label: "Most votes" },
   { id: "views", label: "Most viewed" },
 ];
@@ -41,6 +48,12 @@ const ADD_LABELS = {
 };
 const MAX_OPTIONS = 6;
 const EMPTY_FORM = { field: "Web", title: "", body: "", tags: "", options: ["", ""] };
+
+const BUCKET = "community-images";
+const MAX_IMAGES = 3;
+const MAX_BYTES = 2 * 1024 * 1024;
+const MAX_SIDE = 1600;
+const EXTENSIONS = { "image/webp": "webp", "image/jpeg": "jpg", "image/png": "png" };
 
 function timeAgo(date) {
   const seconds = Math.floor((Date.now() - new Date(date).getTime()) / 1000);
@@ -88,6 +101,257 @@ function normalizePost(p) {
     ...p,
     poll_options: [...(p.poll_options || [])].sort((a, b) => a.position - b.position),
   };
+}
+
+/* ---------- images ---------- */
+
+function imageUrl(path) {
+  return supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+}
+
+// Shrinks big photos in the browser before upload. If the browser cannot do it,
+// the original file is used as is (the 2 MB limit is still checked afterwards).
+async function compressImage(file) {
+  if (!/^image\/(png|jpe?g|webp)$/.test(file.type)) {
+    throw new Error("Only PNG, JPG and WebP images are allowed.");
+  }
+  if (typeof createImageBitmap !== "function") return file;
+  try {
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, MAX_SIDE / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    canvas.getContext("2d").drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    if (bitmap.close) bitmap.close();
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/webp", 0.85));
+    return blob && blob.size < file.size ? blob : file;
+  } catch {
+    return file;
+  }
+}
+
+async function removeImages(paths) {
+  if (!paths.length) return;
+  try {
+    await supabase.storage.from(BUCKET).remove(paths);
+  } catch {
+    /* best effort */
+  }
+}
+
+function useImagePicker() {
+  const [items, setItems] = useState([]);
+  const [error, setError] = useState("");
+  const counter = useRef(0);
+
+  async function add(files) {
+    setError("");
+    const room = MAX_IMAGES - items.length;
+    if (room <= 0) {
+      setError("You can add up to " + MAX_IMAGES + " images.");
+      return;
+    }
+    if (files.length > room) setError("You can add up to " + MAX_IMAGES + " images.");
+    const added = [];
+    for (const file of files.slice(0, room)) {
+      try {
+        const blob = await compressImage(file);
+        if (blob.size > MAX_BYTES) {
+          setError("Each image must be under 2 MB.");
+          continue;
+        }
+        counter.current += 1;
+        added.push({
+          id: "img" + counter.current,
+          blob,
+          url: URL.createObjectURL(blob),
+          name: file.name || "screenshot",
+        });
+      } catch (e) {
+        setError(e.message);
+      }
+    }
+    if (added.length) setItems((prev) => [...prev, ...added].slice(0, MAX_IMAGES));
+  }
+
+  function remove(id) {
+    const gone = items.find((it) => it.id === id);
+    if (gone) URL.revokeObjectURL(gone.url);
+    setItems((prev) => prev.filter((it) => it.id !== id));
+    setError("");
+  }
+
+  function clear() {
+    items.forEach((it) => URL.revokeObjectURL(it.url));
+    setItems([]);
+    setError("");
+  }
+
+  return { items, error, add, remove, clear };
+}
+
+function pasteImages(e, picker) {
+  const files = [...(e.clipboardData?.files || [])].filter((f) => f.type.startsWith("image/"));
+  if (files.length) {
+    e.preventDefault();
+    picker.add(files);
+  }
+}
+
+function ImageField({ picker, id }) {
+  const inputRef = useRef(null);
+  return (
+    <div className="community-imagefield">
+      {picker.items.length > 0 && (
+        <div className="community-previews">
+          {picker.items.map((it) => (
+            <div key={it.id} className="community-preview-item">
+              <img src={it.url} alt={it.name} />
+              <button
+                type="button"
+                className="community-preview-remove"
+                aria-label={"Remove " + it.name}
+                onClick={() => picker.remove(it.id)}
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+      <div className="community-imagefield-row">
+        <button
+          type="button"
+          className="community-secondary community-add-image"
+          disabled={picker.items.length >= MAX_IMAGES}
+          onClick={() => inputRef.current && inputRef.current.click()}
+        >
+          Add image
+        </button>
+        <span className="community-image-hint">
+          PNG, JPG or WebP, up to {MAX_IMAGES} images. You can also paste a screenshot with Ctrl+V.
+        </span>
+      </div>
+      <input
+        ref={inputRef}
+        id={id}
+        type="file"
+        accept="image/png,image/jpeg,image/webp"
+        multiple
+        hidden
+        aria-label="Choose images"
+        onChange={(e) => {
+          const files = [...e.target.files];
+          e.target.value = "";
+          picker.add(files);
+        }}
+      />
+      {picker.error && (
+        <p className="community-error" role="alert">
+          {picker.error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function ImageGrid({ paths, onOpen, small }) {
+  if (!paths || paths.length === 0) return null;
+  return (
+    <div className={"community-images" + (small ? " is-small" : "")}>
+      {paths.map((p, i) => (
+        <button
+          key={p}
+          type="button"
+          className="community-image-btn"
+          aria-label={"View image " + (i + 1)}
+          onClick={() => onOpen(paths, i)}
+        >
+          <img src={imageUrl(p)} alt="" loading="lazy" />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function Lightbox({ images, index, onClose, onIndex }) {
+  const many = images.length > 1;
+  useEffect(() => {
+    function onKey(e) {
+      if (e.key === "Escape") onClose();
+      if (many && e.key === "ArrowRight") onIndex((index + 1) % images.length);
+      if (many && e.key === "ArrowLeft") onIndex((index - 1 + images.length) % images.length);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [index, images.length, many, onClose, onIndex]);
+
+  return (
+    <div className="community-lightbox" role="dialog" aria-modal="true" aria-label="Image viewer" onClick={onClose}>
+      <button type="button" className="community-lightbox-close" aria-label="Close" autoFocus onClick={onClose}>
+        ×
+      </button>
+      {many && (
+        <button
+          type="button"
+          className="community-lightbox-nav is-prev"
+          aria-label="Previous image"
+          onClick={(e) => {
+            e.stopPropagation();
+            onIndex((index - 1 + images.length) % images.length);
+          }}
+        >
+          ‹
+        </button>
+      )}
+      <img src={imageUrl(images[index])} alt="" onClick={(e) => e.stopPropagation()} />
+      {many && (
+        <button
+          type="button"
+          className="community-lightbox-nav is-next"
+          aria-label="Next image"
+          onClick={(e) => {
+            e.stopPropagation();
+            onIndex((index + 1) % images.length);
+          }}
+        >
+          ›
+        </button>
+      )}
+    </div>
+  );
+}
+
+/* ---------- likes ---------- */
+
+function LikeButton({ liked, count, disabled, title, onClick }) {
+  return (
+    <button
+      type="button"
+      className={"community-like" + (liked ? " is-liked" : "")}
+      aria-pressed={liked}
+      aria-label={liked ? "Remove like" : "Like"}
+      title={title}
+      disabled={disabled}
+      onClick={onClick}
+    >
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill={liked ? "currentColor" : "none"}
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21.2l7.8-7.7 1-1.1a5.5 5.5 0 0 0 0-7.8z" />
+      </svg>
+      <span>{count}</span>
+    </button>
+  );
 }
 
 /* ---------- code blocks ---------- */
@@ -236,15 +500,21 @@ export default function Community() {
   const [answers, setAnswers] = useState([]);
   const [answerText, setAnswerText] = useState("");
   const [answerError, setAnswerError] = useState("");
+  const [answering, setAnswering] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
   const [myVotes, setMyVotes] = useState({});
+  const [myLikes, setMyLikes] = useState(() => new Set());
   const [myAnswerVotes, setMyAnswerVotes] = useState(() => new Set());
   const [notice, setNotice] = useState("");
+  const [lightbox, setLightbox] = useState(null);
   const noticeTimer = useRef(null);
   const pendingPoll = useRef(new Set());
+  const pendingLike = useRef(new Set());
   const pendingUpvote = useRef(new Set());
+  const postPicker = useImagePicker();
+  const answerPicker = useImagePicker();
 
   const authorName =
     user?.user_metadata?.full_name ||
@@ -256,6 +526,10 @@ export default function Community() {
     noticeTimer.current = setTimeout(() => setNotice(""), 3500);
   }
 
+  const openLightbox = useCallback((paths, index) => setLightbox({ paths, index }), []);
+  const closeLightbox = useCallback(() => setLightbox(null), []);
+  const moveLightbox = useCallback((index) => setLightbox((l) => (l ? { ...l, index } : l)), []);
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data?.user ?? null));
     return () => clearTimeout(noticeTimer.current);
@@ -266,7 +540,7 @@ export default function Community() {
     supabase
       .from("posts")
       .select(
-        "id, user_id, kind, title, body, field, tags, views, solved, author_name, created_at, answers_count, poll_options(id, position, label, votes)",
+        "id, user_id, kind, title, body, field, tags, views, solved, author_name, created_at, answers_count, likes, images, poll_options(id, position, label, votes)",
       )
       .eq("kind", tab)
       .order("created_at", { ascending: false })
@@ -301,6 +575,21 @@ export default function Community() {
   }, [userId, tab, refreshKey]);
 
   useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+    supabase
+      .from("post_likes")
+      .select("post_id")
+      .then(({ data, error }) => {
+        if (cancelled || error || !data) return;
+        setMyLikes(new Set(data.map((v) => v.post_id)));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
+
+  useEffect(() => {
     if (!deleteTarget) return;
     function onKey(e) {
       if (e.key === "Escape") setDeleteTarget(null);
@@ -314,7 +603,7 @@ export default function Community() {
   async function loadAnswers(postId) {
     const { data, error } = await supabase
       .from("answers")
-      .select("id, user_id, body, author_name, is_accepted, votes, created_at")
+      .select("id, user_id, body, author_name, is_accepted, votes, images, created_at")
       .eq("post_id", postId)
       .order("created_at", { ascending: true });
     const list = !error && data ? data : [];
@@ -339,6 +628,7 @@ export default function Community() {
     setMyAnswerVotes(new Set());
     setAnswerText("");
     setAnswerError("");
+    answerPicker.clear();
     loadAnswers(post.id);
     // supabase queries only run once awaited or .then() is called
     supabase.rpc("increment_views", { post_id: post.id }).then(() => {});
@@ -346,6 +636,7 @@ export default function Community() {
 
   function closePost() {
     setSelected(null);
+    answerPicker.clear();
     loadPosts();
   }
 
@@ -356,6 +647,37 @@ export default function Community() {
     setSort("newest");
     setStatus("all");
     setFormError("");
+    postPicker.clear();
+  }
+
+  function closeForm() {
+    setAskOpen(false);
+    postPicker.clear();
+  }
+
+  /* ----- uploads ----- */
+
+  async function uploadAll(items) {
+    const paths = [];
+    for (const it of items) {
+      const ext = EXTENSIONS[it.blob.type] || "webp";
+      const id =
+        typeof crypto !== "undefined" && crypto.randomUUID
+          ? crypto.randomUUID()
+          : Date.now().toString(36) + Math.random().toString(36).slice(2);
+      const path = user.id + "/" + id + "." + ext;
+      const { error } = await supabase.storage.from(BUCKET).upload(path, it.blob, {
+        contentType: it.blob.type,
+        cacheControl: "31536000",
+        upsert: false,
+      });
+      if (error) {
+        await removeImages(paths);
+        throw error;
+      }
+      paths.push(path);
+    }
+    return paths;
   }
 
   /* ----- create ----- */
@@ -402,6 +724,15 @@ export default function Community() {
     }
 
     setPosting(true);
+    let paths
+    try {
+      paths = await uploadAll(postPicker.items);
+    } catch {
+      setPosting(false);
+      setFormError("Couldn't upload the images. Try again.");
+      return;
+    }
+
     let error;
     if (isPoll) {
       ({ error } = await supabase.rpc("create_poll", {
@@ -410,6 +741,7 @@ export default function Community() {
         p_field: form.field,
         p_tags: tags,
         p_options: options,
+        p_images: paths,
       }));
     } else {
       ({ error } = await supabase.from("posts").insert({
@@ -420,10 +752,12 @@ export default function Community() {
         field: form.field,
         tags,
         author_name: authorName,
+        images: paths,
       }));
     }
     setPosting(false);
     if (error) {
+      await removeImages(paths);
       setFormError(
         error.code === "P0001" && error.message ? error.message : "Couldn't post. Try again.",
       );
@@ -432,11 +766,13 @@ export default function Community() {
     setForm(EMPTY_FORM);
     setFormError("");
     setAskOpen(false);
+    postPicker.clear();
     loadPosts();
   }
 
   async function submitAnswer(e) {
     e.preventDefault();
+    if (answering) return;
     if (!answerText.trim()) {
       setAnswerError("Write something first.");
       return;
@@ -445,18 +781,31 @@ export default function Community() {
       setAnswerError("Log in to reply.");
       return;
     }
+    setAnswering(true);
+    let paths
+    try {
+      paths = await uploadAll(answerPicker.items);
+    } catch {
+      setAnswering(false);
+      setAnswerError("Couldn't upload the images. Try again.");
+      return;
+    }
     const { error } = await supabase.from("answers").insert({
       post_id: selected.id,
       user_id: user.id,
       body: answerText.trim(),
       author_name: authorName,
+      images: paths,
     });
+    setAnswering(false);
     if (error) {
+      await removeImages(paths);
       setAnswerError("Couldn't send. Try again.");
       return;
     }
     setAnswerText("");
     setAnswerError("");
+    answerPicker.clear();
     loadAnswers(selected.id);
   }
 
@@ -481,14 +830,17 @@ export default function Community() {
   async function confirmDelete() {
     const { type, item } = deleteTarget;
     setDeleteTarget(null);
+    const mine = (paths) => paths.filter((p) => p.startsWith(user.id + "/"));
     if (type === "post") {
       const { error } = await supabase.from("posts").delete().eq("id", item.id);
       if (error) return;
+      removeImages(mine([...(item.images || []), ...answers.flatMap((a) => a.images || [])]));
       closePost();
       return;
     }
     const { error } = await supabase.from("answers").delete().eq("id", item.id);
     if (error) return;
+    removeImages(mine(item.images || []));
     setAnswers((prev) => prev.filter((a) => a.id !== item.id));
     if (item.is_accepted) setSelected((s) => ({ ...s, solved: false }));
   }
@@ -548,7 +900,44 @@ export default function Community() {
     }
   }
 
-  /* ----- answer upvotes ----- */
+  /* ----- likes on posts ----- */
+
+  function applyPostLike(postId, add) {
+    const bump = (p) =>
+      p.id !== postId ? p : { ...p, likes: Math.max((p.likes || 0) + (add ? 1 : -1), 0) };
+    setPosts((ps) => ps.map(bump));
+    setSelected((s) => (s ? bump(s) : s));
+    setMyLikes((prev) => {
+      const next = new Set(prev);
+      if (add) next.add(postId);
+      else next.delete(postId);
+      return next;
+    });
+  }
+
+  async function togglePostLike(post) {
+    if (!user) {
+      flash("Log in to like.");
+      return;
+    }
+    if (post.user_id === user.id) return;
+    if (pendingLike.current.has(post.id)) return;
+    const had = myLikes.has(post.id);
+    pendingLike.current.add(post.id);
+    applyPostLike(post.id, !had);
+
+    const table = supabase.from("post_likes");
+    const result = had
+      ? await table.delete().eq("post_id", post.id).eq("user_id", user.id)
+      : await table.insert({ post_id: post.id, user_id: user.id });
+    pendingLike.current.delete(post.id);
+    if (result.error) {
+      applyPostLike(post.id, had);
+      flash("Couldn't save your like. Try again.");
+    }
+  }
+
+  /* ----- likes on answers and comments ----- */
 
   function applyUpvote(answerId, add) {
     setAnswers((prev) =>
@@ -566,7 +955,7 @@ export default function Community() {
 
   async function toggleUpvote(answer) {
     if (!user) {
-      flash("Log in to vote.");
+      flash("Log in to like.");
       return;
     }
     if (answer.user_id === user.id) return;
@@ -582,7 +971,7 @@ export default function Community() {
     pendingUpvote.current.delete(answer.id);
     if (result.error) {
       applyUpvote(answer.id, had);
-      flash("Couldn't save your vote. Try again.");
+      flash("Couldn't save your like. Try again.");
     }
   }
 
@@ -604,6 +993,7 @@ export default function Community() {
       return okField && okQuery && okStatus;
     })
     .sort((a, b) => {
+      if (sort === "likes") return (b.likes || 0) - (a.likes || 0);
       if (sort === "answers") return answerCount(b) - answerCount(a);
       if (sort === "votes") return pollTotal(b) - pollTotal(a);
       if (sort === "views") return b.views - a.views;
@@ -615,6 +1005,18 @@ export default function Community() {
       {notice}
     </div>
   ) : null;
+
+  const viewer = lightbox ? (
+    <Lightbox
+      images={lightbox.paths}
+      index={lightbox.index}
+      onClose={closeLightbox}
+      onIndex={moveLightbox}
+    />
+  ) : null;
+
+  const likeTitle = (item) =>
+    user && item.user_id === user.id ? "You can't like your own post" : undefined;
 
   if (selected) {
     const isOwner = user && selected.user_id === user.id;
@@ -647,6 +1049,7 @@ export default function Community() {
               </span>
             </div>
             {selected.body.trim() && <Body text={selected.body} />}
+            <ImageGrid paths={selected.images} onOpen={openLightbox} />
             {selected.kind === "poll" && (
               <PollBox post={selected} myVote={myVotes[selected.id]} onVote={votePoll} />
             )}
@@ -657,6 +1060,15 @@ export default function Community() {
                 ))}
               </div>
             )}
+            <div className="community-post-actions">
+              <LikeButton
+                liked={myLikes.has(selected.id)}
+                count={selected.likes || 0}
+                disabled={!!isOwner}
+                title={likeTitle(selected)}
+                onClick={() => togglePostLike(selected)}
+              />
+            </div>
           </article>
           {isOwner && (
             <button
@@ -672,56 +1084,42 @@ export default function Community() {
           <div className="community-answers">
             {ordered.map((a) => {
               const canMark = isOwner && selected.kind === "question" && !selected.solved;
-              const canDelete = user && a.user_id === user.id;
               const own = user && a.user_id === user.id;
-              const voted = myAnswerVotes.has(a.id);
               return (
                 <div
                   key={a.id}
                   className={"community-answer" + (a.is_accepted ? " is-accepted" : "")}
                 >
-                  <div className="community-answer-row">
-                    <button
-                      type="button"
-                      className={"community-upvote" + (voted ? " is-voted" : "")}
-                      aria-pressed={voted}
-                      aria-label={voted ? "Remove your vote" : "Upvote"}
-                      title={own ? "You can't vote for your own " + words(selected.kind)[0] : "Upvote"}
+                  <div className="community-meta">
+                    <span className="community-avatar">{initials(a.author_name)}</span>
+                    <span>
+                      {a.author_name} · {timeAgo(a.created_at)}
+                    </span>
+                    {a.is_accepted && <span className="community-solved">Best answer</span>}
+                  </div>
+                  <Body text={a.body} />
+                  <ImageGrid paths={a.images} onOpen={openLightbox} />
+                  <div className="community-answer-actions">
+                    <LikeButton
+                      liked={myAnswerVotes.has(a.id)}
+                      count={a.votes || 0}
                       disabled={!!own}
+                      title={own ? "You can't like your own " + words(selected.kind)[0] : undefined}
                       onClick={() => toggleUpvote(a)}
-                    >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                        <path d="M12 4 3 16h6v4h6v-4h6z" />
-                      </svg>
-                      <span>{a.votes || 0}</span>
-                    </button>
-                    <div className="community-answer-main">
-                      <div className="community-meta">
-                        <span className="community-avatar">{initials(a.author_name)}</span>
-                        <span>
-                          {a.author_name} · {timeAgo(a.created_at)}
-                        </span>
-                        {a.is_accepted && <span className="community-solved">Best answer</span>}
-                      </div>
-                      <Body text={a.body} />
-                      {(canMark || canDelete) && (
-                        <div className="community-answer-actions">
-                          {canMark && (
-                            <button className="community-link-btn" onClick={() => markSolved(a)}>
-                              Mark as solved
-                            </button>
-                          )}
-                          {canDelete && (
-                            <button
-                              className="community-link-btn is-danger"
-                              onClick={() => setDeleteTarget({ type: "answer", item: a })}
-                            >
-                              Delete
-                            </button>
-                          )}
-                        </div>
-                      )}
-                    </div>
+                    />
+                    {canMark && (
+                      <button className="community-link-btn" onClick={() => markSolved(a)}>
+                        Mark as solved
+                      </button>
+                    )}
+                    {own && (
+                      <button
+                        className="community-link-btn is-danger"
+                        onClick={() => setDeleteTarget({ type: "answer", item: a })}
+                      >
+                        Delete
+                      </button>
+                    )}
                   </div>
                 </div>
               );
@@ -749,15 +1147,19 @@ export default function Community() {
                 setAnswerText(e.target.value);
                 setAnswerError("");
               }}
+              onPaste={(e) => pasteImages(e, answerPicker)}
               placeholder="Wrap code in three backticks to format it"
             />
+            <ImageField picker={answerPicker} id="answer-images" />
             {answerError && <p className="community-error">{answerError}</p>}
-            <button type="submit" className="community-primary">
-              {selected.kind === "question"
-                ? "Post answer"
-                : selected.kind === "poll"
-                  ? "Post comment"
-                  : "Post reply"}
+            <button type="submit" className="community-primary" disabled={answering}>
+              {answering
+                ? "Posting…"
+                : selected.kind === "question"
+                  ? "Post answer"
+                  : selected.kind === "poll"
+                    ? "Post comment"
+                    : "Post reply"}
             </button>
           </form>
           {deleteTarget && (
@@ -793,6 +1195,7 @@ export default function Community() {
             </div>
           )}
         </div>
+        {viewer}
       </Sidebar>
     );
   }
@@ -812,7 +1215,7 @@ export default function Community() {
             <h1>Community</h1>
             <p>Ask questions, share experiences and help other learners.</p>
           </div>
-          <button className="community-primary" onClick={() => setAskOpen(!askOpen)}>
+          <button className="community-primary" onClick={() => (askOpen ? closeForm() : setAskOpen(true))}>
             {ADD_LABELS[tab]}
           </button>
         </header>
@@ -830,6 +1233,7 @@ export default function Community() {
             </button>
           ))}
         </div>
+        <p className="community-hint">{TAB_HINTS[tab]}</p>
 
         {notices}
 
@@ -865,7 +1269,9 @@ export default function Community() {
               }
             />
 
-            <label htmlFor="post-body">{isPoll ? "Details (optional)" : "Details"}</label>
+            <label htmlFor="post-body">
+              {isPoll ? "Details (optional)" : isQuestion ? "Details" : "Your experience"}
+            </label>
             <textarea
               id="post-body"
               rows={isPoll ? 3 : 6}
@@ -874,12 +1280,17 @@ export default function Community() {
                 setForm({ ...form, body: e.target.value });
                 setFormError("");
               }}
+              onPaste={(e) => pasteImages(e, postPicker)}
               placeholder={
                 isPoll
                   ? "Tell people what you are choosing for"
-                  : "Wrap code in three backticks to format it"
+                  : isQuestion
+                    ? "Wrap code in three backticks to format it"
+                    : "What did you do, what worked, and what would you tell someone starting today?"
               }
             />
+
+            <ImageField picker={postPicker} id="post-images" />
 
             {isPoll && (
               <>
@@ -943,11 +1354,7 @@ export default function Community() {
               <button type="submit" className="community-primary" disabled={posting}>
                 {posting ? "Posting…" : "Post"}
               </button>
-              <button
-                type="button"
-                className="community-secondary"
-                onClick={() => setAskOpen(false)}
-              >
+              <button type="button" className="community-secondary" onClick={closeForm}>
                 Cancel
               </button>
             </div>
@@ -1088,6 +1495,7 @@ export default function Community() {
                         {p.body.replace(/```[\s\S]*?```/g, " [code] ").replace(/```/g, "")}
                       </p>
                     )}
+                    <ImageGrid paths={p.images} onOpen={openLightbox} small />
                     {(p.tags || []).length > 0 && (
                       <div className="community-tags">
                         {p.tags.map((t) => (
@@ -1102,9 +1510,16 @@ export default function Community() {
                           {p.author_name} · {timeAgo(p.created_at)}
                         </span>
                       </div>
-                      {p.kind === "poll" && (
-                        <span className="community-stats">{countLabel(answerCount(p), "poll")}</span>
-                      )}
+                      <div className="community-stats">
+                        {p.kind === "poll" && <span>{countLabel(answerCount(p), "poll")}</span>}
+                        <LikeButton
+                          liked={myLikes.has(p.id)}
+                          count={p.likes || 0}
+                          disabled={!!user && p.user_id === user.id}
+                          title={likeTitle(p)}
+                          onClick={() => togglePostLike(p)}
+                        />
+                      </div>
                     </div>
                   </div>
                 </article>
@@ -1113,6 +1528,7 @@ export default function Community() {
           </div>
         )}
       </div>
+      {viewer}
     </Sidebar>
   );
 }
