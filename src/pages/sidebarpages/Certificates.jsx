@@ -10,7 +10,7 @@ export default function CertificatePaper({
   name = "Nihad Paşayev",
   program = "Backend Development",
   date = "25 November 2026",
-  certId = "DU-BE-2026-0001",
+  certId = "DU-BE-2026-0001", 
   verifyUrl = "https://devup.az/verify/DU-BE-2026-0001",
   blurb = "Demonstrated the skills required to design, build and deploy reliable backend services.",
 }) {
