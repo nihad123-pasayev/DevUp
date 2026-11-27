@@ -70,6 +70,7 @@ function SnackPhone({ code }) {
           ref={setFrame}
           className="pv-screen"
           title="Phone preview"
+          allow="screen-wake-lock *; fullscreen *; clipboard-write *"
           src={embed || url || undefined}
         />
         {!url && !embed && <div className="pv-loading">Starting the phone...</div>}
