@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import "./PhonePreview.css";
 
 const ENTRY = "App.tsx";
+// false = use the official Snack embed (always works, but shows the editor too)
+const USE_SDK = false;
 const SDK_URL = "https://esm.sh/snack-sdk@7";
 
 function embedSrc(code) {
@@ -26,6 +28,10 @@ function SnackPhone({ code }) {
   useEffect(() => {
     let off = false;
     let snack = null;
+    if (!USE_SDK) {
+      setEmbed(embedSrc(codeRef.current));
+      return undefined;
+    }
     (async () => {
       try {
         const { Snack } = await import(/* @vite-ignore */ SDK_URL);
