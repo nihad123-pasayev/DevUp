@@ -19,6 +19,7 @@ import LessonPage from "./pages/LessonPage.jsx";
 import ProjectPage from "./pages/ProjectPage.jsx";
 import CapstonePage from "./pages/CapstonePage.jsx";
 import FinalExamPage from "./pages/FinalExamPage.jsx";
+import Verify from "./pages/sidebarpages/Verify.jsx"
 export default function App() {
   return (
     <BrowserRouter>
@@ -44,6 +45,8 @@ export default function App() {
         <Route path="/project/:lessonId" element={<ProjectPage />} />
         <Route path="/capstone/:id" element={<CapstonePage />} />
         <Route path="/exam/:id" element={<FinalExamPage />} />
+        <Route path="/verify" element={<Verify />} />
+        <Route path="/verify/:code" element={<Verify />} />
       </Routes>
     </BrowserRouter>
   );
