@@ -36,8 +36,17 @@ function SnackPhone({ code }) {
           webPreviewRef: webRef,
         });
         snackRef.current = snack;
-        snack.addStateListener(() => {
-          if (!off) setUrl(snack.getState().webPreviewURL || "");
+        window.__snack = snack;
+        snack.addStateListener((state) => {
+          console.log("[snack]", {
+            online: state.online,
+            resolving: state.isResolving,
+            missing: state.missingDependencies,
+            channel: state.channel,
+            sdk: state.sdkVersion,
+            url: state.webPreviewURL,
+          });
+          if (!off) setUrl(state.webPreviewURL || "");
         });
         snack.setOnline(true);
         setUrl(snack.getState().webPreviewURL || "");
