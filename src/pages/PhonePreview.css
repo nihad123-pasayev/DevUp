@@ -59,3 +59,8 @@
   background: #fff;
 }
 .pv-note { margin: 8px 0 0; font-size: 12px; color: #5b6475; }
+
+.pv-sp { height: 560px; border-radius: 28px; overflow: hidden; background: #fff; }
+.pv-sp .sp-wrapper, .pv-sp .sp-layout, .pv-sp .sp-stack,
+.pv-sp .sp-preview-container { height: 100% !important; }
+.pv-sp .sp-preview-iframe { height: 100% !important; }
