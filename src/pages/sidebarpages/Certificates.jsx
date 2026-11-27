@@ -1,6 +1,6 @@
 import { QRCodeSVG } from "qrcode.react";
-import logo from "./assets/devup-logo.png";
-import icon from "./assets/devup-icon.png";
+import logo from "../../../public/photos/devup-logo.png";
+import icon from "../../../public/photos/devup-icon.png";
 
 /**
  * Sertifikat kağızı (1000 x 707).
@@ -33,12 +33,34 @@ export default function CertificatePaper({
             <stop offset="1" stopColor="#8fb4f7" stopOpacity=".08" />
           </linearGradient>
         </defs>
-        <path d="M0 0H560C430 70 300 70 190 150C110 210 60 300 0 420Z" fill="url(#cfWaveA)" />
-        <path d="M0 0H330C240 60 160 90 100 160C50 220 20 290 0 340Z" fill="#2f6cf0" opacity=".16" />
-        <path d="M1536 1024H950C1090 960 1220 950 1330 870C1420 800 1480 700 1536 560Z" fill="url(#cfWaveB)" />
-        <path d="M1536 1024H1200C1290 970 1370 940 1430 870C1490 800 1520 740 1536 680Z" fill="#2f6cf0" opacity=".16" />
-        <path d="M1536 0H1300C1380 20 1460 60 1536 130Z" fill="#2f6cf0" opacity=".07" />
-        <path d="M0 1024H260C170 1000 90 950 0 860Z" fill="#2f6cf0" opacity=".07" />
+        <path
+          d="M0 0H560C430 70 300 70 190 150C110 210 60 300 0 420Z"
+          fill="url(#cfWaveA)"
+        />
+        <path
+          d="M0 0H330C240 60 160 90 100 160C50 220 20 290 0 340Z"
+          fill="#2f6cf0"
+          opacity=".16"
+        />
+        <path
+          d="M1536 1024H950C1090 960 1220 950 1330 870C1420 800 1480 700 1536 560Z"
+          fill="url(#cfWaveB)"
+        />
+        <path
+          d="M1536 1024H1200C1290 970 1370 940 1430 870C1490 800 1520 740 1536 680Z"
+          fill="#2f6cf0"
+          opacity=".16"
+        />
+        <path
+          d="M1536 0H1300C1380 20 1460 60 1536 130Z"
+          fill="#2f6cf0"
+          opacity=".07"
+        />
+        <path
+          d="M0 1024H260C170 1000 90 950 0 860Z"
+          fill="#2f6cf0"
+          opacity=".07"
+        />
       </svg>
 
       {/* çərçivə */}
@@ -54,7 +76,13 @@ export default function CertificatePaper({
 
       <div className="cf-qr">
         <div className="cf-qr-box">
-          <QRCodeSVG value={verifyUrl} size={70} level="M" fgColor="#0f1b4a" bgColor="#ffffff" />
+          <QRCodeSVG
+            value={verifyUrl}
+            size={70}
+            level="M"
+            fgColor="#0f1b4a"
+            bgColor="#ffffff"
+          />
         </div>
         <div className="cf-qr-label">SCAN TO VERIFY</div>
         <div className="cf-qr-id">ID: {certId}</div>
