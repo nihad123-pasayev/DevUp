@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import "./PhonePreview.css";
 
 const ENTRY = "App.tsx";
-const SDK_URL = "https://esm.sh/snack-sdk@4";
+const SDK_URL = "https://esm.sh/snack-sdk@7";
 
 function embedSrc(code) {
   const files = { [ENTRY]: { type: "CODE", contents: code } };
