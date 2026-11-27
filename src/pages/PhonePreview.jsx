@@ -10,10 +10,39 @@ import "./PhonePreview.css";
 // Runs React Native code in the browser with react-native-web (no Expo servers needed).
 const INDEX_TS = `import React from "react";
 import { createRoot } from "react-dom/client";
-import App from "./App";
+import * as mod from "./App";
 
-const root = createRoot(document.getElementById("root") as HTMLElement);
-root.render(<App />);
+function pick(m: any): any {
+  let c = m;
+  for (let i = 0; i < 3; i++) {
+    if (c && typeof c === "object" && "default" in c) c = c.default;
+  }
+  return c;
+}
+const App: any = pick(mod);
+
+class Boundary extends React.Component<{ children: React.ReactNode }, { err: string }> {
+  state = { err: "" };
+  static getDerivedStateFromError(e: any) {
+    return { err: String(e && e.message ? e.message : e) };
+  }
+  render() {
+    if (this.state.err) {
+      return (
+        <pre style={{ color: "#c0392b", padding: 12, whiteSpace: "pre-wrap", font: "12px monospace" }}>
+          {this.state.err + "\\n\\nApp type: " + typeof App + (App && typeof App === "object" ? " keys: " + Object.keys(App).join(",") : "")}
+        </pre>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+createRoot(document.getElementById("root") as HTMLElement).render(
+  <Boundary>
+    <App />
+  </Boundary>
+);
 `;
 
 const INDEX_HTML = `<!DOCTYPE html>
