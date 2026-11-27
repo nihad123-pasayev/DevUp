@@ -2,13 +2,22 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import "./PhonePreview.css";
 
 const ENTRY = "App.tsx";
+const SDK_URL = "https://esm.sh/snack-sdk@3.10.0";
+
+function embedSrc(code) {
+  const files = { [ENTRY]: { type: "CODE", contents: code } };
+  return (
+    "https://snack.expo.dev/embedded?platform=web&preview=true&theme=light&files=" +
+    encodeURIComponent(JSON.stringify(files))
+  );
+}
 
 function SnackPhone({ code }) {
   const webRef = useRef(null);
   const snackRef = useRef(null);
   const codeRef = useRef(code);
   const [url, setUrl] = useState("");
-  const [error, setError] = useState("");
+  const [embed, setEmbed] = useState("");
 
   const setFrame = useCallback((el) => {
     webRef.current = el ? el.contentWindow : null;
@@ -19,7 +28,7 @@ function SnackPhone({ code }) {
     let snack = null;
     (async () => {
       try {
-        const { Snack } = await import("snack-sdk");
+        const { Snack } = await import(/* @vite-ignore */ SDK_URL);
         if (off) return;
         snack = new Snack({
           name: "DevUp preview",
@@ -34,9 +43,7 @@ function SnackPhone({ code }) {
         setUrl(snack.getState().webPreviewURL || "");
       } catch (e) {
         console.error("[PhonePreview]", e);
-        if (!off) {
-          setError("The phone preview could not start: " + (e && e.message ? e.message : "unknown error"));
-        }
+        if (!off) setEmbed(embedSrc(codeRef.current));
       }
     })();
     return () => {
@@ -49,10 +56,10 @@ function SnackPhone({ code }) {
   useEffect(() => {
     codeRef.current = code;
     const s = snackRef.current;
-    if (!s) return;
     const t = setTimeout(() => {
-      s.updateFiles({ [ENTRY]: { type: "CODE", contents: code } });
-    }, 500);
+      if (s) s.updateFiles({ [ENTRY]: { type: "CODE", contents: code } });
+      else setEmbed((old) => (old ? embedSrc(code) : old));
+    }, 600);
     return () => clearTimeout(t);
   }, [code]);
 
@@ -63,10 +70,9 @@ function SnackPhone({ code }) {
           ref={setFrame}
           className="pv-screen"
           title="Phone preview"
-          src={url || undefined}
+          src={embed || url || undefined}
         />
-        {!url && !error && <div className="pv-loading">Starting the phone...</div>}
-        {error && <div className="pv-loading pv-error">{error}</div>}
+        {!url && !embed && <div className="pv-loading">Starting the phone...</div>}
       </div>
     </div>
   );
