@@ -5,12 +5,10 @@ import "./Community.css";
 
 const TABS = [
   { id: "question", label: "Questions" },
-  { id: "poll", label: "Polls" },
   { id: "experience", label: "Experiences" },
 ];
 const TAB_HINTS = {
-  question: "Stuck on something? Ask a question and other learners will help you.",
-  poll: "Can't decide between options? Create a poll and let the community vote.",
+  question: "Stuck on something? Ask a question, or create a poll when you can't choose between options.",
   experience: "Share your experience and your success. Your story can help other learners.",
 };
 const FIELDS = [
@@ -30,20 +28,18 @@ const SORTS = [
   { id: "answers", label: "Most answered" },
   { id: "views", label: "Most viewed" },
 ];
-const POLL_SORTS = [
-  { id: "newest", label: "Newest" },
-  { id: "likes", label: "Most liked" },
-  { id: "votes", label: "Most votes" },
-  { id: "views", label: "Most viewed" },
-];
 const STATUSES = [
   { id: "all", label: "All" },
   { id: "unanswered", label: "Unanswered" },
   { id: "solved", label: "Solved" },
+  { id: "polls", label: "Polls" },
 ];
+const TYPE_HINTS = {
+  question: "Describe your problem and other learners will answer.",
+  poll: "Can't decide between options? Let the community vote.",
+};
 const ADD_LABELS = {
   question: "+ Ask a question",
-  poll: "+ Create a poll",
   experience: "+ Share an experience",
 };
 const MAX_OPTIONS = 6;
@@ -497,6 +493,7 @@ function PollBox({ post, myVote, onVote, compact }) {
 export default function Community() {
   const [user, setUser] = useState(null);
   const [tab, setTab] = useState("question");
+  const [postType, setPostType] = useState("question");
   const [field, setField] = useState("All fields");
   const [status, setStatus] = useState("all");
   const [query, setQuery] = useState("");
@@ -559,7 +556,7 @@ export default function Community() {
       .select(
         "id, user_id, kind, title, body, field, tags, views, solved, author_name, created_at, answers_count, likes, images, edited_at, poll_options(id, position, label, votes)",
       )
-      .eq("kind", tab)
+      .in("kind", tab === "question" ? ["question", "poll"] : [tab])
       .order("created_at", { ascending: false })
       .then(({ data, error }) => {
         if (cancelled) return;
@@ -573,7 +570,7 @@ export default function Community() {
 
   const userId = user?.id;
   useEffect(() => {
-    if (!userId || tab !== "poll") return;
+    if (!userId || tab !== "question") return;
     let cancelled = false;
     supabase
       .from("poll_votes")
@@ -675,6 +672,7 @@ export default function Community() {
     setAskOpen(false);
     setSort("newest");
     setStatus("all");
+    setPostType("question");
     setFormError("");
     postPicker.clear();
   }
@@ -720,7 +718,7 @@ export default function Community() {
   async function submitPost(e) {
     e.preventDefault();
     if (posting) return;
-    const isPoll = tab === "poll";
+    const isPoll = tab === "question" && postType === "poll";
     if (!form.title.trim() || (!isPoll && !form.body.trim())) {
       setFormError(isPoll ? "Enter your question." : "Enter a title and details.");
       return;
@@ -775,7 +773,7 @@ export default function Community() {
     } else {
       ({ error } = await supabase.from("posts").insert({
         user_id: user.id,
-        kind: tab,
+        kind: tab === "question" ? postType : tab,
         title: form.title.trim(),
         body: form.body.trim(),
         field: form.field,
@@ -1052,9 +1050,9 @@ export default function Community() {
     }
   }
 
-  const isQuestion = tab === "question";
-  const isPoll = tab === "poll";
-  const sorts = isPoll ? POLL_SORTS : SORTS;
+  const inQuestions = tab === "question";
+  const formPoll = inQuestions && postType === "poll";
+  const formQuestion = inQuestions && postType === "question";
 
   const visible = posts
     .filter((p) => {
@@ -1063,16 +1061,17 @@ export default function Community() {
       const okQuery =
         p.title.toLowerCase().includes(q) ||
         (p.tags || []).some((t) => t.includes(q));
+      const isQ = p.kind === "question";
       const okStatus =
-        !isQuestion ||
         status === "all" ||
-        (status === "solved" ? p.solved : !p.solved && answerCount(p) === 0);
+        (status === "polls" && p.kind === "poll") ||
+        (status === "solved" && isQ && p.solved) ||
+        (status === "unanswered" && isQ && !p.solved && answerCount(p) === 0);
       return okField && okQuery && okStatus;
     })
     .sort((a, b) => {
       if (sort === "likes") return (b.likes || 0) - (a.likes || 0);
       if (sort === "answers") return answerCount(b) - answerCount(a);
-      if (sort === "votes") return pollTotal(b) - pollTotal(a);
       if (sort === "views") return b.views - a.views;
       return 0;
     });
@@ -1393,12 +1392,10 @@ export default function Community() {
     );
   }
 
-  const emptyTitle = isQuestion ? "No questions yet" : isPoll ? "No polls yet" : "No experiences yet";
-  const emptyText = isQuestion
-    ? "Be the first to ask a question."
-    : isPoll
-      ? "Torn between two options? Ask the community to vote."
-      : "Share what you've learned along the way.";
+  const emptyTitle = inQuestions ? "No questions yet" : "No experiences yet";
+  const emptyText = inQuestions
+    ? "Be the first to ask a question or create a poll."
+    : "Share what you've learned along the way.";
 
   return (
     <Sidebar>
@@ -1432,6 +1429,30 @@ export default function Community() {
 
         {askOpen && (
           <form className="community-form" onSubmit={submitPost}>
+            {inQuestions && (
+              <>
+                <div className="community-types" role="group" aria-label="Post type">
+                  {[
+                    ["question", "Question"],
+                    ["poll", "Poll (multiple choice)"],
+                  ].map(([id, label]) => (
+                    <button
+                      key={id}
+                      type="button"
+                      aria-pressed={postType === id}
+                      className={"community-type" + (postType === id ? " is-active" : "")}
+                      onClick={() => {
+                        setPostType(id);
+                        setFormError("");
+                      }}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <p className="community-type-hint">{TYPE_HINTS[postType]}</p>
+              </>
+            )}
             <label htmlFor="post-field">Field</label>
             <select
               id="post-field"
@@ -1443,7 +1464,7 @@ export default function Community() {
               ))}
             </select>
 
-            <label htmlFor="post-title">{isPoll ? "Your question" : "Title"}</label>
+            <label htmlFor="post-title">{formPoll ? "Your question" : "Title"}</label>
             <input
               id="post-title"
               type="text"
@@ -1454,20 +1475,20 @@ export default function Community() {
                 setFormError("");
               }}
               placeholder={
-                isQuestion
+                formQuestion
                   ? "How do I center a div with Flexbox?"
-                  : isPoll
+                  : formPoll
                     ? "React or Vue: which should I learn first?"
                     : "How I learned React"
               }
             />
 
             <label htmlFor="post-body">
-              {isPoll ? "Details (optional)" : isQuestion ? "Details" : "Your experience"}
+              {formPoll ? "Details (optional)" : formQuestion ? "Details" : "Your experience"}
             </label>
             <textarea
               id="post-body"
-              rows={isPoll ? 3 : 6}
+              rows={formPoll ? 3 : 6}
               value={form.body}
               onChange={(e) => {
                 setForm({ ...form, body: e.target.value });
@@ -1475,9 +1496,9 @@ export default function Community() {
               }}
               onPaste={(e) => pasteImages(e, postPicker)}
               placeholder={
-                isPoll
+                formPoll
                   ? "Tell people what you are choosing for"
-                  : isQuestion
+                  : formQuestion
                     ? "Wrap code in three backticks to format it"
                     : "What did you do, what worked, and what would you tell someone starting today?"
               }
@@ -1485,7 +1506,7 @@ export default function Community() {
 
             <ImageField picker={postPicker} id="post-images" />
 
-            {isPoll && (
+            {formPoll && (
               <>
                 <span className="community-label">Options (2 to {MAX_OPTIONS})</span>
                 <div className="community-option-inputs">
@@ -1584,7 +1605,7 @@ export default function Community() {
             value={sort}
             onChange={(e) => setSort(e.target.value)}
           >
-            {sorts.map((s) => (
+            {SORTS.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.label}
               </option>
@@ -1592,7 +1613,7 @@ export default function Community() {
           </select>
         </div>
 
-        {isQuestion && (
+        {inQuestions && (
           <div className="community-statuses" role="group" aria-label="Status">
             {STATUSES.map((s) => (
               <button

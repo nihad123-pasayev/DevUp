@@ -1034,3 +1034,16 @@
 .community-like-count:not(.is-plain):hover { text-decoration: underline; }
 .community-likers { list-style: none; margin: 0 0 12px; padding: 0; max-height: 280px; overflow: auto; }
 .community-likers li { display: flex; align-items: center; gap: 10px; padding: 6px 0; }
+/* ===== Community: post type switch ===== */
+.community-types { display: inline-flex; gap: 6px; padding: 4px; border-radius: 999px; background: #f1f5f9; align-self: flex-start; }
+.community-type {
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #475569;
+  font-size: 14px;
+  cursor: pointer;
+}
+.community-type.is-active { background: #fff; color: #0f172a; font-weight: 600; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12); }
+.community-type-hint { margin: 0; color: #64748b; font-size: 13px; }
