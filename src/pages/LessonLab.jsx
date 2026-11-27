@@ -3,6 +3,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import EditorImport from "react-simple-code-editor";
 import Prism from "prismjs";
 import LessonContent from "./LessonContent.jsx";
+import PhonePreview from "./PhonePreview.jsx";
 
 const Editor = EditorImport.default ?? EditorImport;
 
@@ -109,6 +110,8 @@ const LANG_LABELS = {
   typescript: "TypeScript",
   graphql: "GraphQL",
   javascript: "JavaScript",
+  dart: "Dart",
+  tsx: "TSX",
 };
 
 function highlightCode(code, lang, label) {
@@ -120,7 +123,10 @@ function highlightCode(code, lang, label) {
   if (key === "css" && Prism.languages.css) return Prism.highlight(code, Prism.languages.css, "css");
   if (key === "sql") return Prism.highlight(code, SQL_GRAMMAR, "sql");
   if (key === "graphql") return Prism.highlight(code, GRAPHQL_GRAMMAR, "graphql");
-  if (key === "typescript") return Prism.highlight(code, TS_GRAMMAR, "typescript");
+  if (key === "typescript" || key === "tsx")
+    return Prism.highlight(code, TS_GRAMMAR, "typescript");
+  if (key === "dart" && Prism.languages.clike)
+    return Prism.highlight(code, Prism.languages.clike, "clike");
   return Prism.highlight(code, Prism.languages.javascript, "javascript");
 }
 
@@ -256,7 +262,7 @@ export default function LessonLab({ data, done, onComplete }) {
   const isTerminal = step.type === "terminal";
   const stepLang = (step.language || "javascript").toLowerCase();
   const isHtml = stepLang === "html";
-  const isStatic = STATIC_LANGS.includes(stepLang);
+  const isStatic = STATIC_LANGS.includes(stepLang) || !!step.preview;
   const labelKey = String(step.label || (isHtml ? "html" : stepLang)).toLowerCase();
   const langLabel = LANG_LABELS[labelKey] || "JavaScript";
 
@@ -288,6 +294,7 @@ export default function LessonLab({ data, done, onComplete }) {
   }
 
   async function run() {
+    if (step.preview) return;
     if (isHtml) {
       previewHtml(codes[index]);
       return;
@@ -666,7 +673,16 @@ export default function LessonLab({ data, done, onComplete }) {
               />
             </div>
 
-            <div className="ll-out" tabIndex={0} role="log" aria-label="Output">
+            {step.preview && (
+              <PhonePreview kind={step.preview} code={codes[index]} />
+            )}
+            <div
+              className="ll-out"
+              style={step.preview ? { display: "none" } : undefined}
+              tabIndex={0}
+              role="log"
+              aria-label="Output"
+            >
               <span className="ll-out-label">
                 {isHtml ? (htmlVisual ? "Preview" : "Console") : "Output"}
               </span>

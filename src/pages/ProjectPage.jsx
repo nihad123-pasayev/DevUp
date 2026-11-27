@@ -3,8 +3,9 @@ import { useNavigate, useParams } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { supabase } from "../supabaseclient.js";
-import { markLessonComplete } from "../progress.js"; 
+import { markLessonComplete } from "../progress.js";
 import "./ProjectPage.css";
+import PhonePreview from "../components/PhonePreview.jsx";
 
 /* ---------- helpers ---------- */
 const QUIET = { log() {}, info() {}, warn() {}, error() {} };
@@ -19,7 +20,14 @@ function readGithubCallback(lessonId) {
     const c = p.get("code");
     const st = p.get("state");
     const saved = JSON.parse(sessionStorage.getItem(GH_KEY) || "null");
-    if (c && st && saved && saved.state === st && String(saved.lessonId) === String(lessonId)) return c;
+    if (
+      c &&
+      st &&
+      saved &&
+      saved.state === st &&
+      String(saved.lessonId) === String(lessonId)
+    )
+      return c;
   } catch {
     /* ignore */
   }
@@ -53,15 +61,18 @@ function runChecks(checks, code, runtime) {
     try {
       new Function("doc", "code", "console", code);
     } catch (e) {
-      return [{ ok: false, fail: `Your code has a syntax error: ${e.message}` }];
+      return [
+        { ok: false, fail: `Your code has a syntax error: ${e.message}` },
+      ];
     }
     return checks.map((c) => {
       try {
-        const ok = !!new Function("doc", "code", "console", `${code}\n;return (${c.test});`)(
-          null,
-          code,
-          QUIET
-        );
+        const ok = !!new Function(
+          "doc",
+          "code",
+          "console",
+          `${code}\n;return (${c.test});`,
+        )(null, code, QUIET);
         return { ok, fail: c.fail };
       } catch {
         return { ok: false, fail: c.fail };
@@ -72,13 +83,14 @@ function runChecks(checks, code, runtime) {
   const { css, prop, has } = cssTools(doc);
   return checks.map((c) => {
     try {
-      const ok = !!new Function("doc", "code", "css", "prop", "has", `return (${c.test});`)(
-        doc,
-        code,
-        css,
-        prop,
-        has
-      );
+      const ok = !!new Function(
+        "doc",
+        "code",
+        "css",
+        "prop",
+        "has",
+        `return (${c.test});`,
+      )(doc, code, css, prop, has);
       return { ok, fail: c.fail };
     } catch {
       return { ok: false, fail: c.fail };
@@ -89,7 +101,9 @@ function runChecks(checks, code, runtime) {
 /* CSS projects: css = all <style> text, has(sel) = a rule with this exact selector exists,
    prop(sel, name) = last value written for that property in rules with this selector (or null) */
 function cssTools(doc) {
-  const css = [...doc.querySelectorAll("style")].map((n) => n.textContent).join("\n");
+  const css = [...doc.querySelectorAll("style")]
+    .map((n) => n.textContent)
+    .join("\n");
   const clean = css.replace(/\/\*[\s\S]*?\*\//g, "");
   const rules = [];
   const re = /([^{}]+)\{([^{}]*)\}/g;
@@ -109,8 +123,14 @@ function cssTools(doc) {
       if (!r.selectors.includes(norm(sel))) return;
       r.body.split(";").forEach((d) => {
         const i = d.indexOf(":");
-        if (i > 0 && d.slice(0, i).trim().toLowerCase() === name.toLowerCase()) {
-          value = d.slice(i + 1).replace(/!important/i, "").trim();
+        if (
+          i > 0 &&
+          d.slice(0, i).trim().toLowerCase() === name.toLowerCase()
+        ) {
+          value = d
+            .slice(i + 1)
+            .replace(/!important/i, "")
+            .trim();
         }
       });
     });
@@ -132,7 +152,8 @@ const CLOSE = "</" + "script>";
 
 function hashOf(text) {
   let h = 5381;
-  for (let i = 0; i < text.length; i++) h = ((h << 5) + h + text.charCodeAt(i)) | 0;
+  for (let i = 0; i < text.length; i++)
+    h = ((h << 5) + h + text.charCodeAt(i)) | 0;
   return String(h);
 }
 
@@ -145,7 +166,9 @@ function buildRunner(code, runId) {
     "if(typeof a==='string')return a;" +
     "try{return JSON.stringify(a,null,2)}catch(e){return String(a)}" +
     "}).join(' ');" +
-    "parent.postMessage({__pp:1,run:'" + runId + "',type:type,text:t},'*');}" +
+    "parent.postMessage({__pp:1,run:'" +
+    runId +
+    "',type:type,text:t},'*');}" +
     "['log','info','warn','error'].forEach(function(k){" +
     "console[k]=function(){send(k,[].slice.call(arguments))};});" +
     "window.addEventListener('error',function(e){send('error',[e.message])});" +
@@ -153,8 +176,13 @@ function buildRunner(code, runId) {
     "send('error',['Unhandled: '+(e.reason&&e.reason.message||e.reason)])});" +
     "})();";
   return (
-    "<!doctype html><html><body><script>" + bridge + CLOSE +
-    '<script type="module">\n' + safe + "\n" + CLOSE +
+    "<!doctype html><html><body><script>" +
+    bridge +
+    CLOSE +
+    '<script type="module">\n' +
+    safe +
+    "\n" +
+    CLOSE +
     "</body></html>"
   );
 }
@@ -188,7 +216,11 @@ export default function ProjectPage() {
   const [finishing, setFinishing] = useState(false);
   const [finished, setFinished] = useState(false);
   const [ghCode] = useState(() => readGithubCallback(lessonId));
-  const [gh, setGh] = useState({ status: ghCode ? "pushing" : "idle", url: "", message: "" });
+  const [gh, setGh] = useState({
+    status: ghCode ? "pushing" : "idle",
+    url: "",
+    message: "",
+  });
   const ghStarted = useRef(false);
   const guideRef = useRef(null);
   const frameRef = useRef(null);
@@ -231,13 +263,17 @@ export default function ProjectPage() {
   /* console messages coming from the sandboxed runner */
   useEffect(() => {
     function onMsg(e) {
-      if (!frameRef.current || e.source !== frameRef.current.contentWindow) return;
+      if (!frameRef.current || e.source !== frameRef.current.contentWindow)
+        return;
       const d = e.data;
       if (d && d.__pp) {
         const key = String(d.run);
         setLogState((st) => {
           const prev = st.key === key ? st.items : [];
-          return { key, items: [...prev, { type: d.type, text: d.text }].slice(-200) };
+          return {
+            key,
+            items: [...prev, { type: d.type, text: d.text }].slice(-200),
+          };
         });
       }
     }
@@ -251,7 +287,7 @@ export default function ProjectPage() {
       data?.run === true && data?.language && data.language !== "html"
         ? buildRunner(preview, runId)
         : "",
-    [preview, runId, data]
+    [preview, runId, data],
   );
   const logs = logState.key === runId ? logState.items : [];
 
@@ -260,11 +296,16 @@ export default function ProjectPage() {
   const isHtml = language === "html";
   const canRun = !isHtml && data?.run === true;
   const fileName = data?.filename || "index.html";
+  const phoneKind =
+    data?.preview === "snack" || data?.preview === "dartpad"
+      ? data.preview
+      : "";
   const passedCount = useMemo(
     () => milestones.filter((m) => passed[m.id]).length,
-    [milestones, passed]
+    [milestones, passed],
   );
-  const current = typeof tab === "number" ? milestones.find((m) => m.id === tab) : null;
+  const current =
+    typeof tab === "number" ? milestones.find((m) => m.id === tab) : null;
 
   function selectTab(t) {
     setTab(t);
@@ -305,12 +346,14 @@ export default function ProjectPage() {
       const r = runChecks(m.checks, code, canRun);
       nextPassed[m.id] = r.every((i) => i.ok);
       r.filter((i) => !i.ok).forEach((i) =>
-        items.push({ ok: false, fail: `Milestone ${m.id}: ${i.fail}` })
+        items.push({ ok: false, fail: `Milestone ${m.id}: ${i.fail}` }),
       );
     });
     runChecks(data.final_checks, code, canRun)
       .filter((i) => !i.ok)
-      .forEach((i) => items.push({ ok: false, fail: `Final check: ${i.fail}` }));
+      .forEach((i) =>
+        items.push({ ok: false, fail: `Final check: ${i.fail}` }),
+      );
 
     setPassed(nextPassed);
     localStorage.setItem(passKey, JSON.stringify(nextPassed));
@@ -337,13 +380,21 @@ export default function ProjectPage() {
   }
 
   function resetCode() {
-    if (window.confirm("Reset the editor to the starter code? Your code will be lost.")) {
+    if (
+      window.confirm(
+        "Reset the editor to the starter code? Your code will be lost.",
+      )
+    ) {
       setCode(data.starter);
     }
   }
 
   function showSolution() {
-    if (window.confirm("Replace your code with the reference solution? Your code will be lost.")) {
+    if (
+      window.confirm(
+        "Replace your code with the reference solution? Your code will be lost.",
+      )
+    ) {
       setCode(data.solution);
     }
   }
@@ -383,11 +434,17 @@ export default function ProjectPage() {
         .eq("lesson_id", lessonId)
         .maybeSingle();
       if (!off && sub?.repo_url) {
-        setGh((g) => (g.status === "idle" ? { status: "done", url: sub.repo_url, message: "" } : { ...g, url: sub.repo_url }));
+        setGh((g) =>
+          g.status === "idle"
+            ? { status: "done", url: sub.repo_url, message: "" }
+            : { ...g, url: sub.repo_url },
+        );
       }
     }
     load();
-    return () => { off = true; };
+    return () => {
+      off = true;
+    };
   }, [lessonId]);
 
   // GitHub-dan qayıdanda kodu göndər (layihə yüklənəndən sonra)
@@ -397,22 +454,31 @@ export default function ProjectPage() {
     sessionStorage.removeItem(GH_KEY);
     window.history.replaceState({}, "", window.location.pathname);
     async function push() {
-      const { data: res, error: err } = await supabase.functions.invoke("github-push", {
-        body: {
-          code: ghCode,
-          clientId: GITHUB_CLIENT_ID,
-          lessonId,
-          repoName: repoSlug(data.title),
-          description: data.title + " (built on DevUp)",
-          files: buildFilesRef.current(),
+      const { data: res, error: err } = await supabase.functions.invoke(
+        "github-push",
+        {
+          body: {
+            code: ghCode,
+            clientId: GITHUB_CLIENT_ID,
+            lessonId,
+            repoName: repoSlug(data.title),
+            description: data.title + " (built on DevUp)",
+            files: buildFilesRef.current(),
+          },
         },
-      });
+      );
       if (err || !res?.url) {
-        const message = err ? await githubError(err) : res?.error || "Could not upload to GitHub.";
+        const message = err
+          ? await githubError(err)
+          : res?.error || "Could not upload to GitHub.";
         setGh((g) => ({ ...g, status: "error", message }));
         return;
       }
-      setGh({ status: "done", url: res.url, message: res.created ? "Repository created!" : "Repository updated!" });
+      setGh({
+        status: "done",
+        url: res.url,
+        message: res.created ? "Repository created!" : "Repository updated!",
+      });
     }
     push();
   }, [ghCode, data, lessonId]);
@@ -422,10 +488,13 @@ export default function ProjectPage() {
     sessionStorage.setItem(GH_KEY, JSON.stringify({ state, lessonId }));
     window.location.href =
       "https://github.com/login/oauth/authorize" +
-      "?client_id=" + encodeURIComponent(GITHUB_CLIENT_ID) +
+      "?client_id=" +
+      encodeURIComponent(GITHUB_CLIENT_ID) +
       "&scope=public_repo" +
-      "&state=" + state +
-      "&redirect_uri=" + encodeURIComponent(window.location.origin + window.location.pathname);
+      "&state=" +
+      state +
+      "&redirect_uri=" +
+      encodeURIComponent(window.location.origin + window.location.pathname);
   }
 
   if (loading) return <div className="pp-state">Loading project...</div>;
@@ -444,7 +513,9 @@ export default function ProjectPage() {
         </div>
         <div className="pp-prog" aria-label="Progress">
           <div className="pp-bar">
-            <div style={{ width: `${(passedCount / milestones.length) * 100}%` }} />
+            <div
+              style={{ width: `${(passedCount / milestones.length) * 100}%` }}
+            />
           </div>
           <span>
             {passedCount}/{milestones.length}
@@ -477,16 +548,33 @@ export default function ProjectPage() {
             <div className="pp-bar-top">
               <span>{fileName}</span>
               <div className="pp-actions">
-                <button type="button" onClick={resetCode}>Reset</button>
-                <button type="button" onClick={showSolution}>Show solution</button>
-                {finished && <button type="button" onClick={downloadCode}>Download</button>}
+                <button type="button" onClick={resetCode}>
+                  Reset
+                </button>
+                <button type="button" onClick={showSolution}>
+                  Show solution
+                </button>
+                {finished && (
+                  <button type="button" onClick={downloadCode}>
+                    Download
+                  </button>
+                )}
                 {finished && gh.status === "pushing" && (
-                  <button type="button" disabled>Pushing…</button>
+                  <button type="button" disabled>
+                    Pushing…
+                  </button>
                 )}
                 {finished && gh.status !== "pushing" && (
                   <>
                     {gh.status === "done" && gh.url && (
-                      <button type="button" onClick={() => window.open(gh.url, "_blank", "noopener")}>View on GitHub ↗</button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          window.open(gh.url, "_blank", "noopener")
+                        }
+                      >
+                        View on GitHub ↗
+                      </button>
                     )}
                     <button type="button" onClick={startGithub}>
                       {gh.status === "done" ? "Update GitHub" : "Add to GitHub"}
@@ -496,7 +584,14 @@ export default function ProjectPage() {
               </div>
             </div>
             {finished && gh.message && (
-              <div role={gh.status === "error" ? "alert" : "status"} style={{ padding: "6px 12px", fontSize: 13, color: gh.status === "error" ? "#ff9b9b" : "#7be0a3" }}>
+              <div
+                role={gh.status === "error" ? "alert" : "status"}
+                style={{
+                  padding: "6px 12px",
+                  fontSize: 13,
+                  color: gh.status === "error" ? "#ff9b9b" : "#7be0a3",
+                }}
+              >
                 {gh.message}
               </div>
             )}
@@ -512,7 +607,15 @@ export default function ProjectPage() {
           </div>
           <div className="pp-pane pp-preview">
             <div className="pp-bar-top">
-              <span>{isHtml ? "Preview" : canRun ? "Console" : "Output"}</span>
+              <span>
+                {isHtml
+                  ? "Preview"
+                  : phoneKind
+                    ? "Phone preview"
+                    : canRun
+                      ? "Console"
+                      : "Output"}
+              </span>
             </div>
             {isHtml && (
               <iframe
@@ -541,11 +644,12 @@ export default function ProjectPage() {
                 </pre>
               </>
             )}
-            {!isHtml && !canRun && (
+            {phoneKind && <PhonePreview kind={phoneKind} code={preview} />}
+            {!isHtml && !canRun && !phoneKind && (
               <div className="pp-console pp-note">
                 This project is server-side code, so there is no live preview.
-                Write your code in the editor and press <strong>Check milestone</strong> to
-                verify it.
+                Write your code in the editor and press{" "}
+                <strong>Check milestone</strong> to verify it.
               </div>
             )}
           </div>
@@ -631,7 +735,9 @@ export default function ProjectPage() {
               <div className="pp-results good">
                 <strong>Project complete</strong>
                 <p>
-                  Great work. {data.done_text || "You built a full web page with HTML."} This lesson is marked as completed.
+                  Great work.{" "}
+                  {data.done_text || "You built a full web page with HTML."}{" "}
+                  This lesson is marked as completed.
                 </p>
               </div>
             )}
@@ -639,7 +745,11 @@ export default function ProjectPage() {
 
           <div className="pp-foot">
             {current && (
-              <button type="button" className="pp-primary" onClick={checkMilestone}>
+              <button
+                type="button"
+                className="pp-primary"
+                onClick={checkMilestone}
+              >
                 Check milestone {current.id}
               </button>
             )}
@@ -650,11 +760,19 @@ export default function ProjectPage() {
                 onClick={finishProject}
                 disabled={finishing || finished}
               >
-                {finished ? "Completed" : finishing ? "Checking..." : "Finish project"}
+                {finished
+                  ? "Completed"
+                  : finishing
+                    ? "Checking..."
+                    : "Finish project"}
               </button>
             )}
             {tab === "start" && (
-              <button type="button" className="pp-primary" onClick={() => selectTab(1)}>
+              <button
+                type="button"
+                className="pp-primary"
+                onClick={() => selectTab(1)}
+              >
                 Start milestone 1
               </button>
             )}
