@@ -1018,4 +1018,19 @@
 }
 .community-owner-actions { display: flex; gap: 14px; margin-top: 8px; }
 /* ===== Community: who liked ===== */
-.community-likers { margin: 4px 0 0; width: 100%; color: #64748b; font-size: 13px; }
+.community-like-wrap { display: inline-flex; align-items: center; gap: 2px; }
+.community-like { padding: 6px 8px 6px 10px; border-radius: 999px 0 0 999px; }
+.community-like-count {
+  padding: 6px 12px 6px 6px;
+  border: 1px solid #e2e8f0;
+  border-left: 0;
+  border-radius: 0 999px 999px 0;
+  background: #fff;
+  color: #475569;
+  font-size: 14px;
+  cursor: pointer;
+}
+.community-like-count.is-plain { cursor: default; }
+.community-like-count:not(.is-plain):hover { text-decoration: underline; }
+.community-likers { list-style: none; margin: 0 0 12px; padding: 0; max-height: 280px; overflow: auto; }
+.community-likers li { display: flex; align-items: center; gap: 10px; padding: 6px 0; }

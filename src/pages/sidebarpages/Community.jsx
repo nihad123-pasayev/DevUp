@@ -325,32 +325,45 @@ function Lightbox({ images, index, onClose, onIndex }) {
 
 /* ---------- likes ---------- */
 
-function LikeButton({ liked, count, disabled, title, onClick }) {
+function LikeButton({ liked, count, disabled, title, onClick, onShowLikers }) {
   return (
-    <button
-      type="button"
-      className={"community-like" + (liked ? " is-liked" : "")}
-      aria-pressed={liked}
-      aria-label={liked ? "Remove like" : "Like"}
-      title={title}
-      disabled={disabled}
-      onClick={onClick}
-    >
-      <svg
-        width="18"
-        height="18"
-        viewBox="0 0 24 24"
-        fill={liked ? "currentColor" : "none"}
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
+    <span className="community-like-wrap">
+      <button
+        type="button"
+        className={"community-like" + (liked ? " is-liked" : "")}
+        aria-pressed={liked}
+        aria-label={liked ? "Remove like" : "Like"}
+        title={title}
+        disabled={disabled}
+        onClick={onClick}
       >
-        <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21.2l7.8-7.7 1-1.1a5.5 5.5 0 0 0 0-7.8z" />
-      </svg>
-      <span>{count}</span>
-    </button>
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill={liked ? "currentColor" : "none"}
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21.2l7.8-7.7 1-1.1a5.5 5.5 0 0 0 0-7.8z" />
+        </svg>
+      </button>
+      {onShowLikers && count > 0 ? (
+        <button
+          type="button"
+          className="community-like-count"
+          aria-label={"See who liked (" + count + ")"}
+          onClick={onShowLikers}
+        >
+          {count}
+        </button>
+      ) : (
+        <span className="community-like-count is-plain">{count}</span>
+      )}
+    </span>
   );
 }
 
@@ -602,6 +615,15 @@ export default function Community() {
     return () => window.removeEventListener("keydown", onKey);
   }, [deleteTarget]);
 
+  useEffect(() => {
+    if (!likers) return;
+    function onKey(e) {
+      if (e.key === "Escape") setLikers(null);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [likers]);
+
   const loadPosts = () => setRefreshKey((k) => k + 1);
 
   async function loadAnswers(postId) {
@@ -816,12 +838,8 @@ export default function Community() {
     loadAnswers(selected.id);
   }
 
-  async function toggleLikers(kind, id) {
+  async function showLikers(kind, id) {
     const key = kind + ":" + id;
-    if (likers && likers.key === key) {
-      setLikers(null);
-      return;
-    }
     setLikers({ key, names: [], loading: true });
     const { data, error } = await supabase.rpc("get_likers", { p_kind: kind, p_id: id });
     setLikers((cur) =>
@@ -831,23 +849,7 @@ export default function Community() {
     );
   }
 
-  const likersLine = (kind, id, count) =>
-    user && count > 0 ? (
-      <>
-        <button type="button" className="community-link-btn" onClick={() => toggleLikers(kind, id)}>
-          {likers && likers.key === kind + ":" + id ? "Hide likes" : "Who liked?"}
-        </button>
-        {likers && likers.key === kind + ":" + id && (
-          <p className="community-likers" role="status">
-            {likers.loading
-              ? "Loading…"
-              : likers.failed
-                ? "Couldn't load the list."
-                : "Liked by " + likers.names.join(", ") + (count > likers.names.length ? " and others" : "")}
-          </p>
-        )}
-      </>
-    ) : null;
+  const likersFor = (kind, id) => (user ? () => showLikers(kind, id) : undefined);
 
   function startEdit(type, item) {
     setEditError("");
@@ -1183,8 +1185,8 @@ export default function Community() {
                 disabled={!!isOwner}
                 title={likeTitle(selected)}
                 onClick={() => togglePostLike(selected)}
+                onShowLikers={likersFor("post", selected.id)}
               />
-              {likersLine("post", selected.id, selected.likes || 0)}
             </div>
           </article>
           {isOwner && (
@@ -1259,8 +1261,8 @@ export default function Community() {
                       disabled={!!own}
                       title={own ? "You can't like your own " + words(selected.kind)[0] : undefined}
                       onClick={() => toggleUpvote(a)}
+                      onShowLikers={likersFor("answer", a.id)}
                     />
-                    {likersLine("answer", a.id, a.votes || 0)}
                     {canMark && (
                       <button className="community-link-btn" onClick={() => markSolved(a)}>
                         Mark as solved
@@ -1354,6 +1356,38 @@ export default function Community() {
             </div>
           )}
         </div>
+        {likers && (
+          <div className="community-modal-backdrop" onClick={() => setLikers(null)}>
+            <div
+              className="community-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Likes"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h2>Likes</h2>
+              {likers.loading ? (
+                <p>Loading…</p>
+              ) : likers.failed ? (
+                <p>Couldn't load the list.</p>
+              ) : (
+                <ul className="community-likers">
+                  {likers.names.map((n, i) => (
+                    <li key={i}>
+                      <span className="community-avatar">{initials(n)}</span>
+                      {n}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <div className="community-modal-actions">
+                <button className="community-secondary" autoFocus onClick={() => setLikers(null)}>
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         {viewer}
       </Sidebar>
     );
