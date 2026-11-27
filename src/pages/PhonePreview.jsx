@@ -9,11 +9,11 @@ import "./PhonePreview.css";
 
 // Runs React Native code in the browser with react-native-web (no Expo servers needed).
 const INDEX_TS = `import React from "react";
-import { AppRegistry } from "react-native-web";
+import { createRoot } from "react-dom/client";
 import App from "./App";
 
-AppRegistry.registerComponent("App", () => App);
-AppRegistry.runApplication("App", { rootTag: document.getElementById("root") });
+const root = createRoot(document.getElementById("root") as HTMLElement);
+root.render(<App />);
 `;
 
 const INDEX_HTML = `<!DOCTYPE html>
