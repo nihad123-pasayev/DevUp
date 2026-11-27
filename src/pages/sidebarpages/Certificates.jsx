@@ -329,6 +329,7 @@ function EarnedCard({ cert, name }) {
       issueYear: String(d.getFullYear()),
       issueMonth: String(d.getMonth() + 1),
       certId: cert.code,
+      certUrl: `${window.location.origin}/verify/${cert.code}`,
     });
     window.open(
       `https://www.linkedin.com/profile/add?${q.toString()}`,
