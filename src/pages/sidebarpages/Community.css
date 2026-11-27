@@ -1047,3 +1047,47 @@
 }
 .community-type.is-active { background: #fff; color: #0f172a; font-weight: 600; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12); }
 .community-type-hint { margin: 0; color: #64748b; font-size: 13px; }
+/* ===== Like button: compact ===== */
+.community-like-wrap {
+  display: inline-flex;
+  align-items: stretch;
+  gap: 0;
+}
+.community-like,
+.community-like-count {
+  box-sizing: border-box;
+  height: 30px;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  color: #475569;
+  cursor: pointer;
+}
+.community-like {
+  padding: 0 8px 0 12px;
+  border-radius: 999px 0 0 999px;
+}
+.community-like svg {
+  width: 16px;
+  height: 16px;
+}
+.community-like-count {
+  padding: 0 12px 0 8px;
+  border-left: 0;
+  border-radius: 0 999px 999px 0;
+}
+.community-like.is-liked {
+  color: #e11d48;
+  border-color: #fecdd3;
+  background: #fff1f2;
+}
+.community-like-count.is-plain {
+  cursor: default;
+}
