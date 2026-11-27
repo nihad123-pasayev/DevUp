@@ -605,7 +605,7 @@ export default function ProjectPage() {
               aria-label="Code editor"
             />
           </div>
-          <div className="pp-pane pp-preview">
+          <div className={"pp-pane pp-preview" + (phoneKind ? " pp-phone" : "")}>
             <div className="pp-bar-top">
               <span>
                 {isHtml

@@ -270,3 +270,14 @@
 .pp-console .pp-log.error{color:#ff8a8a}
 .pp-console .pp-log.warn{color:#ffd37a}
 .pp-note{font-family:inherit;color:#9db0cc;white-space:normal}
+.pp-left { overflow-y: auto; }
+.pp-preview.pp-phone {
+  flex: 0 0 auto;
+  height: auto;
+  min-height: 680px;
+  overflow: visible;
+}
+.pp-preview.pp-phone iframe.pv-screen {
+  width: 100%;
+  height: 560px;
+}
