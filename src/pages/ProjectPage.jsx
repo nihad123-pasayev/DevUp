@@ -5,7 +5,7 @@ import remarkGfm from "remark-gfm";
 import { supabase } from "../supabaseclient.js";
 import { markLessonComplete } from "../progress.js";
 import "./ProjectPage.css";
-import PhonePreview from "../components/PhonePreview.jsx";
+import PhonePreview from "../pages/PhonePreview.jsx";
 
 /* ---------- helpers ---------- */
 const QUIET = { log() {}, info() {}, warn() {}, error() {} };
