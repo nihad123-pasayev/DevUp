@@ -1,94 +1,89 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  SandpackProvider,
+  SandpackLayout,
+  SandpackPreview,
+  useSandpack,
+} from "@codesandbox/sandpack-react";
+import { useEffect, useRef, useState } from "react";
 import "./PhonePreview.css";
 
-const ENTRY = "App.tsx";
-// false = use the official Snack embed (always works, but shows the editor too)
-const USE_SDK = false;
-const SDK_URL = "https://esm.sh/snack-sdk@7";
+// Runs React Native code in the browser with react-native-web (no Expo servers needed).
+const INDEX_TS = `import React from "react";
+import { AppRegistry } from "react-native-web";
+import App from "./App";
 
-function embedSrc(code) {
-  const files = { [ENTRY]: { type: "CODE", contents: code } };
-  return (
-    "https://snack.expo.dev/embedded?platform=web&preview=true&theme=light&files=" +
-    encodeURIComponent(JSON.stringify(files))
-  );
+AppRegistry.registerComponent("App", () => App);
+AppRegistry.runApplication("App", { rootTag: document.getElementById("root") });
+`;
+
+const INDEX_HTML = `<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      html, body, #root { height: 100%; margin: 0; }
+      #root { display: flex; flex-direction: column; }
+      body { font-family: -apple-system, system-ui, sans-serif; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
+`;
+
+function toWeb(code) {
+  return code.replace(/from\s+(["'])react-native\1/g, 'from "react-native-web"');
+}
+
+function Sync({ code }) {
+  const { sandpack } = useSandpack();
+  const first = useRef(true);
+  useEffect(() => {
+    if (first.current) {
+      first.current = false;
+      return;
+    }
+    sandpack.updateFile("/App.tsx", toWeb(code));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [code]);
+  return null;
 }
 
 function SnackPhone({ code }) {
-  const webRef = useRef(null);
-  const snackRef = useRef(null);
-  const codeRef = useRef(code);
-  const [url, setUrl] = useState("");
-  const [embed, setEmbed] = useState("");
-
-  const setFrame = useCallback((el) => {
-    webRef.current = el ? el.contentWindow : null;
-  }, []);
-
-  useEffect(() => {
-    let off = false;
-    let snack = null;
-    if (!USE_SDK) {
-      setEmbed(embedSrc(codeRef.current));
-      return undefined;
-    }
-    (async () => {
-      try {
-        const { Snack } = await import(/* @vite-ignore */ SDK_URL);
-        if (off) return;
-        snack = new Snack({
-          name: "DevUp preview",
-          files: { [ENTRY]: { type: "CODE", contents: codeRef.current } },
-          webPreviewRef: webRef,
-        });
-        snackRef.current = snack;
-        window.__snack = snack;
-        snack.addStateListener((state) => {
-          console.log("[snack]", {
-            online: state.online,
-            resolving: state.isResolving,
-            missing: state.missingDependencies,
-            channel: state.channel,
-            sdk: state.sdkVersion,
-            url: state.webPreviewURL,
-          });
-          if (!off) setUrl(state.webPreviewURL || "");
-        });
-        snack.setOnline(true);
-        setUrl(snack.getState().webPreviewURL || "");
-      } catch (e) {
-        console.error("[PhonePreview]", e);
-        if (!off) setEmbed(embedSrc(codeRef.current));
-      }
-    })();
-    return () => {
-      off = true;
-      snackRef.current = null;
-      if (snack) snack.setOnline(false);
-    };
-  }, []);
-
-  useEffect(() => {
-    codeRef.current = code;
-    const s = snackRef.current;
-    const t = setTimeout(() => {
-      if (s) s.updateFiles({ [ENTRY]: { type: "CODE", contents: code } });
-      else setEmbed((old) => (old ? embedSrc(code) : old));
-    }, 600);
-    return () => clearTimeout(t);
-  }, [code]);
-
+  const files = {
+    "/App.tsx": toWeb(code),
+    "/index.tsx": INDEX_TS,
+    "/public/index.html": INDEX_HTML,
+  };
   return (
     <div className="pv-wrap">
       <div className="pv-phone">
-        <iframe
-          ref={setFrame}
-          className="pv-screen"
-          title="Phone preview"
-          allow="screen-wake-lock *; fullscreen *; clipboard-write *"
-          src={embed || url || undefined}
-        />
-        {!url && !embed && <div className="pv-loading">Starting the phone...</div>}
+        <div className="pv-sp">
+          <SandpackProvider
+            template="react-ts"
+            files={files}
+            customSetup={{
+              dependencies: {
+                react: "^18.2.0",
+                "react-dom": "^18.2.0",
+                "react-native-web": "^0.19.13",
+              },
+            }}
+            options={{ recompileMode: "delayed", recompileDelay: 600 }}
+          >
+            <Sync code={code} />
+            <SandpackLayout style={{ border: 0, borderRadius: 0, height: "100%" }}>
+              <SandpackPreview
+                showNavigator={false}
+                showOpenInCodeSandbox={false}
+                showRefreshButton={false}
+                style={{ height: "100%" }}
+              />
+            </SandpackLayout>
+          </SandpackProvider>
+        </div>
       </div>
     </div>
   );
