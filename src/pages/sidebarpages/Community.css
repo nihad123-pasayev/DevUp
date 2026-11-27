@@ -1017,3 +1017,5 @@
   font: inherit;
 }
 .community-owner-actions { display: flex; gap: 14px; margin-top: 8px; }
+/* ===== Community: who liked ===== */
+.community-likers { margin: 4px 0 0; width: 100%; color: #64748b; font-size: 13px; }

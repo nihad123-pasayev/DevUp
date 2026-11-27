@@ -506,6 +506,7 @@ export default function Community() {
   const [editing, setEditing] = useState(null);
   const [editError, setEditError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [likers, setLikers] = useState(null);
 
   const [myVotes, setMyVotes] = useState({});
   const [myLikes, setMyLikes] = useState(() => new Set());
@@ -626,16 +627,18 @@ export default function Community() {
   }
 
   function openPost(post) {
-    setSelected({ ...post, views: post.views + 1 });
+    const own = !!userId && post.user_id === userId;
+    setSelected({ ...post, views: own ? post.views : post.views + 1 });
     setAnswers([]);
     setMyAnswerVotes(new Set());
     setAnswerText("");
     setAnswerError("");
     setEditing(null);
+    setLikers(null);
     answerPicker.clear();
     loadAnswers(post.id);
     // supabase queries only run once awaited or .then() is called
-    supabase.rpc("increment_views", { post_id: post.id }).then(() => {});
+    if (!own) supabase.rpc("increment_views", { post_id: post.id }).then(() => {});
   }
 
   function closePost() {
@@ -812,6 +815,39 @@ export default function Community() {
     answerPicker.clear();
     loadAnswers(selected.id);
   }
+
+  async function toggleLikers(kind, id) {
+    const key = kind + ":" + id;
+    if (likers && likers.key === key) {
+      setLikers(null);
+      return;
+    }
+    setLikers({ key, names: [], loading: true });
+    const { data, error } = await supabase.rpc("get_likers", { p_kind: kind, p_id: id });
+    setLikers((cur) =>
+      cur && cur.key === key
+        ? { key, names: !error && data ? data.map((r) => r.name) : [], loading: false, failed: !!error }
+        : cur,
+    );
+  }
+
+  const likersLine = (kind, id, count) =>
+    user && count > 0 ? (
+      <>
+        <button type="button" className="community-link-btn" onClick={() => toggleLikers(kind, id)}>
+          {likers && likers.key === kind + ":" + id ? "Hide likes" : "Who liked?"}
+        </button>
+        {likers && likers.key === kind + ":" + id && (
+          <p className="community-likers" role="status">
+            {likers.loading
+              ? "Loading…"
+              : likers.failed
+                ? "Couldn't load the list."
+                : "Liked by " + likers.names.join(", ") + (count > likers.names.length ? " and others" : "")}
+          </p>
+        )}
+      </>
+    ) : null;
 
   function startEdit(type, item) {
     setEditError("");
@@ -1148,6 +1184,7 @@ export default function Community() {
                 title={likeTitle(selected)}
                 onClick={() => togglePostLike(selected)}
               />
+              {likersLine("post", selected.id, selected.likes || 0)}
             </div>
           </article>
           {isOwner && (
@@ -1223,6 +1260,7 @@ export default function Community() {
                       title={own ? "You can't like your own " + words(selected.kind)[0] : undefined}
                       onClick={() => toggleUpvote(a)}
                     />
+                    {likersLine("answer", a.id, a.votes || 0)}
                     {canMark && (
                       <button className="community-link-btn" onClick={() => markSolved(a)}>
                         Mark as solved
