@@ -503,6 +503,9 @@ export default function Community() {
   const [answering, setAnswering] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [editing, setEditing] = useState(null);
+  const [editError, setEditError] = useState("");
+  const [saving, setSaving] = useState(false);
 
   const [myVotes, setMyVotes] = useState({});
   const [myLikes, setMyLikes] = useState(() => new Set());
@@ -540,7 +543,7 @@ export default function Community() {
     supabase
       .from("posts")
       .select(
-        "id, user_id, kind, title, body, field, tags, views, solved, author_name, created_at, answers_count, likes, images, poll_options(id, position, label, votes)",
+        "id, user_id, kind, title, body, field, tags, views, solved, author_name, created_at, answers_count, likes, images, edited_at, poll_options(id, position, label, votes)",
       )
       .eq("kind", tab)
       .order("created_at", { ascending: false })
@@ -603,7 +606,7 @@ export default function Community() {
   async function loadAnswers(postId) {
     const { data, error } = await supabase
       .from("answers")
-      .select("id, user_id, body, author_name, is_accepted, votes, images, created_at")
+      .select("id, user_id, body, author_name, is_accepted, votes, images, edited_at, created_at")
       .eq("post_id", postId)
       .order("created_at", { ascending: true });
     const list = !error && data ? data : [];
@@ -628,6 +631,7 @@ export default function Community() {
     setMyAnswerVotes(new Set());
     setAnswerText("");
     setAnswerError("");
+    setEditing(null);
     answerPicker.clear();
     loadAnswers(post.id);
     // supabase queries only run once awaited or .then() is called
@@ -724,7 +728,7 @@ export default function Community() {
     }
 
     setPosting(true);
-    let paths
+    let paths;
     try {
       paths = await uploadAll(postPicker.items);
     } catch {
@@ -782,7 +786,7 @@ export default function Community() {
       return;
     }
     setAnswering(true);
-    let paths
+    let paths;
     try {
       paths = await uploadAll(answerPicker.items);
     } catch {
@@ -807,6 +811,41 @@ export default function Community() {
     setAnswerError("");
     answerPicker.clear();
     loadAnswers(selected.id);
+  }
+
+  function startEdit(type, item) {
+    setEditError("");
+    setEditing({ type, id: item.id, title: item.title || "", body: item.body });
+  }
+
+  async function saveEdit(e) {
+    e.preventDefault();
+    if (saving || !editing) return;
+    const body = editing.body.trim();
+    const title = editing.title.trim();
+    const isPost = editing.type === "post";
+    if (isPost ? !title : !body) {
+      setEditError(isPost ? "The title can't be empty." : "Write something first.");
+      return;
+    }
+    if (isPost && selected.kind !== "poll" && !body) {
+      setEditError("Enter a title and details.");
+      return;
+    }
+    setSaving(true);
+    const { error } = isPost
+      ? await supabase.from("posts").update({ title, body }).eq("id", editing.id)
+      : await supabase.from("answers").update({ body }).eq("id", editing.id);
+    setSaving(false);
+    if (error) {
+      setEditError("Couldn't save. Try again.");
+      return;
+    }
+    const edited_at = new Date().toISOString();
+    if (isPost) setSelected((s) => ({ ...s, title, body, edited_at }));
+    else setAnswers((prev) => prev.map((a) => (a.id === editing.id ? { ...a, body, edited_at } : a)));
+    setEditing(null);
+    setEditError("");
   }
 
   async function markSolved(answer) {
@@ -1020,6 +1059,7 @@ export default function Community() {
 
   if (selected) {
     const isOwner = user && selected.user_id === user.id;
+    const postEditing = editing && editing.type === "post";
     const ordered = [...answers].sort(
       (a, b) =>
         Number(b.is_accepted) - Number(a.is_accepted) ||
@@ -1041,14 +1081,54 @@ export default function Community() {
               {selected.kind === "poll" && <span className="community-kind">Poll</span>}
               {selected.solved && <span className="community-solved">Solved</span>}
             </div>
-            <h1>{selected.title}</h1>
-            <div className="community-meta">
-              <span className="community-avatar">{initials(selected.author_name)}</span>
-              <span>
-                {selected.author_name} · {timeAgo(selected.created_at)} · {selected.views} views
-              </span>
-            </div>
-            {selected.body.trim() && <Body text={selected.body} />}
+            {postEditing ? (
+              <form className="community-edit" onSubmit={saveEdit}>
+                <input
+                  type="text"
+                  aria-label="Edit title"
+                  maxLength={150}
+                  value={editing.title}
+                  onChange={(e) => {
+                    setEditing({ ...editing, title: e.target.value });
+                    setEditError("");
+                  }}
+                />
+                <textarea
+                  aria-label="Edit text"
+                  rows={6}
+                  value={editing.body}
+                  onChange={(e) => {
+                    setEditing({ ...editing, body: e.target.value });
+                    setEditError("");
+                  }}
+                />
+                {editError && (
+                  <p className="community-error" role="alert">
+                    {editError}
+                  </p>
+                )}
+                <div className="community-form-actions">
+                  <button type="submit" className="community-primary" disabled={saving}>
+                    {saving ? "Saving…" : "Save"}
+                  </button>
+                  <button type="button" className="community-secondary" onClick={() => setEditing(null)}>
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <>
+                <h1>{selected.title}</h1>
+                <div className="community-meta">
+                  <span className="community-avatar">{initials(selected.author_name)}</span>
+                  <span>
+                    {selected.author_name} · {timeAgo(selected.created_at)}
+                    {selected.edited_at ? " · edited" : ""} · {selected.views} views
+                  </span>
+                </div>
+                {selected.body.trim() && <Body text={selected.body} />}
+              </>
+            )}
             <ImageGrid paths={selected.images} onOpen={openLightbox} />
             {selected.kind === "poll" && (
               <PollBox post={selected} myVote={myVotes[selected.id]} onVote={votePoll} />
@@ -1071,12 +1151,19 @@ export default function Community() {
             </div>
           </article>
           {isOwner && (
-            <button
-              className="community-link-btn is-danger"
-              onClick={() => setDeleteTarget({ type: "post", item: selected })}
-            >
-              Delete post
-            </button>
+            <div className="community-owner-actions">
+              {!editing && (
+                <button className="community-link-btn" onClick={() => startEdit("post", selected)}>
+                  Edit post
+                </button>
+              )}
+              <button
+                className="community-link-btn is-danger"
+                onClick={() => setDeleteTarget({ type: "post", item: selected })}
+              >
+                Delete post
+              </button>
+            </div>
           )}
 
           <h2 className="community-subtitle">{countLabel(answers.length, selected.kind)}</h2>
@@ -1094,10 +1181,39 @@ export default function Community() {
                     <span className="community-avatar">{initials(a.author_name)}</span>
                     <span>
                       {a.author_name} · {timeAgo(a.created_at)}
+                      {a.edited_at ? " · edited" : ""}
                     </span>
                     {a.is_accepted && <span className="community-solved">Best answer</span>}
                   </div>
-                  <Body text={a.body} />
+                  {editing && editing.type === "answer" && editing.id === a.id ? (
+                    <form className="community-edit" onSubmit={saveEdit}>
+                      <textarea
+                        aria-label="Edit text"
+                        rows={4}
+                        autoFocus
+                        value={editing.body}
+                        onChange={(e) => {
+                          setEditing({ ...editing, body: e.target.value });
+                          setEditError("");
+                        }}
+                      />
+                      {editError && (
+                        <p className="community-error" role="alert">
+                          {editError}
+                        </p>
+                      )}
+                      <div className="community-form-actions">
+                        <button type="submit" className="community-primary" disabled={saving}>
+                          {saving ? "Saving…" : "Save"}
+                        </button>
+                        <button type="button" className="community-secondary" onClick={() => setEditing(null)}>
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
+                  ) : (
+                    <Body text={a.body} />
+                  )}
                   <ImageGrid paths={a.images} onOpen={openLightbox} />
                   <div className="community-answer-actions">
                     <LikeButton
@@ -1110,6 +1226,11 @@ export default function Community() {
                     {canMark && (
                       <button className="community-link-btn" onClick={() => markSolved(a)}>
                         Mark as solved
+                      </button>
+                    )}
+                    {own && !editing && (
+                      <button className="community-link-btn" onClick={() => startEdit("answer", a)}>
+                        Edit
                       </button>
                     )}
                     {own && (
